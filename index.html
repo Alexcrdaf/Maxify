@@ -9,7 +9,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -76,6 +75,90 @@ audio{width:180px;height:34px}
 .tab{padding:6px 14px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;color:var(--muted);font-family:'Syne',sans-serif}
 .tab.active{background:rgba(79,140,255,.15);color:var(--accent)}
 .tab:hover:not(.active){background:rgba(255,255,255,.05);color:var(--text)}
+
+/* ── MOBILE ────────────────────────────────────────────────────────────────── */
+@media(max-width:640px){
+  body{overflow:hidden}
+  #root{height:100dvh!important}
+  .app-layout{flex-direction:column!important;padding:0!important;gap:0!important}
+  .sidebar{
+    position:fixed!important;bottom:0;left:0;right:0;top:auto!important;
+    width:100%!important;height:auto!important;
+    border-radius:20px 20px 0 0!important;
+    flex-direction:row!important;
+    padding:8px 12px 20px!important;
+    gap:0!important;
+    z-index:100;
+    border-top:1px solid var(--border)!important;
+    border-bottom:none!important;
+    border-left:none!important;
+    border-right:none!important;
+    overflow:visible!important;
+  }
+  .sidebar-top{display:none!important}
+  .sidebar-divider{display:none!important}
+  .sidebar-search{display:none!important}
+  .sidebar-tabs{
+    display:flex!important;
+    flex-direction:row!important;
+    flex:1!important;
+    justify-content:space-around!important;
+    align-items:center!important;
+    gap:0!important;
+    overflow:visible!important;
+  }
+  .sidebar-tab-btn{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    gap:2px!important;
+    padding:6px 12px!important;
+    border-radius:12px!important;
+    cursor:pointer!important;
+    font-size:10px!important;
+    color:var(--muted)!important;
+    font-family:'Syne',sans-serif!important;
+    font-weight:600!important;
+    transition:color .15s!important;
+  }
+  .sidebar-tab-btn.active{color:var(--accent)!important}
+  .sidebar-tab-btn .tab-icon{font-size:22px}
+  .sidebar-list{display:none!important}
+  .sidebar-signout{display:none!important}
+  .main-area{
+    flex:1!important;
+    height:calc(100dvh - 72px)!important;
+    border-radius:0!important;
+    margin:0!important;
+  }
+  .chat-area{
+    height:calc(100dvh - 72px)!important;
+    border-radius:0!important;
+  }
+  .modal{width:calc(100vw - 24px)!important;max-height:90dvh!important;overflow-y:auto!important}
+  .modal-bg{align-items:flex-end!important}
+  .modal{border-radius:24px 24px 0 0!important;padding-bottom:32px!important}
+  .attach-menu{bottom:60px!important}
+  .call-wrap{padding:20px!important}
+  /* Mobile chat list overlay */
+  .mobile-list-overlay{
+    position:fixed!important;
+    inset:0!important;
+    bottom:72px!important;
+    background:var(--bg)!important;
+    z-index:90!important;
+    overflow-y:auto!important;
+    padding:16px 12px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:6px!important;
+  }
+}
+@media(min-width:641px){
+  .mobile-list-overlay{display:none!important}
+  .sidebar-tab-btn .tab-icon{display:none}
+  .sidebar-tab-btn .tab-label-mobile{display:none}
+}
 </style>
 </head>
 <body>
@@ -84,7 +167,7 @@ audio{width:180px;height:34px}
 // ── Firebase ──────────────────────────────────────────────────────────────────
 const FC={apiKey:"AIzaSyA6pHfRD-a50nZ5C-e_RDj5j8ijLBQPX8A",authDomain:"mymaxiscord.firebaseapp.com",databaseURL:"https://mymaxiscord-default-rtdb.firebaseio.com",projectId:"mymaxiscord",storageBucket:"mymaxiscord.firebasestorage.app",messagingSenderId:"110398248811",appId:"1:110398248811:web:1454c9bc4dc4f5e9931e2e"};
 if(!firebase.apps.length) firebase.initializeApp(FC);
-const auth=firebase.auth(), db=firebase.database(), stor=firebase.storage();
+const auth=firebase.auth(), db=firebase.database();
 const h=React.createElement;
 const {useState,useEffect,useRef,useCallback,useMemo}=React;
 
@@ -105,12 +188,41 @@ function beep(freq1,freq2,dur,vol){
 const playSend=()=>beep(880,1200,.16,.15);
 const playRecv=()=>beep(520,660,.2,.1);
 
-// ── Upload ───────────────────────────────────────────────────────────────────
+// ── Upload: ImgBB (photos) + Cloudinary (video/audio/files) ─────────────────
+const CLOUDINARY_CLOUD='djdcmj2om';
+const CLOUDINARY_PRESET='maxify_unsigned';
+const IMGBB_KEY='6b2f4aa4251af974124a1053b9e8b719';
+
 async function upload(file,onPct){
-  const ref=stor.ref(`uploads/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._]/g,'_')}`);
-  const task=ref.put(file);
-  await new Promise((res,rej)=>task.on('state_changed',s=>onPct&&onPct(s.bytesTransferred/s.totalBytes*100),rej,res));
-  return ref.getDownloadURL();
+  if(file.type.startsWith('image/')){
+    // ImgBB — free, no limits, images only
+    const fd=new FormData();
+    fd.append('image',file);
+    const r=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:'POST',body:fd});
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error?.message||'ImgBB error');
+    onPct&&onPct(100);
+    return j.data.url;
+  } else {
+    // Cloudinary — free 25GB, video/audio/files
+    const fd=new FormData();
+    fd.append('file',file);
+    fd.append('upload_preset',CLOUDINARY_PRESET);
+    return new Promise((res,rej)=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST',`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`);
+      xhr.upload.onprogress=e=>e.lengthComputable&&onPct&&onPct(e.loaded/e.total*100);
+      xhr.onload=()=>{
+        try{
+          const j=JSON.parse(xhr.responseText);
+          if(j.secure_url) res(j.secure_url);
+          else rej(new Error(j.error?.message||'Cloudinary error: '+xhr.responseText));
+        }catch(e){rej(e)}
+      };
+      xhr.onerror=()=>rej(new Error('Нет соединения'));
+      xhr.send(fd);
+    });
+  }
 }
 
 // ── Avatar ───────────────────────────────────────────────────────────────────
@@ -889,6 +1001,7 @@ function App(){
   const [showSearch,setShowSearch]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
   const [createRoom,setCreateRoom]=useState(null); // 'group'|'channel'
+  const [showMobileList,setShowMobileList]=useState(false);
   const [peerInst,setPeerInst]=useState(null);
   const [tab,setTab]=useState('dms'); // dms | rooms | channels
 
@@ -978,12 +1091,62 @@ function App(){
   const activeRoom=activeChat?.type==='room'?rooms.find(r=>r.id===activeChat.id):null;
   const groups=rooms.filter(r=>r.type==='group');
   const channels=rooms.filter(r=>r.type==='channel');
+  const isMobile=window.innerWidth<=640;
 
-  return h('div',{style:{height:'100vh',display:'flex',padding:14,gap:12}},
-    // ── Sidebar ───────────────────────────────────────────────────────────────
-    h('div',{className:'glass',style:{width:260,borderRadius:22,padding:'12px 10px',display:'flex',flexDirection:'column',gap:6,flexShrink:0}},
+  // List content for current tab
+  const listContent=()=>{
+    if(tab==='dms') return h(React.Fragment,null,
+      h('button',{className:'btn btn-ghost',style:{justifyContent:'flex-start',padding:'8px 12px',borderRadius:12,fontSize:13,width:'100%',marginBottom:4},onClick:()=>setShowSearch(true)},'🔍  Найти пользователя'),
+      dmConvs.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'16px 8px'}},'Нет переписок'),
+      dmConvs.map(c=>{
+        const pu=peerUsers[c.uid];
+        return h('div',{key:c.uid,className:'chat-row'+(activeChat?.id===c.uid&&activeChat?.type==='dm'?' active':''),onClick:()=>{openDM({id:c.uid,...(pu||{})});setShowMobileList(false)}},
+          h(Avatar,{user:pu,size:40}),
+          h('div',{style:{flex:1,minWidth:0}},
+            h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},pu?.login||c.uid.slice(0,8)),
+            h('div',{style:{fontSize:12,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},c.last?.preview||'...')
+          ),
+          c.unread>0&&h('div',{className:'unread'},c.unread)
+        );
+      })
+    );
+    if(tab==='groups') return h(React.Fragment,null,
+      h('button',{className:'btn btn-ghost',style:{justifyContent:'flex-start',padding:'8px 12px',borderRadius:12,fontSize:13,width:'100%',marginBottom:4},onClick:()=>setCreateRoom('group')},'+ Создать группу'),
+      groups.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'12px 8px'}},'Нет групп'),
+      groups.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
+        h('div',{style:{width:40,height:40,borderRadius:'50%',background:'rgba(79,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},'👥'),
+        h('div',{style:{flex:1,minWidth:0}},
+          h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.name),
+          h('div',{style:{fontSize:12,color:'var(--muted)'}},r.last?.preview||r.desc||'Группа')
+        )
+      ))
+    );
+    if(tab==='channels') return h(React.Fragment,null,
+      h('button',{className:'btn btn-ghost',style:{justifyContent:'flex-start',padding:'8px 12px',borderRadius:12,fontSize:13,width:'100%',marginBottom:4},onClick:()=>setCreateRoom('channel')},'+ Создать канал'),
+      channels.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'12px 8px'}},'Нет каналов'),
+      channels.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
+        h('div',{style:{width:40,height:40,borderRadius:'50%',background:'rgba(155,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},'📢'),
+        h('div',{style:{flex:1,minWidth:0}},
+          h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.name),
+          h('div',{style:{fontSize:12,color:'var(--muted)'}},r.last?.preview||r.desc||'Канал')
+        )
+      ))
+    );
+  };
+
+  const navTabs=[
+    {id:'dms',icon:'💬',label:'Чаты'},
+    {id:'groups',icon:'👥',label:'Группы'},
+    {id:'channels',icon:'📢',label:'Каналы'},
+    {id:'profile',icon:'👤',label:'Профиль'},
+  ];
+
+  return h('div',{className:'app-layout',style:{height:'100dvh',display:'flex',padding:14,gap:12}},
+
+    // ── DESKTOP sidebar ───────────────────────────────────────────────────────
+    h('div',{className:'glass sidebar',style:{width:260,borderRadius:22,padding:'12px 10px',display:'flex',flexDirection:'column',gap:6,flexShrink:0}},
       // me row
-      h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'6px 8px',borderRadius:14,cursor:'pointer'},
+      h('div',{className:'sidebar-top',style:{display:'flex',alignItems:'center',gap:10,padding:'6px 8px',borderRadius:14,cursor:'pointer'},
         onMouseEnter:e=>e.currentTarget.style.background='rgba(255,255,255,.05)',
         onMouseLeave:e=>e.currentTarget.style.background='',
         onClick:()=>setShowProfile(true)},
@@ -993,78 +1156,58 @@ function App(){
           h('div',{style:{fontSize:11,color:peerInst?'var(--ok)':'var(--muted)'}},peerInst?'● онлайн':'● подключение...')
         )
       ),
-      h('div',{className:'hr'}),
-      h('button',{className:'btn btn-ghost',style:{justifyContent:'flex-start',padding:'8px 12px',borderRadius:12,fontSize:13,width:'100%'},onClick:()=>setShowSearch(true)},'🔍  Найти пользователя'),
-      h('div',{className:'hr'}),
-
-      // tabs
+      h('div',{className:'hr sidebar-divider'}),
       h('div',{className:'tab-bar',style:{padding:'2px 0'}},
         [{id:'dms',label:'ЛС'},{id:'groups',label:'Группы'},{id:'channels',label:'Каналы'}].map(t=>
           h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),style:{flex:1,textAlign:'center'},onClick:()=>setTab(t.id)},t.label)
         )
       ),
+      h('div',{className:'sidebar-list',style:{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:2}},listContent()),
+      h('div',{className:'hr sidebar-divider'}),
+      h('button',{className:'sidebar-signout',style:{background:'none',border:'none',color:'var(--muted)',fontSize:12,cursor:'pointer',padding:'6px',textAlign:'center',borderRadius:8,transition:'color .15s'},
+        onMouseEnter:e=>e.target.style.color='var(--danger)',onMouseLeave:e=>e.target.style.color='var(--muted)',onClick:signOut},'Выйти'),
 
-      // content
-      h('div',{style:{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:2}},
+      // ── MOBILE bottom nav (inside sidebar div, visible only on mobile via CSS)
+      h('div',{className:'sidebar-tabs'},
+        navTabs.map(t=>h('div',{
+          key:t.id,
+          className:'sidebar-tab-btn'+(tab===t.id||((t.id==='profile')&&showProfile)?(' active'):''),
+          onClick:()=>{
+            if(t.id==='profile'){setShowProfile(true);return}
+            setTab(t.id);
+            setShowMobileList(true);
+            setActiveChat(null);
+          }
+        },
+          h('div',{className:'tab-icon'},t.icon),
+          h('div',{style:{fontSize:10}},t.label)
+        ))
+      )
+    ),
 
-        tab==='dms'&&h(React.Fragment,null,
-          dmConvs.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'16px 8px'}},'Нет переписок'),
-          dmConvs.map(c=>{
-            const pu=peerUsers[c.uid];
-            return h('div',{key:c.uid,className:'chat-row'+(activeChat?.id===c.uid&&activeChat?.type==='dm'?' active':''),onClick:()=>openDM({id:c.uid,...(pu||{})})},
-              h(Avatar,{user:pu,size:34}),
-              h('div',{style:{flex:1,minWidth:0}},
-                h('div',{style:{fontWeight:600,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},pu?.login||c.uid.slice(0,8)),
-                h('div',{style:{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},c.last?.preview||'...')
-              ),
-              c.unread>0&&h('div',{className:'unread'},c.unread)
-            );
-          })
-        ),
-
-        tab==='groups'&&h(React.Fragment,null,
-          h('button',{className:'btn btn-ghost',style:{justifyContent:'flex-start',padding:'7px 10px',borderRadius:12,fontSize:12,width:'100%',marginBottom:4},onClick:()=>setCreateRoom('group')},'+ Создать группу'),
-          groups.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'12px 8px'}},'Нет групп'),
-          groups.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>openRoom(r)},
-            h('div',{style:{width:34,height:34,borderRadius:'50%',background:'rgba(79,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}},'👥'),
-            h('div',{style:{flex:1,minWidth:0}},
-              h('div',{style:{fontWeight:600,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.name),
-              h('div',{style:{fontSize:11,color:'var(--muted)'}},r.last?.preview||r.desc||'Группа')
-            )
-          ))
-        ),
-
-        tab==='channels'&&h(React.Fragment,null,
-          h('button',{className:'btn btn-ghost',style:{justifyContent:'flex-start',padding:'7px 10px',borderRadius:12,fontSize:12,width:'100%',marginBottom:4},onClick:()=>setCreateRoom('channel')},'+ Создать канал'),
-          channels.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'12px 8px'}},'Нет каналов'),
-          channels.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>openRoom(r)},
-            h('div',{style:{width:34,height:34,borderRadius:'50%',background:'rgba(155,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}},'📢'),
-            h('div',{style:{flex:1,minWidth:0}},
-              h('div',{style:{fontWeight:600,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.name),
-              h('div',{style:{fontSize:11,color:'var(--muted)'}},r.last?.preview||r.desc||'Канал')
-            )
-          ))
-        )
+    // ── MOBILE list overlay ───────────────────────────────────────────────────
+    showMobileList&&!activeChat&&h('div',{className:'mobile-list-overlay'},
+      h('div',{className:'syne',style:{fontWeight:800,fontSize:18,marginBottom:8,padding:'0 4px'}},
+        tab==='dms'?'Сообщения':tab==='groups'?'Группы':'Каналы'
       ),
-
-      h('div',{className:'hr'}),
-      h('button',{style:{background:'none',border:'none',color:'var(--muted)',fontSize:12,cursor:'pointer',padding:'6px',textAlign:'center',borderRadius:8,transition:'color .15s'},
-        onMouseEnter:e=>e.target.style.color='var(--danger)',onMouseLeave:e=>e.target.style.color='var(--muted)',onClick:signOut},'Выйти')
+      listContent()
     ),
 
     // ── Main area ─────────────────────────────────────────────────────────────
-    activeChat?.type==='dm'
-      ?h(DMChat,{key:activeChat.id,me:user.id,peer:activeChat.id,peerUser:activeDMPeer,onBack:()=>setActiveChat(null),peerInst})
-      :activeChat?.type==='room'&&activeRoom
-        ?h(RoomChat,{key:activeRoom.id,room:activeRoom,me:user.id,onBack:()=>setActiveChat(null)})
-        :h('div',{className:'glass',style:{flex:1,borderRadius:22,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12}},
-            h('div',{style:{fontSize:48,opacity:.15}},'💬'),
-            h('div',{className:'syne',style:{fontSize:22,fontWeight:800,opacity:.2,letterSpacing:'-.03em'}},'Maxify'),
-            h('div',{style:{fontSize:13,color:'var(--muted)',opacity:.5}},'Выберите чат слева')
-          ),
+    h('div',{className:'main-area',style:{flex:1,borderRadius:22,overflow:'hidden',display:'flex',flexDirection:'column'}},
+      activeChat?.type==='dm'
+        ?h(DMChat,{key:activeChat.id,me:user.id,peer:activeChat.id,peerUser:activeDMPeer,onBack:()=>setActiveChat(null),peerInst})
+        :activeChat?.type==='room'&&activeRoom
+          ?h(RoomChat,{key:activeRoom.id,room:activeRoom,me:user.id,onBack:()=>setActiveChat(null)})
+          :h('div',{className:'glass',style:{flex:1,height:'100%',borderRadius:22,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12}},
+              h('div',{style:{fontSize:48,opacity:.15}},'💬'),
+              h('div',{className:'syne',style:{fontSize:22,fontWeight:800,opacity:.2,letterSpacing:'-.03em'}},'Maxify'),
+              h('div',{style:{fontSize:13,color:'var(--muted)',opacity:.5,textAlign:'center'}},'Выберите чат')
+            )
+    ),
 
     showProfile&&h(ProfileModal,{user,onClose:()=>setShowProfile(false)}),
-    showSearch&&h(UserSearch,{me:user.id,onSelect:openDM,onClose:()=>setShowSearch(false)}),
+    showSearch&&h(UserSearch,{me:user.id,onSelect:u=>{openDM(u);setShowMobileList(false)},onClose:()=>setShowSearch(false)}),
     createRoom&&h(CreateRoomModal,{me:user.id,type:createRoom,onClose:()=>setCreateRoom(null)})
   );
 }
