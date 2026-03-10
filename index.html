@@ -335,16 +335,117 @@ function getBestMimeType(kind){
   for(const t of(kind==='audio'?a:v)){if(MediaRecorder.isTypeSupported(t))return t;}return'';
 }
 
-const CL_CLOUD='djdcmj2om',CL_PRESET='maxify';
-async function upload(file,onPct){
-  const fd=new FormData();fd.append('file',file);fd.append('upload_preset',CL_PRESET);
+// ── Multi-provider upload system ─────────────────────────────────────────────
+// Providers tried in order. If one fails or quota exceeded — next is used.
+// To add more Cloudinary accounts: create free account at cloudinary.com,
+// go to Settings → Upload → Add upload preset (unsigned), paste cloud_name+preset below.
+
+const UPLOAD_PROVIDERS = [
+  // Cloudinary account #1 (primary) — 25 GB
+  { type:'cloudinary', cloud:'djdcmj2om', preset:'maxify' },
+  // Cloudinary account #2 — 25 GB ✅
+  { type:'cloudinary', cloud:'djd6tk4mo', preset:'fgh8888888' },
+  // ImgBB — 32 MB на файл ✅
+  { type:'imgbb', key:'6b2f4aa4251af974124a1053b9e8b719' },
+  // Catbox.moe — до 200 MB на файл ✅
+  { type:'catbox' },
+];
+
+// Track which provider index to try next (persists across uploads in session)
+let _providerIdx = 0;
+
+function _uploadCloudinary(file, cloud, preset, onPct){
   return new Promise((res,rej)=>{
+    const fd=new FormData();
+    fd.append('file',file);
+    fd.append('upload_preset',preset);
     const xhr=new XMLHttpRequest();
-    xhr.open('POST','https://api.cloudinary.com/v1_1/'+CL_CLOUD+'/auto/upload');
+    xhr.open('POST','https://api.cloudinary.com/v1_1/'+cloud+'/auto/upload');
     xhr.upload.onprogress=e=>{if(e.lengthComputable&&onPct)onPct(Math.round(e.loaded/e.total*100))};
-    xhr.onload=()=>{try{const j=JSON.parse(xhr.responseText);if(j.secure_url)res(j.secure_url);else rej(new Error(j.error?.message||'err'))}catch(e){rej(new Error('parse'))}};
-    xhr.onerror=()=>rej(new Error('Нет соединения'));xhr.send(fd);
+    xhr.onload=()=>{
+      try{
+        const j=JSON.parse(xhr.responseText);
+        if(j.secure_url) res(j.secure_url);
+        else rej(new Error(j.error?.message||'quota_or_error'));
+      }catch(e){rej(new Error('parse_error'))}
+    };
+    xhr.onerror=()=>rej(new Error('network_error'));
+    xhr.send(fd);
   });
+}
+
+function _uploadImgBB(file, apiKey, onPct){
+  return new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const base64=reader.result.split(',')[1];
+      const fd=new FormData();
+      fd.append('image',base64);
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST','https://api.imgbb.com/1/upload?key='+apiKey);
+      xhr.upload.onprogress=e=>{if(e.lengthComputable&&onPct)onPct(Math.round(e.loaded/e.total*100))};
+      xhr.onload=()=>{
+        try{
+          const j=JSON.parse(xhr.responseText);
+          if(j.data?.url) res(j.data.url);
+          else rej(new Error('imgbb_error'));
+        }catch(e){rej(new Error('parse_error'))}
+      };
+      xhr.onerror=()=>rej(new Error('network_error'));
+      xhr.send(fd);
+    };
+    reader.onerror=()=>rej(new Error('read_error'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function _uploadCatbox(file, onPct){
+  return new Promise((res,rej)=>{
+    const fd=new FormData();
+    fd.append('reqtype','fileupload');
+    fd.append('fileToUpload',file);
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST','https://catbox.moe/user/api.php');
+    xhr.upload.onprogress=e=>{if(e.lengthComputable&&onPct)onPct(Math.round(e.loaded/e.total*100))};
+    xhr.onload=()=>{
+      const url=xhr.responseText.trim();
+      if(url.startsWith('https://')) res(url);
+      else rej(new Error('catbox_error: '+url.slice(0,60)));
+    };
+    xhr.onerror=()=>rej(new Error('network_error'));
+    xhr.send(fd);
+  });
+}
+
+async function upload(file, onPct){
+  const total = UPLOAD_PROVIDERS.length;
+  let lastErr = null;
+
+  // Try each provider starting from current index, wrap around
+  for(let attempt=0; attempt<total; attempt++){
+    const idx = (_providerIdx + attempt) % total;
+    const p = UPLOAD_PROVIDERS[idx];
+    try{
+      let url;
+      if(p.type==='cloudinary'){
+        url = await _uploadCloudinary(file, p.cloud, p.preset, onPct);
+      } else if(p.type==='imgbb'){
+        url = await _uploadImgBB(file, p.key, onPct);
+      } else if(p.type==='catbox'){
+        url = await _uploadCatbox(file, onPct);
+      } else {
+        throw new Error('unknown_provider');
+      }
+      // Success — next upload starts from same provider (don't advance on success)
+      return url;
+    } catch(err){
+      lastErr = err;
+      // Advance to next provider for future uploads
+      _providerIdx = (idx + 1) % total;
+      console.warn('[upload] Provider '+p.type+(p.cloud?' ('+p.cloud+')':'')+' failed: '+err.message+'. Trying next...');
+    }
+  }
+  throw new Error('Все сервисы недоступны: ' + (lastErr?.message||'unknown'));
 }
 
 const VERIFIED_EMAILS=['dima.julbarisov01@gmail.com'];
