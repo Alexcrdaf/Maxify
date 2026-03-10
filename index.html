@@ -1091,7 +1091,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
         h('button',{className:'btn btn-ghost btn-icon',title:'Видеозвонок',onClick:()=>startCall(true)},'🎥'),
         h('button',{className:'btn btn-ghost btn-icon',title:'Ещё',style:{fontSize:18},onClick:()=>setShowMenu(v=>!v)},'⋯')
       ),
-      showMenu&&h('div',{style:{position:'absolute',top:56,right:14,background:'var(--attach-bg)',border:'1px solid var(--border)',borderRadius:14,padding:6,zIndex:50,display:'flex',flexDirection:'column',gap:2,minWidth:180,boxShadow:'0 8px 32px rgba(0,0,0,.4)'}},
+      showMenu&&h('div',{style:{position:'fixed',top:60,right:14,background:'var(--attach-bg)',border:'1px solid var(--border)',borderRadius:14,padding:6,zIndex:9999,display:'flex',flexDirection:'column',gap:2,minWidth:196,boxShadow:'0 12px 40px rgba(0,0,0,.6)'}},
         h('div',{className:'attach-item',onClick:()=>{setShowDeleteChat(true);setShowMenu(false)}},'🗑  Удалить переписку'),
         h('div',{className:'attach-item',style:{color:'var(--danger)'},onClick:()=>{setShowBlock(true);setShowMenu(false)}},'🚫  Заблокировать')
       )
