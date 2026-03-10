@@ -160,13 +160,14 @@ function getBestMimeType(kind){
   return ''; // browser default
 }
 
-// ── Upload: ImgBB (photos) + Cloudinary (video/audio/files) ─────────────────
-const CLOUDINARY_CLOUD='djdcmj2om';
-const CLOUDINARY_PRESET='maxify_unsigned';
+// ── Upload: ImgBB (фото) + Uploadcare (видео/аудио/файлы) ──────────────────
+// Uploadcare: бесплатно, без preset, просто публичный ключ
 const IMGBB_KEY='6b2f4aa4251af974124a1053b9e8b719';
+const UPLOADCARE_PUB='demopublickey'; // работает для тестов; замените на свой ключ с uploadcare.com
 
 async function upload(file,onPct){
   if(file.type.startsWith('image/')){
+    // Фото → ImgBB
     const fd=new FormData();
     fd.append('image',file);
     const r=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:'POST',body:fd});
@@ -175,18 +176,26 @@ async function upload(file,onPct){
     onPct&&onPct(100);
     return j.data.url;
   } else {
-    const fd=new FormData();
-    fd.append('file',file);
-    fd.append('upload_preset',CLOUDINARY_PRESET);
+    // Видео / аудио / файлы → Uploadcare
+    // API: https://upload.uploadcare.com/base/
     return new Promise((res,rej)=>{
+      const fd=new FormData();
+      fd.append('UPLOADCARE_PUB_KEY', UPLOADCARE_PUB);
+      fd.append('UPLOADCARE_STORE','1');
+      fd.append('file', file);
       const xhr=new XMLHttpRequest();
-      xhr.open('POST',`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`);
+      xhr.open('POST','https://upload.uploadcare.com/base/');
       xhr.upload.onprogress=e=>e.lengthComputable&&onPct&&onPct(e.loaded/e.total*100);
       xhr.onload=()=>{
         try{
           const j=JSON.parse(xhr.responseText);
-          if(j.secure_url) res(j.secure_url);
-          else rej(new Error(j.error?.message||'Cloudinary error: '+xhr.responseText));
+          // Uploadcare возвращает { file: "<uuid>" }
+          if(j.file){
+            // CDN URL — прямой, без подписи, работает сразу
+            res(`https://ucarecdn.com/${j.file}/`);
+          } else {
+            rej(new Error(j.detail||JSON.stringify(j)));
+          }
         }catch(e){rej(e)}
       };
       xhr.onerror=()=>rej(new Error('Нет соединения'));
