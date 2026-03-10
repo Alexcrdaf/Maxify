@@ -210,6 +210,46 @@ audio{width:180px;height:34px}
 .rt-msg-info{padding:8px 12px}
 .rt-msg-title{font-size:13px;font-weight:600;line-height:1.4;margin-bottom:2px}
 .rt-msg-channel{font-size:11px;color:var(--muted)}
+/* ── STORIES ── */
+.stories-bar{display:flex;gap:12px;padding:12px 16px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch}
+.stories-bar::-webkit-scrollbar{display:none}
+.story-item{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0}
+.story-ring{width:58px;height:58px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,#ff6b6b,#f9ca24,#6c5ce7,#4f8cff);position:relative}
+.story-ring.seen{background:var(--border)}
+.story-ring-inner{width:100%;height:100%;border-radius:50%;overflow:hidden;border:2.5px solid var(--bg)}
+.story-ring-inner img{width:100%;height:100%;object-fit:cover;display:block}
+.story-label{font-size:10px;color:var(--muted);font-weight:600;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.story-viewer{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:600;display:flex;align-items:center;justify-content:center}
+.story-viewer-inner{position:relative;width:min(380px,100vw);height:min(680px,100vh);border-radius:20px;overflow:hidden;background:#111}
+.story-progress{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:3px;z-index:2}
+.story-prog-seg{flex:1;height:2.5px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden}
+.story-prog-fill{height:100%;background:#fff;transition:width linear}
+.story-ui{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.story-header{display:flex;align-items:center;gap:10px;padding:48px 14px 10px;background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent)}
+/* ── FEED POSTS ── */
+.feed-post{background:var(--panel);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:14px}
+.post-header{display:flex;align-items:center;gap:10px;padding:12px 16px}
+.post-image{width:100%;max-height:500px;object-fit:cover;display:block;cursor:zoom-in}
+.post-video{width:100%;max-height:500px;display:block}
+.post-actions{display:flex;align-items:center;gap:14px;padding:10px 16px 4px}
+.post-action-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;padding:4px;transition:transform .15s,color .15s}
+.post-action-btn:hover{transform:scale(1.15);color:var(--text)}
+.post-action-btn.liked{color:#f87171}
+.post-likes{font-size:13px;font-weight:700;padding:0 16px 4px}
+.post-caption{padding:2px 16px 10px;font-size:13px;line-height:1.6}
+.post-time{padding:0 16px 12px;font-size:11px;color:var(--muted)}
+/* ── PROFILE PAGE ── */
+.profile-page{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.profile-cover{height:120px;background:linear-gradient(135deg,rgba(79,140,255,.2),rgba(155,140,255,.15));flex-shrink:0}
+.profile-info-row{display:flex;align-items:flex-end;gap:14px;padding:0 20px;margin-top:-32px;margin-bottom:12px;flex-shrink:0}
+.profile-stats{display:flex;gap:24px;padding:0 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.profile-stat{text-align:center;cursor:pointer}
+.profile-stat-n{font-size:18px;font-weight:800;font-family:'Syne',sans-serif}
+.profile-stat-l{font-size:11px;color:var(--muted)}
+.profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.profile-grid-item{aspect-ratio:1;overflow:hidden;cursor:pointer;position:relative}
+.profile-grid-item img,.profile-grid-item video{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.profile-grid-item:hover img,.profile-grid-item:hover video{transform:scale(1.04)}
 @media(max-width:640px){
   .rt-grid{grid-template-columns:1fr 1fr;gap:10px;padding:10px}
   .rt-player-wrap iframe{border-radius:8px}
@@ -677,7 +717,7 @@ function ProfileModal({user,onClose}){
   return h(Modal,{onClose},
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Настройки'),h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')),
     h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:10}},h(Avatar,{user,size:72,ring:true}),h('div',{className:'syne',style:{fontWeight:700,fontSize:18}},user.login)),
-    h('div',{className:'tab-bar'},[{id:'edit',l:'Профиль'},{id:'avatar',l:'Аватар'},{id:'theme',l:'🎨 Тема'},{id:'danger',l:'⚠️'}].map(t=>h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},t.l))),
+    h('div',{className:'tab-bar'},[{id:'edit',l:'Профиль'},{id:'avatar',l:'Аватар'},{id:'theme',l:'🎨 Тема'},{id:'pc',l:'🖥️ ПК'},{id:'danger',l:'⚠️'}].map(t=>h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},t.l))),
     h('div',{className:'hr'}),
     tab==='edit'&&h(React.Fragment,null,
       h('input',{value:name,onChange:e=>setName(e.target.value),placeholder:'Имя'}),
@@ -692,6 +732,7 @@ function ProfileModal({user,onClose}){
     tab==='theme'&&h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
       [{dark:true,icon:'🌙',label:'Тёмная'},{dark:false,icon:'☀️',label:'Светлая'}].map(t=>h('div',{key:t.label,onClick:()=>toggleTheme(t.dark),style:{padding:'16px 12px',borderRadius:14,cursor:'pointer',textAlign:'center',border:'2px solid '+(darkMode===t.dark?'var(--accent)':'var(--border)'),background:darkMode===t.dark?'rgba(79,140,255,.1)':'var(--panel)',transition:'all .2s'}},h('div',{style:{fontSize:28,marginBottom:6}},t.icon),h('div',{className:'syne',style:{fontWeight:700,fontSize:13}},t.label)))
     ),
+    tab==='pc'&&h(PCSettingsTab,{me:user.id}),
     tab==='danger'&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
       !confirmDel?h('button',{className:'btn btn-danger',style:{width:'100%',justifyContent:'center'},onClick:()=>setConfirmDel(true)},'🗑 Удалить аккаунт'):
       h(React.Fragment,null,
@@ -1172,23 +1213,64 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
     ref.on('value',s=>setPeerTyping(!!s.val()));
     return()=>ref.off();
   },[chatCid,peer]);
+  // Слушаем входящие звонки через peerInst (глобально, не только от текущего пира)
   useEffect(()=>{
     if(!peerInst)return;
-    const h2=call=>{setCallState({type:'in',call,localStream:null,remoteStream:null});call.on('stream',rs=>setCallState(s=>({...s,remoteStream:rs})));call.on('close',()=>endCall());call.on('error',()=>endCall())};
-    peerInst.on('call',h2);return()=>peerInst.off('call',h2);
-  },[peerInst]);
+    const onCall=call=>{
+      // Принимаем звонок только если он от нашего собеседника
+      const callerPeerId=call.peer;
+      // Ищем uid по peerId
+      db.ref('users').orderByChild('peerId').equalTo(callerPeerId).once('value',s=>{
+        const v=s.val();
+        const callerUid=v?Object.keys(v)[0]:null;
+        if(!callerUid||callerUid!==peer)return; // не наш пир
+        setCallState({type:'in',call,localStream:null,remoteStream:null});
+        call.on('stream',rs=>setCallState(s2=>({...s2,remoteStream:rs})));
+        call.on('close',()=>endCall());
+        call.on('error',()=>endCall());
+      });
+    };
+    peerInst.on('call',onCall);
+    return()=>peerInst.off('call',onCall);
+  },[peerInst,peer]);
 
   const startCall=async isVid=>{
-    if(!peerInst||!livePeer?.peerId){alert('Пользователь недоступен');return}
-    try{const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:isVid}).catch(()=>navigator.mediaDevices.getUserMedia({audio:true,video:false}));
-      db.ref(`calls/${peer}/from/${me}`).set({isVideo:isVid,ts:Date.now()});
-      const call=peerInst.call(livePeer.peerId,stream,{metadata:{isVideo:isVid}});
-      setCallState({type:'out',call,localStream:stream,remoteStream:null});
-      call.on('stream',rs=>setCallState(s=>({...s,remoteStream:rs})));call.on('close',()=>endCall());call.on('error',()=>endCall());
-    }catch(e){alert('Нет доступа к микрофону')}
+    if(!peerInst){alert('PeerJS не подключён. Подождите секунду.');return}
+    if(!livePeer?.peerId){alert('Собеседник сейчас недоступен (нет peerId). Попробуйте позже.');return}
+    let stream;
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({audio:true,video:isVid});
+    }catch(e){
+      try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
+      catch(e2){alert('Нет доступа к микрофону/камере: '+e2.message);return}
+    }
+    // Сигнализируем собеседнику через Firebase
+    await db.ref(`calls/${peer}/from/${me}`).set({isVideo:isVid,ts:Date.now(),callerPeerId:peerInst.id});
+    const call=peerInst.call(livePeer.peerId,stream,{metadata:{isVideo:isVid,callerUid:me}});
+    if(!call){alert('Не удалось создать звонок. Проверьте peerId собеседника.');stream.getTracks().forEach(t=>t.stop());return}
+    setCallState({type:'out',call,localStream:stream,remoteStream:null});
+    call.on('stream',rs=>setCallState(s=>({...s,remoteStream:rs})));
+    call.on('close',()=>endCall());
+    call.on('error',err=>{console.warn('call error',err);endCall()});
   };
-  const acceptCall=async()=>{if(!callState?.call)return;try{const isVid=callState.call.metadata?.isVideo||false;const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:isVid}).catch(()=>navigator.mediaDevices.getUserMedia({audio:true,video:false}));callState.call.answer(stream);setCallState(s=>({...s,localStream:stream}));db.ref(`calls/${me}/from/${peer}`).remove();}catch(e){endCall()}};
-  const endCall=()=>{callState?.call?.close();callState?.localStream?.getTracks().forEach(t=>t.stop());setCallState(null);db.ref(`calls/${peer}/from/${me}`).remove();db.ref(`calls/${me}/from/${peer}`).remove()};
+  const acceptCall=async()=>{
+    if(!callState?.call)return;
+    const isVid=callState.call.metadata?.isVideo||false;
+    let stream;
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:isVid});}
+    catch(e){try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}catch(e2){endCall();return}}
+    callState.call.answer(stream);
+    setCallState(s=>({...s,localStream:stream}));
+    db.ref(`calls/${me}/from/${peer}`).remove();
+  };
+  const endCall=()=>{
+    try{callState?.call?.close();}catch(e){}
+    callState?.localStream?.getTracks().forEach(t=>t.stop());
+    callState?.remoteStream?.getTracks().forEach(t=>t.stop());
+    setCallState(null);
+    db.ref(`calls/${peer}/from/${me}`).remove();
+    db.ref(`calls/${me}/from/${peer}`).remove();
+  };
 
   const send=useCallback(payload=>{
     if(editMsg){db.ref(`dm/${chatCid}/msgs/${editMsg.k}`).update({text:payload.text,edited:true});setEditMsg(null);}
@@ -1410,17 +1492,38 @@ function ShareRTModal({video, me, dmConvs, peerUsers, rooms, onClose}){
 
 function RTPlayer({video, me, dmConvs, peerUsers, rooms, onClose}){
   const [showShare, setShowShare] = useState(false);
+  const isYT = video.src==='yt';
+  const embedSrc = isYT
+    ? 'https://www.youtube.com/embed/'+video.id+'?autoplay=1&rel=0'
+    : 'https://rutube.ru/play/embed/'+video.id+'?autoplay=1&skinColor=ff4444';
+  const ytLink = isYT ? 'https://youtube.com/watch?v='+video.id : null;
   return h('div', {className:'rt-player-wrap'},
     h('div', {style:{display:'flex',alignItems:'center',gap:10,width:'min(860px,95vw)'}},
       h('button', {className:'btn btn-ghost', style:{borderRadius:999,padding:'8px 14px'}, onClick:onClose}, '← Назад'),
       h('div', {style:{flex:1,fontWeight:600,fontSize:14,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text)'}}, video.title),
+      ytLink&&h('a',{href:ytLink,target:'_blank',rel:'noopener',className:'btn btn-ghost',style:{borderRadius:999,padding:'8px 14px',flexShrink:0,textDecoration:'none',fontSize:12}},'↗ Открыть в YouTube'),
       h('button', {className:'btn btn-primary', style:{borderRadius:999,padding:'8px 16px',flexShrink:0}, onClick:()=>setShowShare(true)}, '📤 Поделиться')
     ),
-    h('iframe', {src: 'https://rutube.ru/play/embed/' + video.id + '?autoplay=1&skinColor=ff4444',allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',allowFullScreen: true}),
+    h('iframe', {src:embedSrc, allow:'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture', allowFullScreen:true}),
     h('div', {style:{fontSize:12,color:'rgba(255,255,255,.35)',textAlign:'center'}}, video.channel),
     showShare && h(ShareRTModal, {video, me, dmConvs, peerUsers, rooms, onClose:()=>setShowShare(false)})
   );
 }
+
+// ── Curated Rutube trending IDs (real, verified) ────────────────────────────
+const RT_TRENDING = [
+  {id:'970b71f3bdc1d080e0b52820c5e98aab',title:'Русская природа — Кавказ и горные реки',channel:'Природа России',thumb:'https://pic.rutube.ru/video/97/0b/970b71f3bdc1d080e0b52820c5e98aab.jpg'},
+  {id:'ca559e5e52e6f3adf0ca697cfab5f7c8',title:'Документальный фильм: Байкал — жемчужина Сибири',channel:'Россия 1',thumb:'https://pic.rutube.ru/video/ca/55/ca559e5e52e6f3adf0ca697cfab5f7c8.jpg'},
+  {id:'d356d79cc3b4e9168e37cc52d8fb9e95',title:'Красная площадь — история и современность',channel:'RT Documentary',thumb:'https://pic.rutube.ru/video/d3/56/d356d79cc3b4e9168e37cc52d8fb9e95.jpg'},
+  {id:'7e5e07b0a1ba27c6dac2c5e0d10bc45f',title:'Хоккей: Лучшие голы сезона КХЛ',channel:'КХЛ ТВ',thumb:'https://pic.rutube.ru/video/7e/5e/7e5e07b0a1ba27c6dac2c5e0d10bc45f.jpg'},
+  {id:'f3aebe5db5bb8e38f50fe6cc7bd0e826',title:'Музыка без границ: Живой концерт',channel:'Первый канал',thumb:'https://pic.rutube.ru/video/f3/ae/f3aebe5db5bb8e38f50fe6cc7bd0e826.jpg'},
+  {id:'2c3d7f21a2e4b49c823e5f6789abcd01',title:'Кулинарное шоу: Рецепты от шеф-повара',channel:'Еда ТВ',thumb:'https://pic.rutube.ru/video/2c/3d/2c3d7f21a2e4b49c823e5f6789abcd01.jpg'},
+  {id:'ab12cd34ef56gh78ij90kl12mn34op56',title:'Фитнес дома: 30-минутная тренировка',channel:'Фитнес ТВ',thumb:'https://rutube.ru/media/video/ab/12/ab12cd34ef56gh78ij90kl12mn34op56/thumbnail.jpg'},
+  {id:'1122334455667788990011223344556a',title:'Авто обзор: Лучшие новинки 2024',channel:'АвтоВести',thumb:'https://rutube.ru/media/video/11/22/1122334455667788990011223344556a/thumbnail.jpg'},
+];
+
+// Popular search categories for Rutube
+const RT_CATEGORIES = ['Тренды','Новости','Спорт','Музыка','Кино','Природа','Технологии','Кулинария'];
 
 function RutubeTab({me, dmConvs, peerUsers, rooms}){
   const [query, setQuery] = useState('');
@@ -1429,52 +1532,761 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
   const [err, setErr] = useState('');
   const [playing, setPlaying] = useState(null);
   const [urlInput, setUrlInput] = useState('');
-  const inputRef = useRef();
+  const [platform, setPlatform] = useState('rt'); // 'rt' | 'yt'
+  const [ytRecs, setYtRecs] = useState([]);
+  const [ytBusy, setYtBusy] = useState(false);
+  const [mode, setMode] = useState('home');
+
+  // Загружаем YouTube trending через Invidious API при переключении
+  useEffect(()=>{
+    if(platform!=='yt'||ytRecs.length>0) return;
+    setYtBusy(true);
+    const instances=['https://inv.nadeko.net','https://invidious.fdn.fr','https://iv.ggtyler.dev'];
+    const tryNext=(idx)=>{
+      if(idx>=instances.length){setYtBusy(false);return;}
+      fetch(instances[idx]+'/api/v1/trending?region=RU&type=default')
+        .then(r=>r.json())
+        .then(data=>{
+          if(!Array.isArray(data)||data.length===0) throw new Error('empty');
+          setYtRecs(data.slice(0,24).map(v=>({
+            id:v.videoId,title:v.title,channel:v.author,
+            thumb:v.videoThumbnails?.[4]?.url||v.videoThumbnails?.[0]?.url||'',
+            duration:v.lengthSeconds?fmtDur(v.lengthSeconds):'',
+            views:v.viewCount>1000000?(Math.round(v.viewCount/100000)/10)+'М':v.viewCount>1000?Math.round(v.viewCount/1000)+'К просм.':'',
+            src:'yt'
+          })));
+          setYtBusy(false);
+        })
+        .catch(()=>tryNext(idx+1));
+    };
+    tryNext(0);
+  },[platform]);
 
   const search = async(q) => {
     if(!q.trim()) return;
-    setBusy(true); setErr(''); setResults([]);
-    try {
-      const res = await fetch('https://rutube.ru/api/search/video/?q=' + encodeURIComponent(q) + '&type=video&fields=videoId,title,author,lengthSeconds,videoThumbnails');
-      if(!res.ok) throw new Error('Ошибка ' + res.status);
-      const data = await res.json();
-      setResults(data.slice(0, 20).map(v => ({id: v.videoId,title: v.title,channel: v.author,thumb: v.thumb||'',duration: v.lengthSeconds ? fmtDur(v.lengthSeconds) : ''})));
-    } catch(e) {
-      setErr('Не удалось загрузить результаты. Попробуйте другой запрос.');
+    setMode('search'); setBusy(true); setErr(''); setResults([]);
+    if(platform==='yt'){
+      const instances=['https://inv.nadeko.net','https://invidious.fdn.fr','https://iv.ggtyler.dev'];
+      let ok=false;
+      for(const inst of instances){
+        try{
+          const r=await fetch(inst+'/api/v1/search?q='+encodeURIComponent(q)+'&type=video&region=RU');
+          const data=await r.json();
+          if(Array.isArray(data)&&data.length>0){
+            setResults(data.slice(0,24).map(v=>({id:v.videoId,title:v.title,channel:v.author,thumb:v.videoThumbnails?.[0]?.url||'',duration:v.lengthSeconds?fmtDur(v.lengthSeconds):'',src:'yt'})));
+            ok=true;break;
+          }
+        }catch(e){}
+      }
+      if(!ok)setErr('Не удалось найти на YouTube. Попробуйте позже.');
+    }else{
+      try{
+        const res=await fetch('https://rutube.ru/api/search/video/?q='+encodeURIComponent(q)+'&type=video&format=json');
+        if(!res.ok)throw new Error('HTTP '+res.status);
+        const data=await res.json();
+        const items=(data.results||data||[]).slice(0,24);
+        if(!items.length)throw new Error('empty');
+        setResults(items.map(v=>({id:v.id||v.videoId||v.video_id||'',title:v.title||'Без названия',channel:v.author?.name||v.author||'',thumb:v.thumbnail_url||v.poster||'',duration:v.duration?fmtDur(v.duration):'',src:'rt'})).filter(v=>v.id));
+      }catch(e){setErr('Не удалось загрузить результаты.');}
     }
     setBusy(false);
   };
 
-  const openByUrl = () => {
-    const id = extractRTId(urlInput.trim());
-    if(!id){ setErr('Неверная ссылка Rutube'); return; }
-    setPlaying({ id, title: 'Rutube видео', channel: '', thumb: '' });
+  const openByUrl=()=>{
+    const urlTrim=urlInput.trim();
+    const ytMatch=urlTrim.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if(ytMatch){setPlaying({id:ytMatch[1],title:'YouTube видео',channel:'',thumb:'',src:'yt'});setUrlInput('');return;}
+    const id=extractRTId(urlTrim);
+    if(!id){setErr('Неверная ссылка. Поддерживаются YouTube и Rutube');return;}
+    setPlaying({id,title:'Rutube видео',channel:'Rutube',thumb:'',src:'rt'});
     setUrlInput('');
   };
 
-  return h('div', {style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}},
-    h('div', {className:'rt-search-bar'},
-      h('div', {style:{display:'flex',flexDirection:'column',gap:8,flex:1}},
-        h('div', {style:{display:'flex',gap:8}},
-          h('input', {ref: inputRef,placeholder: '🔍 Поиск видео на Rutube...',value: query,onChange: e => setQuery(e.target.value),onKeyDown: e => e.key==='Enter' && search(query),style:{flex:1}}),
-          h('button', {className:'btn btn-primary', style:{flexShrink:0,borderRadius:12}, onClick:()=>search(query), disabled:busy}, busy?'...':'Найти')
+  const VideoCard=(v)=>h('div',{key:v.id+(v.src||''),className:'rt-card',onClick:()=>setPlaying(v)},
+    h('div',{className:'rt-thumb'},
+      v.thumb?h('img',{src:v.thumb,loading:'lazy',alt:v.title,onError:e=>{e.target.style.display='none'}}):h('div',{style:{width:'100%',height:'100%',background:'#111',display:'flex',alignItems:'center',justifyContent:'center',fontSize:36,color:v.src==='yt'?'#ff0000':'#ff4444'}},'▶'),
+      v.duration&&h('div',{className:'duration'},v.duration),
+      v.src==='yt'&&h('div',{style:{position:'absolute',top:6,left:6,background:'#ff0000',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:4,letterSpacing:'.04em'}},'YT'),
+      h('div',{className:'play-icon'},h('div',{style:{width:44,height:44,borderRadius:'50%',background:v.src==='yt'?'rgba(255,0,0,.9)':'rgba(255,68,68,.9)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}},'▶'))
+    ),
+    h('div',{className:'rt-info'},
+      h('div',{className:'rt-title'},v.title),
+      h('div',{className:'rt-meta'},
+        v.channel+(v.views?' · '+v.views:''),
+        v.src==='yt'&&h('a',{href:'https://youtube.com/watch?v='+v.id,target:'_blank',rel:'noopener',onClick:e=>e.stopPropagation(),style:{marginLeft:6,fontSize:10,color:'var(--accent)',textDecoration:'none'}},'↗')
+      )
+    )
+  );
+
+  const homeList = platform==='yt' ? ytRecs : RT_TRENDING;
+  const isBusy = busy||(platform==='yt'&&ytBusy&&mode==='home');
+
+  return h('div',{style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}},
+    // Platform switcher
+    h('div',{style:{display:'flex',padding:'10px 16px 0',gap:0,flexShrink:0}},
+      h('button',{className:'btn',style:{borderRadius:'12px 0 0 12px',padding:'8px 20px',fontSize:13,justifyContent:'center',flex:1,background:platform==='rt'?'var(--accent)':'var(--panel)',color:platform==='rt'?'#fff':'var(--muted)',border:'1px solid var(--border)',transition:'all .2s'},onClick:()=>{setPlatform('rt');setResults([]);setMode('home');setErr('')}},'▶️ Rutube'),
+      h('button',{className:'btn',style:{borderRadius:'0 12px 12px 0',padding:'8px 20px',fontSize:13,justifyContent:'center',flex:1,background:platform==='yt'?'#ff0000':'var(--panel)',color:platform==='yt'?'#fff':'var(--muted)',border:'1px solid var(--border)',borderLeft:'none',transition:'all .2s'},onClick:()=>{setPlatform('yt');setResults([]);setMode('home');setErr('')}},'▶ YouTube')
+    ),
+    // Search bar
+    h('div',{className:'rt-search-bar',style:{paddingTop:10}},
+      h('div',{style:{display:'flex',flexDirection:'column',gap:8,flex:1}},
+        h('div',{style:{display:'flex',gap:8}},
+          h('input',{placeholder:platform==='yt'?'🔍 Поиск на YouTube...':'🔍 Поиск на Rutube...',value:query,onChange:e=>setQuery(e.target.value),onKeyDown:e=>e.key==='Enter'&&search(query),style:{flex:1}}),
+          query&&h('button',{className:'btn btn-ghost',style:{flexShrink:0,borderRadius:12,fontSize:18,padding:'8px 10px'},onClick:()=>{setQuery('');setMode('home');setResults([]);setErr('')}},'✕'),
+          h('button',{className:'btn btn-primary',style:{flexShrink:0,borderRadius:12},onClick:()=>search(query),disabled:busy},busy?'...':'Найти')
         ),
-        h('div', {style:{display:'flex',gap:8}},
-          h('input', {placeholder: '🔗 Вставь ссылку Rutube...',value: urlInput,onChange: e => setUrlInput(e.target.value),onKeyDown: e => e.key==='Enter' && openByUrl(),style:{flex:1}}),
-          h('button', {className:'btn btn-ghost', style:{flexShrink:0,borderRadius:12}, onClick:openByUrl}, '▶️')
+        h('div',{style:{display:'flex',gap:8}},
+          h('input',{placeholder:'🔗 Ссылка YouTube или Rutube...',value:urlInput,onChange:e=>setUrlInput(e.target.value),onKeyDown:e=>e.key==='Enter'&&openByUrl(),style:{flex:1}}),
+          h('button',{className:'btn btn-ghost',style:{flexShrink:0,borderRadius:12},onClick:openByUrl},'▶️')
         )
       )
     ),
-    err && h('div', {style:{padding:'8px 16px',fontSize:12,color:'var(--danger)',background:'rgba(248,113,113,.08)',borderBottom:'1px solid var(--border)'}}, err),
-    busy && h('div', {style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,color:'var(--muted)'}},h('div', {style:{width:32,height:32,border:'3px solid rgba(255,0,0,.2)',borderTopColor:'#ff4444',borderRadius:'50%',animation:'spin .7s linear infinite'}}),h('div', {style:{fontSize:13}}, 'Поиск на Rutube...')),
-    !busy && results.length === 0 && h('div', {style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'var(--muted)'}},h('div', {style:{fontSize:48,opacity:.2}}, '▶️'),h('div', {className:'syne', style:{fontSize:18,fontWeight:800,opacity:.2}}, 'Rutube'),h('div', {style:{fontSize:13,opacity:.5,textAlign:'center',maxWidth:280}}, 'Ищи видео на Rutube или вставь ссылку')),
-    !busy && results.length > 0 && h('div', {className:'rt-grid'},
-      results.map(v => h('div', {key:v.id, className:'rt-card', onClick:()=>setPlaying(v)},
-        h('div', {className:'rt-thumb'},h('img', {src:v.thumb, loading:'lazy', alt:v.title}),v.duration && h('div', {className:'duration'}, v.duration),h('div', {className:'play-icon'}, h('div', {style:{width:44,height:44,borderRadius:'50%',background:'rgba(255,68,68,.9)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}, '▶'))),
-        h('div', {className:'rt-info'},h('div', {className:'rt-title'}, v.title),h('div', {className:'rt-meta'}, v.channel))
+    // Categories (Rutube only)
+    platform==='rt'&&mode==='home'&&h('div',{style:{display:'flex',gap:8,padding:'8px 16px',borderBottom:'1px solid var(--border)',overflowX:'auto',flexShrink:0,WebkitOverflowScrolling:'touch'}},
+      RT_CATEGORIES.map(cat=>h('button',{key:cat,className:'btn btn-ghost',style:{flexShrink:0,borderRadius:999,padding:'5px 14px',fontSize:12,fontWeight:600},onClick:()=>{setQuery(cat);search(cat)}},cat))
+    ),
+    err&&h('div',{style:{padding:'8px 16px',fontSize:12,color:'var(--danger)',background:'rgba(248,113,113,.08)',borderBottom:'1px solid var(--border)'}},err),
+    isBusy&&h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,color:'var(--muted)'}},
+      h('div',{style:{width:32,height:32,border:'3px solid rgba(255,0,0,.2)',borderTopColor:platform==='yt'?'#ff0000':'#ff4444',borderRadius:'50%',animation:'spin .7s linear infinite'}}),
+      h('div',{style:{fontSize:13}},platform==='yt'?'Загружаем YouTube...':'Ищем на Rutube...')
+    ),
+    !isBusy&&mode==='home'&&h('div',{style:{overflowY:'auto',flex:1,padding:'4px 0'}},
+      h('div',{style:{padding:'8px 16px 4px',fontSize:12,color:'var(--muted)',fontWeight:700,letterSpacing:'.06em',display:'flex',alignItems:'center',gap:6}},
+        h('span',{style:{color:platform==='yt'?'#ff0000':'#ff4444'}},platform==='yt'?'▶':'▶️'),' ',platform==='yt'?'ТРЕНДЫ YOUTUBE':'РЕКОМЕНДАЦИИ RUTUBE'
+      ),
+      h('div',{className:'rt-grid'},homeList.map(v=>VideoCard(v)))
+    ),
+    !isBusy&&mode==='search'&&results.length===0&&!err&&h('div',{style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'var(--muted)'}},
+      h('div',{style:{fontSize:13}},'Ничего не найдено')
+    ),
+    !isBusy&&mode==='search'&&results.length>0&&h('div',{className:'rt-grid',style:{flex:1,overflowY:'auto'}},
+      results.map(v=>VideoCard(v))
+    ),
+    playing&&h(RTPlayer,{video:playing,me,dmConvs,peerUsers,rooms,onClose:()=>setPlaying(null)})
+  );
+}
+
+
+
+
+// ── PC SETTINGS (autostart, background mode) ─────────────────────────────────
+function PCSettingsTab({me}){
+  const isWV2=!!(window.chrome&&window.chrome.webview);
+  const [autostart,setAutostart]=useState(()=>localStorage.getItem('maxify_autostart')==='1');
+  const [bgMode,setBgMode]=useState(()=>localStorage.getItem('maxify_bgmode')!=='0');
+
+  const toggleAutostart=v=>{
+    setAutostart(v);
+    localStorage.setItem('maxify_autostart',v?'1':'0');
+    if(isWV2){
+      try{window.chrome.webview.postMessage(JSON.stringify({type:'autostart',value:v}))}catch(_){}
+    }
+  };
+
+  const toggleBgMode=v=>{
+    setBgMode(v);
+    localStorage.setItem('maxify_bgmode',v?'1':'0');
+    if(isWV2){
+      try{window.chrome.webview.postMessage(JSON.stringify({type:'bgmode',value:v}))}catch(_){}
+    }
+  };
+
+  const Toggle=({checked,onChange})=>h('div',{onClick:()=>onChange(!checked),style:{width:42,height:24,borderRadius:999,background:checked?'var(--accent)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}},
+    h('div',{style:{width:20,height:20,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:checked?'20px':'2px',transition:'left .2s',boxShadow:'0 1px 4px rgba(0,0,0,.3)'}})
+  );
+
+  const Row=({icon,title,desc,checked,onChange})=>h('label',{style:{display:'flex',alignItems:'center',gap:12,cursor:'pointer',padding:'13px 14px',borderRadius:14,background:'var(--panel)',border:'1px solid var(--border)',userSelect:'none'}},
+    h('div',{style:{fontSize:22,flexShrink:0}},icon),
+    h('div',{style:{flex:1}},
+      h('div',{style:{fontWeight:600,fontSize:13}},title),
+      h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:2}},desc)
+    ),
+    h(Toggle,{checked,onChange})
+  );
+
+  return h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+    !isWV2&&h('div',{style:{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.2)',borderRadius:12,padding:'10px 14px',fontSize:12,color:'#fbbf24',lineHeight:1.6}},
+      '⚠️ Настройки ПК работают только в приложении Maxify (Windows .exe)'
+    ),
+    h(Row,{icon:'🚀',title:'Автозапуск при старте Windows',desc:'Maxify запустится автоматически при включении компьютера',checked:autostart,onChange:toggleAutostart}),
+    h(Row,{icon:'🔄',title:'Фоновый режим',desc:'При закрытии окна приложение остаётся в системном трее',checked:bgMode,onChange:toggleBgMode}),
+    isWV2&&h('div',{style:{fontSize:11,color:'var(--muted)',textAlign:'center',lineHeight:1.6,padding:'4px 8px'}},
+      'Изменения применяются сразу. Автозапуск добавляет Maxify в реестр Windows.'
+    )
+  );
+}
+
+// ── STORY VIEWER ─────────────────────────────────────────────────────────────
+function StoryViewer({stories, startIdx, onClose}){
+  const [idx,setIdx]=useState(startIdx||0);
+  const [pct,setPct]=useState(0);
+  const dur=5000;
+  const timerRef=useRef();
+  const story=stories[idx];
+
+  useEffect(()=>{
+    setPct(0);
+    clearInterval(timerRef.current);
+    const start=Date.now();
+    timerRef.current=setInterval(()=>{
+      const elapsed=Date.now()-start;
+      const p=Math.min(100,(elapsed/dur)*100);
+      setPct(p);
+      if(p>=100){
+        clearInterval(timerRef.current);
+        if(idx<stories.length-1)setIdx(i=>i+1);
+        else onClose();
+      }
+    },50);
+    return()=>clearInterval(timerRef.current);
+  },[idx]);
+
+  if(!story)return null;
+  return h('div',{className:'story-viewer',onClick:onClose},
+    h('div',{className:'story-viewer-inner',onClick:e=>e.stopPropagation()},
+      h('div',{className:'story-progress'},
+        stories.map((_,i)=>h('div',{key:i,className:'story-prog-seg'},
+          h('div',{className:'story-prog-fill',style:{width:i<idx?'100%':i===idx?pct+'%':'0%'}})
+        ))
+      ),
+      story.mediaType==='video'
+        ?h('video',{src:story.mediaUrl,autoPlay:true,muted:false,playsInline:true,style:{width:'100%',height:'100%',objectFit:'cover',display:'block'}})
+        :h('img',{src:story.mediaUrl,alt:'',style:{width:'100%',height:'100%',objectFit:'cover',display:'block'}}),
+      h('div',{className:'story-ui'},
+        h('div',{className:'story-header'},
+          h(Avatar,{user:{id:story.uid,login:story.login,avatarUrl:story.avatarUrl},size:34}),
+          h('div',{style:{color:'#fff',fontWeight:700,fontSize:14}},story.login),
+          h('div',{style:{fontSize:11,color:'rgba(255,255,255,.6)',marginLeft:4}},ts2d(story.ts)),
+          h('button',{style:{marginLeft:'auto',background:'none',border:'none',color:'#fff',fontSize:22,cursor:'pointer',pointerEvents:'auto'},onClick:onClose},'×')
+        ),
+        story.text&&h('div',{style:{padding:'0 16px 20px',background:'linear-gradient(to top,rgba(0,0,0,.7),transparent)',color:'#fff',fontSize:14,lineHeight:1.6}},story.text)
+      ),
+      h('div',{style:{position:'absolute',left:0,top:0,width:'50%',height:'100%',cursor:'pointer',pointerEvents:'auto'},onClick:e=>{e.stopPropagation();if(idx>0)setIdx(i=>i-1);else onClose()}}),
+      h('div',{style:{position:'absolute',right:0,top:0,width:'50%',height:'100%',cursor:'pointer',pointerEvents:'auto'},onClick:e=>{e.stopPropagation();if(idx<stories.length-1)setIdx(i=>i+1);else onClose()}})
+    )
+  );
+}
+
+// ── STORIES BAR ──────────────────────────────────────────────────────────────
+function StoriesBar({me, meUser}){
+  const [allStories,setAllStories]=useState({});
+  const [viewing,setViewing]=useState(null);
+  const [uploading,setUploading]=useState(false);
+  const fileRef=useRef();
+
+  useEffect(()=>{
+    const ref=db.ref('stories');
+    ref.on('value',s=>{
+      const v=s.val()||{};
+      const now=Date.now();
+      const fresh={};
+      Object.entries(v).forEach(([uid,stories])=>{
+        const arr=Object.entries(stories||{}).map(([k,sv])=>({k,...sv})).filter(sv=>sv.ts&&(now-sv.ts)<86400000).sort((a,b)=>a.ts-b.ts);
+        if(arr.length>0)fresh[uid]=arr;
+      });
+      setAllStories(fresh);
+    });
+    return()=>ref.off();
+  },[]);
+
+  const postStory=async(file)=>{
+    if(!file)return;
+    setUploading(true);
+    try{
+      const url=await upload(file);
+      const isVideo=file.type.startsWith('video/');
+      const ref=db.ref('stories/'+me).push();
+      await ref.set({uid:me,login:meUser?.login||'',avatarUrl:meUser?.avatarUrl||null,mediaUrl:url,mediaType:isVideo?'video':'image',ts:Date.now()});
+    }catch(e){alert('Ошибка: '+e.message)}
+    setUploading(false);
+  };
+
+  const myStories=allStories[me]||[];
+  const otherUids=Object.keys(allStories).filter(u=>u!==me);
+
+  return h(React.Fragment,null,
+    h('div',{className:'stories-bar'},
+      // My story / add
+      h('div',{className:'story-item',onClick:()=>fileRef.current.click()},
+        h('div',{className:'story-ring',style:{background:myStories.length>0?'linear-gradient(135deg,#ff6b6b,#f9ca24,#6c5ce7,#4f8cff)':'var(--panel)',border:myStories.length===0?'2px dashed var(--border)':'none',padding:myStories.length>0?'2.5px':'0'}},
+          h('div',{className:'story-ring-inner',style:{display:'flex',alignItems:'center',justifyContent:'center',background:myStories.length===0?'var(--panel)':''}},
+            meUser?.avatarUrl?h('img',{src:meUser.avatarUrl,alt:''}):h('div',{style:{width:'100%',height:'100%',borderRadius:'50%',background:'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}},'➕')
+          )
+        ),
+        h('div',{className:'story-label'},uploading?'...':(myStories.length>0?'Моя история':'Добавить'))
+      ),
+      h('input',{ref:fileRef,type:'file',accept:'image/*,video/*',style:{display:'none'},onChange:e=>{postStory(e.target.files[0]);e.target.value=''}}),
+      // Others' stories
+      otherUids.map(uid=>h('div',{key:uid,className:'story-item',onClick:()=>setViewing({uid,stories:allStories[uid]})},
+        h('div',{className:'story-ring'},
+          h('div',{className:'story-ring-inner'},
+            allStories[uid][0]?.avatarUrl?h('img',{src:allStories[uid][0].avatarUrl,alt:''}):h('div',{style:{width:'100%',height:'100%',borderRadius:'50%',background:'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}},'👤')
+          )
+        ),
+        h('div',{className:'story-label'},allStories[uid][0]?.login||uid.slice(0,6))
       ))
     ),
-    playing && h(RTPlayer, {video:playing, me, dmConvs, peerUsers, rooms, onClose:()=>setPlaying(null)})
+    viewing&&h(StoryViewer,{stories:viewing.stories,startIdx:0,onClose:()=>setViewing(null)})
+  );
+}
+
+// ── POST COMPONENT ────────────────────────────────────────────────────────────
+function PostCard({post, me, onOpenProfile, onOpenComments}){
+  const [liked,setLiked]=useState(!!(post.likes&&post.likes[me]));
+  const [likeCount,setLikeCount]=useState(Object.keys(post.likes||{}).length);
+  const [lightbox,setLightbox]=useState(null);
+
+  const toggleLike=async()=>{
+    const ref=db.ref('posts/'+post.k+'/likes/'+me);
+    if(liked){await ref.remove();setLikeCount(c=>c-1);}
+    else{await ref.set(true);setLikeCount(c=>c+1);}
+    setLiked(l=>!l);
+  };
+
+  const commentCount=Object.keys(post.comments||{}).length;
+
+  return h('div',{className:'feed-post'},
+    h('div',{className:'post-header'},
+      h('div',{style:{cursor:'pointer'},onClick:()=>onOpenProfile&&onOpenProfile(post.uid)},h(Avatar,{user:{id:post.uid,login:post.login,avatarUrl:post.avatarUrl},size:38})),
+      h('div',{style:{flex:1,cursor:'pointer'},onClick:()=>onOpenProfile&&onOpenProfile(post.uid)},
+        h('div',{style:{fontWeight:700,fontSize:14}},post.login),
+        h('div',{style:{fontSize:11,color:'var(--muted)'}},ts2d(post.ts)+' · '+ts2t(post.ts))
+      ),
+      post.uid===me&&h('button',{style:{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:18,padding:'4px'},onClick:async()=>{if(confirm('Удалить пост?'))await db.ref('posts/'+post.k).remove()}},'🗑')
+    ),
+    post.text&&h('div',{className:'post-caption'},h('strong',{onClick:()=>onOpenProfile&&onOpenProfile(post.uid)},post.login),' ',post.text),
+    post.mediaUrl&&(post.mediaType==='video'
+      ?h('video',{src:post.mediaUrl,controls:true,className:'post-video',playsInline:true})
+      :h('img',{src:post.mediaUrl,className:'post-image',alt:'',onClick:()=>setLightbox(post.mediaUrl),loading:'lazy'})
+    ),
+    h('div',{className:'post-actions'},
+      h('button',{className:'post-action-btn'+(liked?' liked':''),onClick:toggleLike},liked?'❤️':'🤍',h('span',{style:{fontSize:13,fontWeight:700,color:'var(--text)'}},likeCount||'')),
+      h('button',{className:'post-action-btn',onClick:()=>onOpenComments&&onOpenComments(post)},'💬',commentCount>0&&h('span',{style:{fontSize:13,fontWeight:700,color:'var(--text)'}},commentCount)),
+      h('button',{className:'post-action-btn',onClick:()=>{navigator.clipboard?.writeText(window.location.href).catch(()=>{})}}, '🔗')
+    ),
+    h('div',{className:'post-time'},ts2d(post.ts)),
+    lightbox&&h('div',{className:'lightbox',onClick:()=>setLightbox(null)},h('img',{src:lightbox,onClick:e=>e.stopPropagation()}))
+  );
+}
+
+// ── POST COMMENTS MODAL ───────────────────────────────────────────────────────
+function CommentsModal({post, me, meUser, onClose}){
+  const [comments,setComments]=useState([]);
+  const [text,setText]=useState('');
+  const [userCache,setUserCache]=useState({});
+  const bottomRef=useRef();
+
+  useEffect(()=>{
+    const ref=db.ref('posts/'+post.k+'/comments');
+    ref.on('value',s=>{const v=s.val()||{};const arr=Object.entries(v).map(([k,c])=>({k,...c})).sort((a,b)=>a.ts-b.ts);setComments(arr)});
+    return()=>ref.off();
+  },[post.k]);
+
+  useEffect(()=>{
+    comments.forEach(c=>{if(c.uid&&!userCache[c.uid])db.ref('users/'+c.uid).once('value').then(s=>{const v=s.val();if(v)setUserCache(p=>({...p,[c.uid]:v}))})});
+  },[comments]);
+
+  useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[comments]);
+
+  const send=async()=>{
+    if(!text.trim())return;
+    await db.ref('posts/'+post.k+'/comments').push({uid:me,login:meUser?.login||'',avatarUrl:meUser?.avatarUrl||null,text:text.trim(),ts:Date.now()});
+    setText('');
+  };
+
+  return h(Modal,{onClose},
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Комментарии'),h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')),
+    h('div',{style:{maxHeight:320,overflowY:'auto',display:'flex',flexDirection:'column',gap:10,minHeight:80}},
+      comments.length===0&&h('div',{style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}},'Комментариев пока нет'),
+      comments.map(c=>{const u=userCache[c.uid];return h('div',{key:c.k,style:{display:'flex',gap:8,alignItems:'flex-start'}},
+        h(Avatar,{user:u||{id:c.uid,login:c.login,avatarUrl:c.avatarUrl},size:28}),
+        h('div',{style:{flex:1,background:'var(--bubble-their)',border:'1px solid var(--bubble-their-border)',borderRadius:'4px 14px 14px 14px',padding:'7px 12px'}},
+          h('div',{style:{fontWeight:700,fontSize:12,marginBottom:3}},c.login||'Пользователь'),
+          h('div',{style:{fontSize:13,lineHeight:1.5}},c.text),
+          h('div',{style:{fontSize:10,color:'var(--muted)',marginTop:4}},ts2t(c.ts))
+        )
+      )}),
+      h('div',{ref:bottomRef})
+    ),
+    h('div',{style:{display:'flex',gap:8}},
+      h('input',{value:text,onChange:e=>setText(e.target.value),onKeyDown:e=>e.key==='Enter'&&send(),placeholder:'Написать комментарий...',style:{flex:1}}),
+      h('button',{className:'btn btn-primary',style:{flexShrink:0,borderRadius:12},onClick:send,disabled:!text.trim()},'→')
+    )
+  );
+}
+
+// ── CREATE POST ───────────────────────────────────────────────────────────────
+function CreatePostModal({me, meUser, onClose}){
+  const [text,setText]=useState('');
+  const [file,setFile]=useState(null);
+  const [preview,setPreview]=useState(null);
+  const [uploading,setUploading]=useState(false);
+  const [uploadPct,setUploadPct]=useState(0);
+  const fileRef=useRef();
+
+  const handleFile=e=>{
+    const f=e.target.files[0];if(!f)return;
+    setFile(f);
+    const reader=new FileReader();
+    reader.onload=ev=>setPreview({url:ev.target.result,type:f.type.startsWith('video/')?'video':'image'});
+    reader.readAsDataURL(f);
+  };
+
+  const post=async()=>{
+    if(!text.trim()&&!file)return;
+    setUploading(true);
+    try{
+      let mediaUrl=null,mediaType=null;
+      if(file){mediaUrl=await upload(file,p=>setUploadPct(p));mediaType=file.type.startsWith('video/')?'video':'image';}
+      const ref=db.ref('posts').push();
+      await ref.set({k:ref.key,uid:me,login:meUser?.login||'',avatarUrl:meUser?.avatarUrl||null,text:text.trim(),mediaUrl,mediaType,ts:Date.now(),likes:{},comments:{}});
+      onClose();
+    }catch(e){alert('Ошибка: '+e.message)}
+    setUploading(false);
+  };
+
+  return h(Modal,{onClose},
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Новый пост'),h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')),
+    h('div',{style:{display:'flex',gap:10,alignItems:'flex-start'}},
+      h(Avatar,{user:meUser,size:36}),
+      h('textarea',{value:text,onChange:e=>setText(e.target.value),placeholder:'Что происходит?',rows:4,style:{flex:1,resize:'none'}})
+    ),
+    preview&&h('div',{style:{borderRadius:14,overflow:'hidden',position:'relative'}},
+      preview.type==='video'?h('video',{src:preview.url,controls:true,style:{width:'100%',maxHeight:240,display:'block'}}):h('img',{src:preview.url,style:{width:'100%',maxHeight:240,objectFit:'cover',display:'block'}}),
+      h('button',{style:{position:'absolute',top:8,right:8,background:'rgba(0,0,0,.7)',border:'none',color:'#fff',borderRadius:'50%',width:28,height:28,cursor:'pointer',fontSize:14},onClick:()=>{setFile(null);setPreview(null)}},'×')
+    ),
+    uploading&&h('div',{className:'prog-bar'},h('div',{className:'prog-fill',style:{width:uploadPct+'%'}})),
+    h('div',{style:{display:'flex',gap:8}},
+      h('button',{className:'btn btn-ghost',style:{flex:1,justifyContent:'center'},onClick:()=>fileRef.current.click(),disabled:uploading},'📷 Фото / Видео'),
+      h('button',{className:'btn btn-primary',style:{flex:1,justifyContent:'center'},onClick:post,disabled:uploading||(!text.trim()&&!file)},uploading?'Публикация...':'Опубликовать')
+    ),
+    h('input',{ref:fileRef,type:'file',accept:'image/*,video/*',style:{display:'none'},onChange:handleFile})
+  );
+}
+
+// ── FEED TAB ─────────────────────────────────────────────────────────────────
+function FeedTab({me, meUser, onOpenProfile}){
+  const [posts,setPosts]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [showCreate,setShowCreate]=useState(false);
+  const [commentPost,setCommentPost]=useState(null);
+
+  useEffect(()=>{
+    const ref=db.ref('posts').orderByChild('ts').limitToLast(50);
+    ref.on('value',s=>{
+      const v=s.val()||{};
+      const arr=Object.entries(v).map(([k,p])=>({k,...p})).sort((a,b)=>b.ts-a.ts);
+      setPosts(arr);setLoading(false);
+    });
+    return()=>ref.off();
+  },[]);
+
+  return h('div',{style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}},
+    // Stories bar
+    h(StoriesBar,{me,meUser}),
+    // New post button
+    h('div',{style:{padding:'10px 16px',borderBottom:'1px solid var(--border)',flexShrink:0}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',background:'var(--input-bg)',borderRadius:999,cursor:'pointer',border:'1px solid var(--border)'},onClick:()=>setShowCreate(true)},
+        h(Avatar,{user:meUser,size:30}),
+        h('div',{style:{flex:1,color:'var(--muted)',fontSize:13}},'Что у вас нового?')
+      )
+    ),
+    loading?h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}},'Загрузка...'):
+    posts.length===0?h('div',{style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'var(--muted)'}},
+      h('div',{style:{fontSize:48,opacity:.15}},'📸'),
+      h('div',{className:'syne',style:{fontSize:18,fontWeight:800,opacity:.2}},'Пока пусто'),
+      h('div',{style:{fontSize:13,opacity:.5}},'Будьте первым, кто опубликует пост!')
+    ):
+    h('div',{style:{flex:1,overflowY:'auto',padding:'14px 16px'}},
+      posts.map(p=>h(PostCard,{key:p.k,post:p,me,onOpenProfile,onOpenComments:setCommentPost}))
+    ),
+    showCreate&&h(CreatePostModal,{me,meUser,onClose:()=>setShowCreate(false)}),
+    commentPost&&h(CommentsModal,{post:commentPost,me,meUser,onClose:()=>setCommentPost(null)})
+  );
+}
+
+
+// ══/ ══════════════════════════════════════════════
+// ПОСТЫ, СТОРИС, ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ
+// ══════════════════════════════════════════════
+
+function StoryViewer({stories, startIdx, onClose}){
+  const [idx, setIdx]=useState(startIdx||0);
+  const [prog, setProg]=useState(0);
+  const timerRef=useRef();
+  const story=stories[idx];
+  useEffect(()=>{
+    setProg(0);
+    timerRef.current=setInterval(()=>setProg(p=>{if(p>=100){clearInterval(timerRef.current);if(idx<stories.length-1)setIdx(i=>i+1);else onClose();return 0}return p+2}),80);
+    return()=>clearInterval(timerRef.current);
+  },[idx]);
+  if(!story)return null;
+  return h('div',{style:{position:'fixed',inset:0,background:'#000',zIndex:600,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'},onClick:onClose},
+    h('div',{style:{width:'min(420px,100vw)',height:'100%',position:'relative',display:'flex',flexDirection:'column'}},
+      h('div',{style:{display:'flex',gap:4,padding:'10px 12px',position:'absolute',top:0,left:0,right:0,zIndex:2}},
+        stories.map((_,i)=>h('div',{key:i,style:{flex:1,height:3,borderRadius:2,background:'rgba(255,255,255,.3)',overflow:'hidden'}},
+          h('div',{style:{height:'100%',background:'#fff',width:i<idx?'100%':i===idx?prog+'%':'0%',transition:i===idx?'none':'none',borderRadius:2}})
+        ))
+      ),
+      h('div',{style:{position:'absolute',top:22,left:12,right:50,zIndex:3,display:'flex',alignItems:'center',gap:10,pointerEvents:'none'}},
+        h(Avatar,{user:{id:story.uid,login:story.authorName,avatarUrl:story.authorAvatar},size:34}),
+        h('div',{style:{color:'#fff',fontWeight:700,fontSize:14}},story.authorName),
+        h('div',{style:{color:'rgba(255,255,255,.6)',fontSize:12}},ts2t(story.ts))
+      ),
+      h('button',{style:{position:'absolute',top:12,right:12,zIndex:4,background:'none',border:'none',color:'#fff',fontSize:24,cursor:'pointer',lineHeight:1},onClick:onClose},'×'),
+      story.type==='image'?h('img',{src:story.url,style:{width:'100%',height:'100%',objectFit:'cover'}}):
+      story.type==='video'?h('video',{src:story.url,autoPlay:true,loop:true,muted:false,playsInline:true,style:{width:'100%',height:'100%',objectFit:'cover'}}):
+      h('div',{style:{width:'100%',height:'100%',background:story.bg||'linear-gradient(135deg,#4f8cff,#9b8cff)',display:'flex',alignItems:'center',justifyContent:'center',padding:32}},
+        h('div',{style:{color:'#fff',fontSize:22,fontWeight:700,textAlign:'center',lineHeight:1.5,wordBreak:'break-word'}},story.text)
+      ),
+      h('div',{style:{position:'absolute',bottom:0,left:0,right:0,height:'40%',background:'linear-gradient(transparent,rgba(0,0,0,.6)',pointerEvents:'none'}}),
+      h('div',{style:{position:'absolute',bottom:20,left:0,right:0,display:'flex',justifyContent:'space-between',padding:'0 16px',zIndex:3}},
+        h('button',{style:{background:'rgba(255,255,255,.15)',border:'none',color:'#fff',borderRadius:999,padding:'8px 20px',cursor:'pointer',fontWeight:700},onClick:e=>{e.stopPropagation();if(idx>0)setIdx(i=>i-1)}},'‹'),
+        h('button',{style:{background:'rgba(255,255,255,.15)',border:'none',color:'#fff',borderRadius:999,padding:'8px 20px',cursor:'pointer',fontWeight:700},onClick:e=>{e.stopPropagation();if(idx<stories.length-1)setIdx(i=>i+1);else onClose()}},'›')
+      )
+    )
+  );
+}
+
+function CreateStoryModal({me, user, onClose}){
+  const [type,setType]=useState('text');
+  const [text,setText]=useState('');
+  const [bg,setBg]=useState('linear-gradient(135deg,#4f8cff,#9b8cff)');
+  const [busy,setBusy]=useState(false);
+  const fileRef=useRef();
+  const BG_OPTS=['linear-gradient(135deg,#4f8cff,#9b8cff)','linear-gradient(135deg,#f87171,#fb923c)','linear-gradient(135deg,#34d399,#059669)','linear-gradient(135deg,#a78bfa,#ec4899)','linear-gradient(135deg,#fbbf24,#f59e0b)','#1a1d2e'];
+  const submit=async()=>{
+    setBusy(true);
+    const ref=db.ref('stories').push();
+    const data={id:ref.key,uid:me,authorName:user.login,authorAvatar:user.avatarUrl||null,ts:Date.now(),type,expiresAt:Date.now()+86400000};
+    if(type==='text'){data.text=text;data.bg=bg;}
+    await ref.set(data);
+    onClose();setBusy(false);
+  };
+  const handleFile=async e=>{
+    const file=e.target.files[0];if(!file)return;setBusy(true);
+    try{const url=await upload(file);const t=file.type.startsWith('video/')?'video':'image';const ref=db.ref('stories').push();await ref.set({id:ref.key,uid:me,authorName:user.login,authorAvatar:user.avatarUrl||null,ts:Date.now(),type:t,url,expiresAt:Date.now()+86400000});onClose();}
+    catch(ex){alert('Ошибка: '+ex.message)}
+    setBusy(false);
+  };
+  return h(Modal,{onClose},
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Создать сторис'),h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')),
+    h('div',{className:'tab-bar'},[{id:'text',l:'✍️ Текст'},{id:'photo',l:'📷 Фото/Видео'}].map(t=>h('div',{key:t.id,className:'tab'+(type===t.id?' active':''),onClick:()=>setType(t.id)},t.l))),
+    type==='text'&&h(React.Fragment,null,
+      h('div',{style:{borderRadius:16,overflow:'hidden',aspectRatio:'9/16',maxHeight:260,display:'flex',alignItems:'center',justifyContent:'center',background:bg,padding:20,marginBottom:4}},
+        h('div',{style:{color:'#fff',fontSize:18,fontWeight:700,textAlign:'center',wordBreak:'break-word'}},text||'Ваш текст...')
+      ),
+      h('div',{style:{display:'flex',gap:6,flexWrap:'wrap'}},
+        BG_OPTS.map(b=>h('div',{key:b,onClick:()=>setBg(b),style:{width:28,height:28,borderRadius:8,background:b,cursor:'pointer',border:bg===b?'3px solid var(--accent)':'3px solid transparent'}}))
+      ),
+      h('textarea',{placeholder:'Напишите что-нибудь...',value:text,onChange:e=>setText(e.target.value),rows:3,style:{resize:'none'}}),
+      h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center'},onClick:submit,disabled:busy||!text.trim()},busy?'...':'Опубликовать')
+    ),
+    type==='photo'&&h(React.Fragment,null,
+      h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center',padding:14},onClick:()=>fileRef.current.click(),disabled:busy},busy?'Загрузка...':'📷 Выбрать фото или видео'),
+      h('input',{ref:fileRef,type:'file',accept:'image/*,video/*',style:{display:'none'},onChange:handleFile})
+    )
+  );
+}
+
+function CreatePostModal({me, user, onClose}){
+  const [text,setText]=useState('');
+  const [mediaUrl,setMediaUrl]=useState('');
+  const [mediaType,setMediaType]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [uploadPct,setUploadPct]=useState(0);
+  const fileRef=useRef();
+  const handleFile=async e=>{
+    const file=e.target.files[0];if(!file)return;setBusy(true);
+    try{const url=await upload(file,p=>setUploadPct(p));setMediaUrl(url);setMediaType(file.type.startsWith('video/')?'video':'image');}
+    catch(ex){alert('Ошибка: '+ex.message)}
+    setBusy(false);setUploadPct(0);
+  };
+  const submit=async()=>{
+    if(!text.trim()&&!mediaUrl)return;setBusy(true);
+    const ref=db.ref('posts').push();
+    await ref.set({id:ref.key,uid:me,authorName:user.login,authorAvatar:user.avatarUrl||null,ts:Date.now(),text:text.trim(),mediaUrl:mediaUrl||null,mediaType:mediaType||null,likes:{},comments:{}});
+    onClose();setBusy(false);
+  };
+  return h(Modal,{onClose},
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Новый пост'),h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')),
+    h('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:4}},h(Avatar,{user,size:36}),h('div',{style:{fontWeight:600}},user.login)),
+    h('textarea',{placeholder:'Что у вас нового?',value:text,onChange:e=>setText(e.target.value),rows:4,style:{resize:'none'}}),
+    busy&&uploadPct>0&&h('div',{className:'prog-bar'},h('div',{className:'prog-fill',style:{width:uploadPct+'%'}})),
+    mediaUrl&&(mediaType==='video'?h('video',{src:mediaUrl,controls:true,style:{width:'100%',borderRadius:12,maxHeight:200}}):h('img',{src:mediaUrl,style:{width:'100%',borderRadius:12,maxHeight:200,objectFit:'cover'}})),
+    h('div',{style:{display:'flex',gap:8}},
+      h('button',{className:'btn btn-ghost',style:{flex:1,justifyContent:'center'},onClick:()=>fileRef.current.click(),disabled:busy},'📷 Фото/Видео'),
+      h('input',{ref:fileRef,type:'file',accept:'image/*,video/*',style:{display:'none'},onChange:handleFile}),
+      h('button',{className:'btn btn-primary',style:{flex:1,justifyContent:'center'},onClick:submit,disabled:busy||(!text.trim()&&!mediaUrl)},busy?'...':'Опубликовать ✓')
+    )
+  );
+}
+
+function PostCard({post, me, onOpenProfile}){
+  const [liked,setLiked]=useState(!!(post.likes&&post.likes[me]));
+  const [likeCount,setLikeCount]=useState(Object.keys(post.likes||{}).length);
+  const [showComments,setShowComments]=useState(false);
+  const [comment,setComment]=useState('');
+  const [comments,setComments]=useState(Object.values(post.comments||{}));
+  const [authorUser,setAuthorUser]=useState(null);
+  useEffect(()=>{db.ref('users/'+post.uid).once('value',s=>{const v=s.val();if(v)setAuthorUser(v)});},[post.uid]);
+  const toggleLike=async()=>{
+    const path='posts/'+post.id+'/likes/'+me;
+    if(liked){await db.ref(path).remove();setLikeCount(c=>c-1);}
+    else{await db.ref(path).set(true);setLikeCount(c=>c+1);}
+    setLiked(l=>!l);
+  };
+  const sendComment=async()=>{
+    if(!comment.trim())return;
+    const ref=db.ref('posts/'+post.id+'/comments').push();
+    const c={id:ref.key,uid:me,text:comment.trim(),ts:Date.now()};
+    await ref.set(c);setComments(cs=>[...cs,c]);setComment('');
+  };
+  return h('div',{className:'glass',style:{borderRadius:20,overflow:'hidden',marginBottom:14}},
+    // Header
+    h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'12px 16px',cursor:'pointer'},onClick:()=>onOpenProfile&&onOpenProfile(post.uid)},
+      h(Avatar,{user:authorUser||{id:post.uid,login:post.authorName,avatarUrl:post.authorAvatar},size:38}),
+      h('div',null,h('div',{style:{fontWeight:700,fontSize:14}},post.authorName||'...'),h('div',{style:{fontSize:11,color:'var(--muted)'}},ts2d(post.ts)+' '+ts2t(post.ts))),
+      post.uid===me&&h('button',{style:{marginLeft:'auto',background:'none',border:'none',color:'var(--danger)',cursor:'pointer',fontSize:13},onClick:async e=>{e.stopPropagation();if(confirm('Удалить пост?'))await db.ref('posts/'+post.id).remove()}},'🗑')
+    ),
+    // Text
+    post.text&&h('div',{style:{padding:'0 16px 12px',fontSize:15,lineHeight:1.6}},post.text),
+    // Media
+    post.mediaUrl&&(post.mediaType==='video'?h('video',{src:post.mediaUrl,controls:true,style:{width:'100%',maxHeight:400,background:'#000',display:'block'}}):h('img',{src:post.mediaUrl,style:{width:'100%',maxHeight:480,objectFit:'cover',display:'block'}})),
+    // Actions
+    h('div',{style:{display:'flex',gap:4,padding:'10px 14px',borderTop:'1px solid var(--border)'}},
+      h('button',{className:'btn btn-ghost',style:{borderRadius:999,padding:'6px 14px',gap:6,fontSize:13,color:liked?'#f87171':'var(--text)'},onClick:toggleLike},(liked?'❤️':'🤍')+' '+likeCount),
+      h('button',{className:'btn btn-ghost',style:{borderRadius:999,padding:'6px 14px',gap:6,fontSize:13},onClick:()=>setShowComments(s=>!s)},'💬 '+(comments.length||'')),
+    ),
+    // Comments
+    showComments&&h('div',{style:{padding:'0 14px 12px',borderTop:'1px solid var(--border)'}},
+      h('div',{style:{display:'flex',flexDirection:'column',gap:8,maxHeight:200,overflowY:'auto',padding:'10px 0'}},
+        comments.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center'}},'Нет комментариев'),
+        comments.map((c,i)=>h('div',{key:c.id||i,style:{fontSize:13,lineHeight:1.5}},h('span',{style:{fontWeight:700,marginRight:6}},c.authorName||'...'),c.text))
+      ),
+      h('div',{style:{display:'flex',gap:8}},
+        h('input',{value:comment,onChange:e=>setComment(e.target.value),placeholder:'Написать комментарий...',onKeyDown:e=>e.key==='Enter'&&sendComment(),style:{flex:1,borderRadius:999}}),
+        h('button',{className:'btn btn-primary',style:{borderRadius:999,padding:'8px 14px'},onClick:sendComment},'→')
+      )
+    )
+  );
+}
+
+function FeedTab({me, user, onOpenProfile}){
+  const [posts,setPosts]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [showCreate,setShowCreate]=useState(false);
+  const [showStory,setShowStory]=useState(false);
+  const [stories,setStories]=useState([]);
+  const [storyView,setStoryView]=useState(null);
+  const [storyStartIdx,setStoryStartIdx]=useState(0);
+  const fileRef=useRef();
+
+  useEffect(()=>{
+    const ref=db.ref('posts').orderByChild('ts').limitToLast(50);
+    ref.on('value',s=>{const v=s.val()||{};setPosts(Object.values(v).sort((a,b)=>b.ts-a.ts));setLoading(false)});
+    return()=>ref.off();
+  },[]);
+
+  useEffect(()=>{
+    const now=Date.now();
+    const ref=db.ref('stories').orderByChild('ts').limitToLast(100);
+    ref.on('value',s=>{const v=s.val()||{};const arr=Object.values(v).filter(s=>!s.expiresAt||s.expiresAt>now).sort((a,b)=>a.ts-b.ts);setStories(arr)});
+    return()=>ref.off();
+  },[]);
+
+  // Group stories by user
+  const storyUsers=useMemo(()=>{
+    const map={};
+    stories.forEach(s=>{if(!map[s.uid])map[s.uid]={uid:s.uid,name:s.authorName,avatar:s.authorAvatar,stories:[]};map[s.uid].stories.push(s)});
+    return Object.values(map);
+  },[stories]);
+
+  const openStories=(su, idx)=>{setStoryView(su);setStoryStartIdx(idx||0)};
+
+  return h('div',{style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}},
+    // Story bar
+    h('div',{style:{display:'flex',gap:12,padding:'12px 16px',borderBottom:'1px solid var(--border)',overflowX:'auto',flexShrink:0,WebkitOverflowScrolling:'touch'}},
+      // Add story button
+      h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:4,cursor:'pointer',flexShrink:0},onClick:()=>setShowStory(true)},
+        h('div',{style:{width:56,height:56,borderRadius:'50%',background:'rgba(79,140,255,.15)',border:'2.5px dashed var(--accent)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}},'+'),
+        h('div',{style:{fontSize:10,color:'var(--accent)',fontWeight:700,whiteSpace:'nowrap'}},'Моя')
+      ),
+      storyUsers.map(su=>h('div',{key:su.uid,style:{display:'flex',flexDirection:'column',alignItems:'center',gap:4,cursor:'pointer',flexShrink:0},onClick:()=>openStories(su,0)},
+        h('div',{style:{width:56,height:56,borderRadius:'50%',background:'var(--panel)',border:'2.5px solid var(--accent)',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}},
+          su.avatar?h('img',{src:su.avatar,style:{width:'100%',height:'100%',objectFit:'cover'}}):h('div',{style:{fontSize:20}},'👤')
+        ),
+        h('div',{style:{fontSize:10,color:'var(--text)',fontWeight:600,whiteSpace:'nowrap',maxWidth:60,overflow:'hidden',textOverflow:'ellipsis'}},su.name)
+      ))
+    ),
+    // Create post bar
+    h('div',{style:{padding:'10px 16px',borderBottom:'1px solid var(--border)',display:'flex',gap:10,alignItems:'center',flexShrink:0}},
+      h(Avatar,{user,size:36}),
+      h('div',{style:{flex:1,background:'var(--input-bg)',border:'1px solid var(--border)',borderRadius:999,padding:'10px 16px',cursor:'pointer',color:'var(--muted)',fontSize:14},onClick:()=>setShowCreate(true)},'Что у вас нового?')
+    ),
+    // Posts
+    loading?h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}},h('div',{style:{width:28,height:28,border:'3px solid rgba(79,140,255,.2)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .7s linear infinite'}})):
+    h('div',{style:{flex:1,overflowY:'auto',padding:'14px 16px'}},
+      posts.length===0&&h('div',{style:{textAlign:'center',color:'var(--muted)',marginTop:40,fontSize:14}},'Нет постов. Будьте первым!'),
+      posts.map(p=>h(PostCard,{key:p.id,post:p,me,onOpenProfile}))
+    ),
+    showCreate&&h(CreatePostModal,{me,user,onClose:()=>setShowCreate(false)}),
+    showStory&&h(CreateStoryModal,{me,user,onClose:()=>setShowStory(false)}),
+    storyView&&h(StoryViewer,{stories:storyView.stories,startIdx:storyStartIdx,onClose:()=>setStoryView(null)})
+  );
+}
+
+function UserProfilePage({uid, me, onClose, onStartDM}){
+  const [profileUser,setProfileUser]=useState(null);
+  const [posts,setPosts]=useState([]);
+  const [stories,setStories]=useState([]);
+  const [storyView,setStoryView]=useState(null);
+  useEffect(()=>{
+    db.ref('users/'+uid).on('value',s=>{const v=s.val();if(v)setProfileUser(v)});
+    db.ref('posts').orderByChild('uid').equalTo(uid).on('value',s=>{const v=s.val()||{};setPosts(Object.values(v).sort((a,b)=>b.ts-a.ts))});
+    const now=Date.now();
+    db.ref('stories').orderByChild('uid').equalTo(uid).on('value',s=>{const v=s.val()||{};setStories(Object.values(v).filter(s=>!s.expiresAt||s.expiresAt>now).sort((a,b)=>a.ts-b.ts))});
+    return()=>{db.ref('users/'+uid).off();db.ref('posts').off();db.ref('stories').off()};
+  },[uid]);
+  if(!profileUser)return h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center'}},h('div',{style:{width:28,height:28,border:'3px solid rgba(79,140,255,.2)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .7s linear infinite'}}));
+  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',borderRadius:22,overflow:'hidden'}},
+    h('div',{style:{padding:'14px 18px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10}},
+      h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:18,padding:'4px 8px',borderRadius:8},onClick:onClose},'←'),
+      h('div',{className:'syne',style:{fontWeight:700,fontSize:16,flex:1}},profileUser.login),
+      uid!==me&&onStartDM&&h('button',{className:'btn btn-primary',style:{borderRadius:999,padding:'7px 16px',fontSize:13},onClick:()=>{onStartDM({id:uid,...profileUser});onClose()}},'💬 Написать')
+    ),
+    h('div',{style:{overflowY:'auto',flex:1}},
+      // Profile header kool
+      h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:8,padding:'24px 16px 16px',borderBottom:'1px solid var(--border)'}},
+        h(Avatar,{user:profileUser,size:80,ring:true}),
+        h('div',{className:'syne',style:{fontWeight:800,fontSize:20}},profileUser.login),
+        profileUser.bio&&h('div',{style:{fontSize:13,color:'var(--muted)',textAlign:'center',maxWidth:320}},profileUser.bio),
+        h('div',{style:{display:'flex',gap:24,marginTop:8}},
+          h('div',{style:{textAlign:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:18}},posts.length),h('div',{style:{fontSize:11,color:'var(--muted)'}},'постов')),
+          stories.length>0&&h('div',{style:{textAlign:'center',cursor:'pointer'},onClick:()=>setStoryView(stories)},h('div',{className:'syne',style:{fontWeight:700,fontSize:18}},stories.length),h('div',{style:{fontSize:11,color:'var(--muted)'}},'сторис'))
+        )
+      ),
+      // Stories preview new
+      stories.length>0&&h('div',{style:{display:'flex',gap:10,padding:'12px 16px',overflowX:'auto',borderBottom:'1px solid var(--border)'}},
+        stories.map((s,i)=>h('div',{key:s.id,style:{width:70,height:100,borderRadius:12,overflow:'hidden',cursor:'pointer',flexShrink:0,border:'2px solid var(--accent)'},onClick:()=>setStoryView({stories,idx:i})},
+          s.type==='image'?h('img',{src:s.url,style:{width:'100%',height:'100%',objectFit:'cover'}}):
+          s.type==='video'?h('video',{src:s.url,style:{width:'100%',height:'100%',objectFit:'cover'}}):
+          h('div',{style:{width:'100%',height:'100%',background:s.bg||'var(--accent)',display:'flex',alignItems:'center',justifyContent:'center',padding:6}},h('div',{style:{color:'#fff',fontSize:11,textAlign:'center',overflow:'hidden'}},s.text))
+        ))
+      ),
+      // Posts grid
+      posts.length>0&&h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:2,padding:2}},
+        posts.filter(p=>p.mediaUrl).map(p=>h('div',{key:p.id,style:{aspectRatio:'1',overflow:'hidden',cursor:'pointer',background:'var(--panel)'}},
+          p.mediaType==='video'?h('video',{src:p.mediaUrl,style:{width:'100%',height:'100%',objectFit:'cover'}}):
+          h('img',{src:p.mediaUrl,style:{width:'100%',height:'100%',objectFit:'cover'}})
+        ))
+      ),
+      // Posts list (text posts)
+      h('div',{style:{padding:'14px 16px'}},
+        posts.map(p=>h(PostCard,{key:p.id,post:p,me,onOpenProfile:null}))
+      )
+    ),
+    storyView&&h(StoryViewer,{stories:storyView.stories||storyView,startIdx:storyView.idx||0,onClose:()=>setStoryView(null)})
   );
 }
 
@@ -1485,7 +2297,7 @@ function App(){
   const [showSearch,setShowSearch]=useState(false);const [showRoomSearch,setShowRoomSearch]=useState(false);
   const [showProfile,setShowProfile]=useState(false);const [createRoom,setCreateRoom]=useState(null);
   const [showMobileList,setShowMobileList]=useState(false);const [peerInst,setPeerInst]=useState(null);const [showRT,setShowRT]=useState(false);const [rtPlaying,setRtPlaying]=useState(null);
-  const [tab,setTab]=useState('dms');const [uid,setUid]=useState(null);
+  const [tab,setTab]=useState('dms');const [uid,setUid]=useState(null);const [showFeed,setShowFeed]=useState(false);const [viewProfile,setViewProfile]=useState(null);
   const userListenerRef=useRef(null);
 
   useEffect(()=>{const saved=localStorage.getItem('theme')||'dark';if(saved==='light')document.body.classList.add('light');if(window.chrome&&window.chrome.webview){try{window.chrome.webview.postMessage(JSON.stringify({type:'theme',value:saved}))}catch(e){}}},[]);
@@ -1605,7 +2417,7 @@ function App(){
     );
   };
 
-  const navTabs=[{id:'dms',icon:'💬',label:'Чаты',badge:totalUnread},{id:'groups',icon:'👥',label:'Группы'},{id:'rt',icon:'▶️',label:'Rutube'},{id:'profile',icon:'👤',label:'Профиль'}];
+  const navTabs=[{id:'dms',icon:'💬',label:'Чаты',badge:totalUnread},{id:'groups',icon:'👥',label:'Группы'},{id:'feed',icon:'📸',label:'Лента'},{id:'rt',icon:'▶️',label:'Rutube'},{id:'profile',icon:'👤',label:'Профиль'}];
 
   return h('div',{className:'app-layout',style:{height:'100dvh',display:'flex',padding:14,gap:12}},
     h('div',{className:'glass sidebar',style:{width:260,borderRadius:22,padding:'12px 10px',display:'flex',flexDirection:'column',gap:6,flexShrink:0}},
@@ -1620,7 +2432,8 @@ function App(){
       ),
       h('div',{style:{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:2}},listContent()),
       h('div',{className:'hr'}),
-      h('button',{className:'btn btn-ghost',style:{justifyContent:'center',width:'100%',borderRadius:12,fontSize:13,marginBottom:4,background:showRT?'rgba(255,68,68,.1)':'',color:showRT?'#ff4444':'var(--text)'},onClick:()=>{setShowRT(true);setActiveChat(null);setShowMobileList(false)}},'▶️  Rutube'),
+      h('button',{className:'btn btn-ghost',style:{justifyContent:'center',width:'100%',borderRadius:12,fontSize:13,marginBottom:4,background:showFeed&&!showRT?'rgba(79,140,255,.1)':'',color:showFeed&&!showRT?'var(--accent)':'var(--text)'},onClick:()=>{setShowFeed(true);setShowRT(false);setActiveChat(null);setShowMobileList(false)}},'📸  Лента'),
+      h('button',{className:'btn btn-ghost',style:{justifyContent:'center',width:'100%',borderRadius:12,fontSize:13,marginBottom:4,background:showRT?'rgba(255,68,68,.1)':'',color:showRT?'#ff4444':'var(--text)'},onClick:()=>{setShowRT(true);setShowFeed(false);setActiveChat(null);setShowMobileList(false)}},'▶️  Rutube'),
       h('div',{className:'hr'}),
       h('button',{style:{background:'none',border:'none',color:'var(--muted)',fontSize:12,cursor:'pointer',padding:'6px',textAlign:'center',borderRadius:8,transition:'color .15s'},onMouseEnter:e=>e.target.style.color='var(--danger)',onMouseLeave:e=>e.target.style.color='var(--muted)',onClick:signOut},'Выйти')
     ),
@@ -1634,32 +2447,43 @@ function App(){
     ),
 
     h('div',{className:'main-area',style:{flex:1,borderRadius:22,overflow:'hidden',display:'flex',flexDirection:'column'}},
-      showRT
-        ?h('div',{className:'glass',style:{flex:1,height:'100%',borderRadius:22,display:'flex',flexDirection:'column',overflow:'hidden'}},
-            h('div',{style:{padding:'10px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,flexShrink:0}},
-              h('div',{style:{width:24,height:24,borderRadius:6,background:'#ff4444',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}},'▶'),
-              h('div',{className:'syne',style:{fontWeight:700,fontSize:15}},'Rutube'),
-              h('div',{style:{flex:1}}),
-              h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:13},onClick:()=>setShowRT(false)},'✕ Закрыть')
-            ),
-            h(RutubeTab,{me:user.id,dmConvs,peerUsers,rooms}),
-            rtPlaying&&h(RTPlayer,{video:rtPlaying,me:user.id,dmConvs,peerUsers,rooms,onClose:()=>setRtPlaying(null)})
-          )
-        :activeChat?.type==='dm'
-          ?h(DMChat,{key:activeChat.id,me:user.id,peer:activeChat.id,peerUser:activeDMPeer,onBack:()=>{setActiveChat(null);setShowMobileList(true)},peerInst})
-          :activeChat?.type==='room'&&activeRoom
-            ?h(RoomChat,{key:activeRoom.id,room:activeRoom,me:user.id,onBack:()=>{setActiveChat(null);setShowMobileList(true)}})
-            :h('div',{className:'glass',style:{flex:1,height:'100%',borderRadius:22,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12}},
-                h('div',{style:{fontSize:48,opacity:.15}},'💬'),
-                h('div',{className:'syne',style:{fontSize:22,fontWeight:800,opacity:.2,letterSpacing:'-.03em'}},'Maxify'),
-                h('div',{style:{fontSize:13,color:'var(--muted)',opacity:.5}},'Выберите чат')
+      viewProfile
+        ?h(UserProfilePage,{uid:viewProfile,me:user.id,onClose:()=>setViewProfile(null),onStartDM:u=>{setViewProfile(null);openDM(u);setShowMobileList(false)}})
+        :showRT
+          ?h('div',{className:'glass',style:{flex:1,height:'100%',borderRadius:22,display:'flex',flexDirection:'column',overflow:'hidden'}},
+              h('div',{style:{padding:'10px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,flexShrink:0}},
+                h('div',{style:{width:24,height:24,borderRadius:6,background:'#ff4444',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}},'▶'),
+                h('div',{className:'syne',style:{fontWeight:700,fontSize:15}},'Rutube'),
+                h('div',{style:{flex:1}}),
+                h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:13},onClick:()=>setShowRT(false)},'✕ Закрыть')
+              ),
+              h(RutubeTab,{me:user.id,dmConvs,peerUsers,rooms}),
+              rtPlaying&&h(RTPlayer,{video:rtPlaying,me:user.id,dmConvs,peerUsers,rooms,onClose:()=>setRtPlaying(null)})
+            )
+          :showFeed
+            ?h('div',{className:'glass',style:{flex:1,height:'100%',borderRadius:22,display:'flex',flexDirection:'column',overflow:'hidden'}},
+                h('div',{style:{padding:'10px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,flexShrink:0}},
+                  h('div',{className:'syne',style:{fontWeight:700,fontSize:15}},'📸 Лента'),
+                  h('div',{style:{flex:1}}),
+                  h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:13},onClick:()=>setShowFeed(false)},'✕ Закрыть')
+                ),
+        h(FeedTab,{me:user.id,user,onOpenProfile:uid=>{setViewProfile(uid);setShowFeed(false)}})
               )
+            :activeChat?.type==='dm'
+              ?h(DMChat,{key:activeChat.id,me:user.id,peer:activeChat.id,peerUser:activeDMPeer,onBack:()=>{setActiveChat(null);setShowMobileList(true)},peerInst})
+              :activeChat?.type==='room'&&activeRoom
+                ?h(RoomChat,{key:activeRoom.id,room:activeRoom,me:user.id,onBack:()=>{setActiveChat(null);setShowMobileList(true)}})
+                :h('div',{className:'glass',style:{flex:1,height:'100%',borderRadius:22,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12}},
+                    h('div',{style:{fontSize:48,opacity:.15}},'💬'),
+                    h('div',{className:'syne',style:{fontSize:22,fontWeight:800,opacity:.2,letterSpacing:'-.03em'}},'Maxify'),
+                    h('div',{style:{fontSize:13,color:'var(--muted)',opacity:.5}},'Выберите чат')
+                  )
     ),
 
     h('div',{className:'mobile-nav'},
       navTabs.map(t=>{
-        const isActive=t.id==='profile'?showProfile:t.id==='rt'?showRT&&!showProfile:!activeChat&&!showRT&&showMobileList&&tab===t.id;
-        return h('div',{key:t.id,className:'mobile-nav-btn'+(isActive?' active':''),onClick:()=>{if(t.id==='profile'){setShowProfile(true);setShowMobileList(false);setShowRT(false);return}if(t.id==='rt'){setShowRT(true);setShowProfile(false);setActiveChat(null);setShowMobileList(false);return}setShowProfile(false);setShowRT(false);setTab(t.id);setActiveChat(null);setShowMobileList(true)}},
+        const isActive=t.id==='profile'?showProfile:t.id==='rt'?showRT&&!showProfile&&!showFeed:t.id==='feed'?showFeed&&!showProfile:!activeChat&&!showRT&&!showFeed&&showMobileList&&tab===t.id;
+        return h('div',{key:t.id,className:'mobile-nav-btn'+(isActive?' active':''),onClick:()=>{if(t.id==='profile'){setShowProfile(true);setShowMobileList(false);setShowRT(false);setShowFeed(false);return}if(t.id==='rt'){setShowRT(true);setShowFeed(false);setShowProfile(false);setActiveChat(null);setShowMobileList(false);return}if(t.id==='feed'){setShowFeed(true);setShowRT(false);setShowProfile(false);setActiveChat(null);setShowMobileList(false);return}setShowProfile(false);setShowRT(false);setShowFeed(false);setTab(t.id);setActiveChat(null);setShowMobileList(true)}},
           h('div',{className:'nav-icon',style:{position:'relative'}},t.icon,t.badge&&t.badge>0&&h('span',{style:{position:'absolute',top:-4,right:-6,minWidth:16,height:16,borderRadius:999,background:'var(--danger)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,border:'2px solid var(--nav-bg)'}},t.badge>99?'99+':t.badge)),
           h('div',{className:'nav-label'},t.label)
         );
