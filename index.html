@@ -237,44 +237,31 @@ audio{width:180px;height:34px}
     if(root) root.style.display = '';
   }
 
-  // Method 1: window size difference (most reliable, cross-browser)
-  function checkSize(){
-    const threshold = 160;
-    const widthDiff = window.outerWidth - window.innerWidth;
-    const heightDiff = window.outerHeight - window.innerHeight;
-    return widthDiff > threshold || heightDiff > threshold;
-  }
-
-  // Method 2: console timing trick
-  let _devDetected = false;
-  const _img = new Image();
-  Object.defineProperty(_img, 'id', {
-    get: function(){
-      _devDetected = true;
-    }
-  });
-
-  // Method 3: debugger timing
-  function checkDebugger(){
+  // Detection: debugger timing (accurate — pauses only when DevTools open with "Pause on debugger" active)
+  // + firebug/devtools object check (works in Chrome/Firefox/Edge)
+  function isDevToolsOpen(){
+    // Check 1: debugger timing — only triggers if DevTools is open AND paused
     const t0 = performance.now();
-    // eslint-disable-next-line no-debugger
-    debugger; // pauses in devtools, creating large time gap
+    debugger;
     const t1 = performance.now();
-    return (t1 - t0) > 100;
+    if((t1 - t0) > 150) return true;
+
+    // Check 2: Chrome-specific devtools object
+    if(window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) return true;
+
+    // Check 3: outerHeight/innerHeight only with very large threshold to avoid false positives
+    // (taskbar, browser chrome etc typically add <100px; devtools adds 200-400px)
+    const heightDiff = window.outerHeight - window.innerHeight;
+    if(heightDiff > 300) return true;
+
+    return false;
   }
 
-  // Poll every 800ms
+  // Poll every 1200ms
   setInterval(function(){
-    const bySize = checkSize();
-    // Reset devDetected flag and check via console trick
-    _devDetected = false;
-    console.log('%c', _img); // triggers getter if console open
-    const byConsole = _devDetected;
-
-    if(bySize || byConsole){
+    if(isDevToolsOpen()){
       if(!_dtOpen){
         _dtOpen = true;
-        _warnCount++;
         showBlock();
       }
     } else {
@@ -282,7 +269,7 @@ audio{width:180px;height:34px}
         hideBlock();
       }
     }
-  }, 800);
+  }, 1200);
 
   // Disable right-click context menu
   document.addEventListener('contextmenu', function(e){
