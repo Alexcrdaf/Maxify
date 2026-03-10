@@ -218,6 +218,14 @@ async function upload(file, onPct) {
 // ── Reserved / verified accounts ─────────────────────────────────────────────
 const VERIFIED_EMAILS=['dima.julbarisov01@gmail.com'];
 const RESERVED_LOGINS=['LGlittleguy'];
+const OFFICIAL_ROOM_NAME = 'Maxify';
+
+function OfficialBadge({size=14}){
+  return h('div',{
+    title:'Официальная группа Maxify',
+    style:{width:size,height:size,borderRadius:'50%',background:'linear-gradient(135deg,#4f8cff,#9b8cff)',display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:size*.6,fontWeight:700,flexShrink:0}
+  },'✓');
+}
 
 // ── FIX: Avatar — безопасная обработка любого типа аргумента ────────────────
 function Avatar({user, size=36, ring=false}){
@@ -621,7 +629,10 @@ function RoomSearchModal({me,onSelect,onClose}){
           r.avatarUrl ? h('img', {src: r.avatarUrl, className:'avatar-img', style:{width:38,height:38}}) : (r.type==='channel'?'📢':'👥')
         ),
         h('div',{style:{flex:1,minWidth:0}},
-          h('div',{style:{fontWeight:600,fontSize:14,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},r.name),
+          h('div',{style:{fontWeight:600,fontSize:14,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}},
+            r.name,
+            r.name === OFFICIAL_ROOM_NAME && h(OfficialBadge, {size: 14})
+          ),
           h('div',{style:{fontSize:11,color:'var(--muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},r.desc||(r.type==='group'?'Группа':'Канал'))
         ),
         h('span',{style:{fontSize:11,color:'var(--accent)'}},'Вступить')
@@ -651,6 +662,10 @@ function CreateRoomModal({me,type,onClose}){
 
   const create=async()=>{
     if(!name.trim()) return;
+    if(name.trim().toLowerCase() === OFFICIAL_ROOM_NAME.toLowerCase() && !VERIFIED_EMAILS.includes(auth.currentUser?.email)){
+      alert('Это название зарезервировано для официального чата');
+      return;
+    }
     setBusy(true);
     const ref=db.ref('rooms').push();
     await ref.set({
@@ -758,7 +773,10 @@ function RoomInfoModal({room,me,onClose}){
   return h(Modal,{onClose,width:420},
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
       h('div',null,
-        h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},room.name),
+        h('div',{className:'syne',style:{fontWeight:700,fontSize:16,display:'flex',alignItems:'center',gap:6}},
+          room.name,
+          room.name === OFFICIAL_ROOM_NAME && h(OfficialBadge, {size: 16})
+        ),
         room.desc&&h('div',{style:{fontSize:12,color:'var(--muted)',marginTop:2}},room.desc)
       ),
       h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')
@@ -871,6 +889,13 @@ function MsgBubble({m,mine,onImgClick,onEdit,onDelete}){
   const [showActions, setShowActions] = useState(false);
   const isText = m.type === 'text';
 
+  useEffect(() => {
+    if (!showActions) return;
+    const handler = () => setShowActions(false);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [showActions]);
+
   const Actions = () => h('div', {
     style: {
       position: 'absolute',
@@ -885,7 +910,8 @@ function MsgBubble({m,mine,onImgClick,onEdit,onDelete}){
       zIndex: 100,
       boxShadow: '0 4px 12px rgba(0,0,0,.3)',
       marginBottom: 4
-    }
+    },
+    onClick: e => e.stopPropagation()
   },
     isText && h('button', { className: 'btn btn-ghost', style: { padding: '4px 8px', fontSize: 11 }, onClick: (e) => { e.stopPropagation(); onEdit(m); setShowActions(false); } }, '✏️'),
     h('button', { className: 'btn btn-danger', style: { padding: '4px 8px', fontSize: 11 }, onClick: (e) => { e.stopPropagation(); onDelete(m); setShowActions(false); } }, '🗑️')
@@ -916,10 +942,13 @@ function MsgBubble({m,mine,onImgClick,onEdit,onDelete}){
   };
 
   return h('div', {
-    style: { position: 'relative' },
-    onMouseEnter: () => mine && setShowActions(true),
-    onMouseLeave: () => setShowActions(false),
-    onClick: () => mine && setShowActions(!showActions)
+    style: { position: 'relative', userSelect: 'none' },
+    onDoubleClick: (e) => {
+      if (mine) {
+        e.stopPropagation();
+        setShowActions(!showActions);
+      }
+    }
   },
     showActions && mine && h(Actions),
     content()
@@ -1377,7 +1406,10 @@ function RoomChat({room,me,onBack}){
           ? h('img', {src: room.avatarUrl, className:'avatar-img', style:{width:34,height:34}})
           : h('div',{style:{width:34,height:34,borderRadius:'50%',background:room.type==='channel'?'rgba(155,140,255,.3)':'rgba(79,140,255,.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}},room.type==='channel'?'📢':'👥'),
         h('div',null,
-          h('div',{className:'syne',style:{fontWeight:700,fontSize:14}},room.name),
+          h('div',{className:'syne',style:{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:4}},
+            room.name,
+            room.name === OFFICIAL_ROOM_NAME && h(OfficialBadge, {size: 14})
+          ),
           room.desc&&h('div',{style:{fontSize:11,color:'var(--muted)',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},room.desc)
         )
       ),
@@ -1638,7 +1670,10 @@ function App(){
           ? h('img', {src: r.avatarUrl, className:'avatar-img', style:{width:40,height:40,flexShrink:0}})
           : h('div',{style:{width:40,height:40,borderRadius:'50%',background:'rgba(79,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},'👥'),
         h('div',{style:{flex:1,minWidth:0}},
-          h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.name),
+          h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',display:'flex',alignItems:'center',gap:4}},
+            r.name,
+            r.name === OFFICIAL_ROOM_NAME && h(OfficialBadge, {size: 14})
+          ),
           h('div',{style:{fontSize:12,color:'var(--muted)'}},r.last?.preview||r.desc||'Группа')
         )
       ))
@@ -1654,7 +1689,10 @@ function App(){
           ? h('img', {src: r.avatarUrl, className:'avatar-img', style:{width:40,height:40,flexShrink:0}})
           : h('div',{style:{width:40,height:40,borderRadius:'50%',background:'rgba(155,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},'📢'),
         h('div',{style:{flex:1,minWidth:0}},
-          h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.name),
+          h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',display:'flex',alignItems:'center',gap:4}},
+            r.name,
+            r.name === OFFICIAL_ROOM_NAME && h(OfficialBadge, {size: 14})
+          ),
           h('div',{style:{fontSize:12,color:'var(--muted)'}},r.last?.preview||r.desc||'Канал')
         )
       ))
