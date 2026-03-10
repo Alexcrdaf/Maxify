@@ -1253,17 +1253,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
     return g;
   },[msgs]);
 
-  const msgMap=useMemo(()=>{
-    const map={};msgs.forEach(m=>{if(m.k)map[m.k]=m;});return map;
-  },[msgs]);
 
-  const filteredMsgs=useMemo(()=>{
-    if(!searchQ.trim())return grouped;
-    const q=searchQ.toLowerCase();
-    return grouped.filter(item=>item.type==='date'||item.m?.text?.toLowerCase().includes(q));
-  },[grouped,searchQ]);
-
-  const galleryMedia=useMemo(()=>msgs.filter(m=>m.type==='image'||m.type==='file-video'),[msgs]);
 
   // Push notif on new message
   useEffect(()=>{
@@ -1526,7 +1516,7 @@ function RoomChat({room,me,onBack}){
           !mine&&h('div',{style:{fontSize:11,color:'var(--muted)',marginBottom:2,display:'flex',alignItems:'center',gap:6}},
             h(Avatar,{user:sender,size:18}),sender?.login||'...'
           ),
-          h(MsgBubble,{m,mine,onImgClick:url=>setLightbox(url)}),
+          h(MsgBubble,{m,mine,onImgClick:url=>setLightbox(url),meUid:me}),
           h('div',{style:{fontSize:10,color:'var(--muted)'}},ts2t(m.ts))
         );
       }),
