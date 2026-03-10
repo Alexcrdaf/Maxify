@@ -1481,18 +1481,6 @@ function RoomChat({room,me,onBack}){
     return g;
   },[msgs]);
 
-  const msgMap=useMemo(()=>{
-    const map={};msgs.forEach(m=>{if(m.k)map[m.k]=m;});return map;
-  },[msgs]);
-
-  const filteredMsgs=useMemo(()=>{
-    if(!searchQ.trim())return grouped;
-    const q=searchQ.toLowerCase();
-    return grouped.filter(item=>item.type==='date'||item.m?.text?.toLowerCase().includes(q));
-  },[grouped,searchQ]);
-
-  const galleryMedia=useMemo(()=>msgs.filter(m=>m.type==='image'||m.type==='file-video'),[msgs]);
-
   return h('div',{style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}},
     h('div',{className:'glass',style:{padding:'10px 18px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}},
       h('div',{style:{display:'flex',alignItems:'center',gap:10}},
