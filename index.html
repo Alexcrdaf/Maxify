@@ -226,7 +226,6 @@ audio{width:180px;height:34px}
   let _dtOpen = false;
   let _warnCount = 0;
 
-  // Overlay element shown when devtools detected
   function showBlock(){
     if(_blocked) return;
     _blocked = true;
@@ -249,7 +248,6 @@ audio{width:180px;height:34px}
         Обновить страницу
       </button>`;
     document.body.appendChild(el);
-    // Freeze React root
     const root = document.getElementById('root');
     if(root) root.style.display = 'none';
   }
@@ -264,22 +262,15 @@ audio{width:180px;height:34px}
     if(root) root.style.display = '';
   }
 
-  // Detection: debugger timing only — zero false positives from zoom/resize
-  // Triggers only when DevTools is open with JS debugger active
   function isDevToolsOpen(){
-    // Firebug legacy check
     if(window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) return true;
-
-    // Debugger timing — normal execution: ~0ms, paused in DevTools: >150ms
     const t0 = performance.now();
     debugger;
     const t1 = performance.now();
     if((t1 - t0) > 150) return true;
-
     return false;
   }
 
-  // Poll every 1200ms
   setInterval(function(){
     if(isDevToolsOpen()){
       if(!_dtOpen){
@@ -293,44 +284,27 @@ audio{width:180px;height:34px}
     }
   }, 1200);
 
-  // Disable right-click context menu
   document.addEventListener('contextmenu', function(e){
     e.preventDefault();
     return false;
   });
 
-  // Disable common devtools keyboard shortcuts
   document.addEventListener('keydown', function(e){
-    // F12
     if(e.key === 'F12') { e.preventDefault(); return false; }
-    // Ctrl+Shift+I / Cmd+Option+I
     if((e.ctrlKey||e.metaKey) && e.shiftKey && (e.key==='I'||e.key==='i')) { e.preventDefault(); return false; }
-    // Ctrl+Shift+J
     if((e.ctrlKey||e.metaKey) && e.shiftKey && (e.key==='J'||e.key==='j')) { e.preventDefault(); return false; }
-    // Ctrl+Shift+C
     if((e.ctrlKey||e.metaKey) && e.shiftKey && (e.key==='C'||e.key==='c')) { e.preventDefault(); return false; }
-    // Ctrl+U (view source)
     if((e.ctrlKey||e.metaKey) && (e.key==='U'||e.key==='u')) { e.preventDefault(); return false; }
-    // Ctrl+S (save page)
     if((e.ctrlKey||e.metaKey) && (e.key==='S'||e.key==='s')) { e.preventDefault(); return false; }
   });
 
-  // Override console to neutralize injection attempts
   const _noop = ()=>{};
-  const _safeConsole = {
-    log: _noop, warn: _noop, error: _noop, info: _noop,
-    debug: _noop, table: _noop, dir: _noop, group: _noop,
-    groupEnd: _noop, time: _noop, timeEnd: _noop, trace: _noop,
-    assert: _noop, clear: _noop, count: _noop, countReset: _noop
-  };
-  // Freeze the overrides so they can't be re-assigned from console
   try {
-    Object.keys(_safeConsole).forEach(k => {
+    Object.keys({log:1,warn:1,error:1,info:1,debug:1,table:1,dir:1,group:1,groupEnd:1,time:1,timeEnd:1,trace:1,assert:1,clear:1,count:1,countReset:1}).forEach(k => {
       try { window.console[k] = _noop; } catch(e2){}
     });
   } catch(e) {}
 
-  // Detect if page is inside iframe (clickjacking protection)
   if(window.self !== window.top){
     document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#f87171;font-size:16px;">🚫 Встраивание запрещено</div>';
     throw new Error('Framing not allowed');
@@ -360,7 +334,12 @@ const playCall=()=>beep(440,550,.5,.25);
 // ── Push Notifications ───────────────────────────────────────────────────────
 const NOTIF_ICON = 'https://api.iconify.design/twemoji/speech-balloon.svg';
 
+// Определяем запущены ли мы в WebView2 (Windows приложение)
+const isWebView2 = !!(window.chrome && window.chrome.webview);
+
 async function requestNotifPermission(){
+  // В WebView2 разрешение не нужно — уведомления через Windows
+  if(isWebView2) return true;
   if(!('Notification' in window)) return false;
   if(Notification.permission === 'granted') return true;
   if(Notification.permission === 'denied') return false;
@@ -368,10 +347,23 @@ async function requestNotifPermission(){
   return result === 'granted';
 }
 
+// ── ГЛАВНАЯ ФУНКЦИЯ: отправляет уведомление в Windows через WebView2 ──
 function sendNotif(title, body, tag, onClick){
+  // Если запущено как Windows .exe — отправляем через WebView2 в C++
+  if(isWebView2){
+    try{
+      window.chrome.webview.postMessage(JSON.stringify({
+        type: 'notification',
+        title: String(title || ''),
+        body: String(body || '')
+      }));
+    }catch(e){}
+    return;
+  }
+  // Браузерный вариант (обычный браузер)
   if(!('Notification' in window)) return;
   if(Notification.permission !== 'granted') return;
-  if(document.visibilityState === 'visible') return; // don't show if app is focused
+  if(document.visibilityState === 'visible') return;
   try{
     const n = new Notification(title, {
       body: body,
@@ -385,15 +377,31 @@ function sendNotif(title, body, tag, onClick){
   }catch(e){}
 }
 
+// ── УВЕДОМЛЕНИЕ О ЗВОНКЕ ──
 function sendCallNotif(callerName, isVideo, onClick){
+  const title = '📞 Входящий ' + (isVideo ? 'видео' : 'аудио') + ' звонок';
+  const body = String(callerName || 'Пользователь') + ' звонит вам';
+
+  // Если запущено как Windows .exe — отправляем через WebView2 в C++
+  if(isWebView2){
+    try{
+      window.chrome.webview.postMessage(JSON.stringify({
+        type: 'notification',
+        title: title,
+        body: body
+      }));
+    }catch(e){}
+    return;
+  }
+  // Браузерный вариант
   if(!('Notification' in window)) return;
   if(Notification.permission !== 'granted') return;
   try{
-    const n = new Notification('📞 Входящий ' + (isVideo?'видео':'аудио') + ' звонок', {
-      body: callerName + ' звонит вам',
+    const n = new Notification(title, {
+      body: body,
       icon: NOTIF_ICON,
       tag: 'maxify-call',
-      requireInteraction: true, // stays until user interacts
+      requireInteraction: true,
       renotify: true,
       silent: false
     });
@@ -408,22 +416,13 @@ function getBestMimeType(kind){
 }
 
 // ── Multi-provider upload system ─────────────────────────────────────────────
-// Providers tried in order. If one fails or quota exceeded — next is used.
-// To add more Cloudinary accounts: create free account at cloudinary.com,
-// go to Settings → Upload → Add upload preset (unsigned), paste cloud_name+preset below.
-
 const UPLOAD_PROVIDERS = [
-  // Cloudinary account #1 (primary) — 25 GB
   { type:'cloudinary', cloud:'djdcmj2om', preset:'maxify' },
-  // Cloudinary account #2 — 25 GB ✅
   { type:'cloudinary', cloud:'djd6tk4mo', preset:'fgh8888888' },
-  // ImgBB — 32 MB на файл ✅
   { type:'imgbb', key:'6b2f4aa4251af974124a1053b9e8b719' },
-  // Catbox.moe — до 200 MB на файл ✅
   { type:'catbox' },
 ];
 
-// Track which provider index to try next (persists across uploads in session)
 let _providerIdx = 0;
 
 function _uploadCloudinary(file, cloud, preset, onPct){
@@ -492,8 +491,6 @@ function _uploadCatbox(file, onPct){
 async function upload(file, onPct){
   const total = UPLOAD_PROVIDERS.length;
   let lastErr = null;
-
-  // Try each provider starting from current index, wrap around
   for(let attempt=0; attempt<total; attempt++){
     const idx = (_providerIdx + attempt) % total;
     const p = UPLOAD_PROVIDERS[idx];
@@ -508,13 +505,10 @@ async function upload(file, onPct){
       } else {
         throw new Error('unknown_provider');
       }
-      // Success — next upload starts from same provider (don't advance on success)
       return url;
     } catch(err){
       lastErr = err;
-      // Advance to next provider for future uploads
       _providerIdx = (idx + 1) % total;
-      console.warn('[upload] Provider '+p.type+(p.cloud?' ('+p.cloud+')':'')+' failed: '+err.message+'. Trying next...');
     }
   }
   throw new Error('Все сервисы недоступны: ' + (lastErr?.message||'unknown'));
@@ -529,7 +523,6 @@ function OfficialBadge({size=14}){
   return h('div',{title:'Официальная группа Maxify',style:{width:size,height:size,borderRadius:'50%',background:'linear-gradient(135deg,#4f8cff,#9b8cff)',display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:size*.6,fontWeight:700,flexShrink:0}},'✓');
 }
 
-// ── Enhanced Avatar with real-time online status ──
 function Avatar({user,size=36,ring=false}){
   const [liveUser,setLiveUser]=useState(null);
   const login=(typeof user==='string'?user:user?.login)||'?';
@@ -566,7 +559,6 @@ function Modal({onClose,children,width=380}){
   );
 }
 
-// ── Auth ──
 function Auth(){
   const [mode,setMode]=useState('login');
   const [f,setF]=useState({email:'',pass:'',name:''});
@@ -633,7 +625,6 @@ function Auth(){
   );
 }
 
-// ── User Search ──
 function UserSearch({me,onSelect,onClose}){
   const [q,setQ]=useState('');const [results,setResults]=useState([]);const [busy,setBusy]=useState(false);const [err,setErr]=useState('');
   useEffect(()=>{
@@ -668,7 +659,6 @@ function UserSearch({me,onSelect,onClose}){
   );
 }
 
-// ── Profile Modal ──
 function ProfileModal({user,onClose}){
   const [tab,setTab]=useState('edit');
   const [name,setName]=useState(user.login||'');
@@ -716,7 +706,6 @@ function ProfileModal({user,onClose}){
   );
 }
 
-// ── Room Search ──
 function RoomSearchModal({me,onSelect,onClose}){
   const [q,setQ]=useState('');const [results,setResults]=useState([]);const [busy,setBusy]=useState(false);
   useEffect(()=>{
@@ -744,7 +733,6 @@ function RoomSearchModal({me,onSelect,onClose}){
   );
 }
 
-// ── Create Room Modal ──
 function CreateRoomModal({me,type,onClose}){
   const [name,setName]=useState('');const [desc,setDesc]=useState('');const [avatarUrl,setAvatarUrl]=useState(null);const [busy,setBusy]=useState(false);const [uploadPct,setUploadPct]=useState(0);const [isPrivate,setIsPrivate]=useState(false);const fileRef=useRef();
   const handleFile=async e=>{const file=e.target.files[0];if(!file)return;setBusy(true);try{const url=await upload(file,p=>setUploadPct(p));setAvatarUrl(url);}catch(ex){alert('Ошибка: '+ex.message)}setBusy(false);setUploadPct(0)};
@@ -780,7 +768,6 @@ function CreateRoomModal({me,type,onClose}){
   );
 }
 
-// ── Room Info Modal (enhanced with admin & permissions) ──
 function RoomInfoModal({room,me,onClose}){
   const [tab,setTab]=useState('members');
   const [searchQ,setSearchQ]=useState('');
@@ -836,7 +823,6 @@ function RoomInfoModal({room,me,onClose}){
       ))
     ),
     h('div',{className:'hr'}),
-
     tab==='edit'&&isAdmin&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
       h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:8}},
         h('div',{onClick:()=>fileRef.current.click(),style:{width:64,height:64,borderRadius:'50%',background:'var(--panel)',border:'2px dashed var(--border)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',overflow:'hidden'}},
@@ -858,11 +844,9 @@ function RoomInfoModal({room,me,onClose}){
       ),
       h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center'},onClick:saveChanges,disabled:busy||!editName.trim()},'Сохранить')
     ),
-
     tab==='members'&&h('div',{style:{maxHeight:280,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
       Object.keys(members).map(uid=>h(MemberRow,{key:uid,uid,isOwner,isAdmin,ownerId:room.owner,admins,me,onRemove:async()=>{if(uid===room.owner)return;await db.ref('rooms/'+room.id+'/members/'+uid).remove()}}))
     ),
-
     tab==='add'&&isAdmin&&h('div',{style:{display:'flex',flexDirection:'column',gap:8}},
       h('input',{placeholder:'Поиск...',value:searchQ,onChange:e=>setSearchQ(e.target.value),autoFocus:true}),
       h('div',{style:{maxHeight:240,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
@@ -871,14 +855,12 @@ function RoomInfoModal({room,me,onClose}){
         ))
       )
     ),
-
     tab==='admins'&&isOwner&&h('div',{style:{display:'flex',flexDirection:'column',gap:8}},
       h('div',{style:{fontSize:12,color:'var(--muted)',lineHeight:1.6}},'Администраторы могут закреплять сообщения, добавлять участников и редактировать информацию.'),
       h('div',{style:{maxHeight:260,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
         Object.keys(members).map(uid=>h(AdminRow,{key:uid,uid,ownerId:room.owner,admins,onToggle:()=>toggleAdmin(uid)}))
       )
     ),
-
     tab==='permissions'&&isOwner&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
       h('div',{style:{fontSize:12,color:'var(--muted)',marginBottom:4}},'Что могут делать обычные участники:'),
       [
@@ -887,18 +869,14 @@ function RoomInfoModal({room,me,onClose}){
         {key:'inviteUsers',label:'Приглашать пользователей',icon:'👤'},
       ].map(p=>h('label',{key:p.key,style:{display:'flex',alignItems:'center',gap:10,cursor:'pointer',padding:'10px 12px',borderRadius:10,background:'var(--panel)',border:'1px solid var(--border)'}},
         h('div',{style:{flex:1}},h('div',{style:{fontSize:13,fontWeight:600,display:'flex',alignItems:'center',gap:6}},p.icon,' ',p.label)),
-        h('div',{
-          onClick:()=>togglePerm(p.key),
-          style:{width:38,height:22,borderRadius:999,background:perms[p.key]?'var(--accent)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}
-        },h('div',{style:{width:18,height:18,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:perms[p.key]?'18px':'2px',transition:'left .2s',boxShadow:'0 1px 4px rgba(0,0,0,.3)'}}))
+        h('div',{onClick:()=>togglePerm(p.key),style:{width:38,height:22,borderRadius:999,background:perms[p.key]?'var(--accent)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}},
+          h('div',{style:{width:18,height:18,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:perms[p.key]?'18px':'2px',transition:'left .2s',boxShadow:'0 1px 4px rgba(0,0,0,.3)'}}))
       ))
     ),
-
     tab==='settings'&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
       h('button',{className:'btn btn-ghost',style:{justifyContent:'center'},onClick:async()=>{await db.ref('users/'+me+'/hiddenRooms/'+room.id).set(true);onClose()}},'🙈 Скрыть из списка'),
       h('div',{style:{fontSize:11,color:'var(--muted)',textAlign:'center'}},'Скрытые можно найти через поиск')
     ),
-
     h('div',{className:'hr'}),
     h('div',{style:{display:'flex',gap:8}},
       !isOwner&&h('button',{className:'btn btn-danger',style:{flex:1,justifyContent:'center'},onClick:leaveRoom},'Покинуть'),
@@ -930,14 +908,11 @@ function AdminRow({uid,ownerId,admins,onToggle}){
   return h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',borderRadius:12}},
     h(Avatar,{user:u,size:34}),
     h('div',{style:{flex:1}},h('div',{style:{fontWeight:600,fontSize:13}},u.login+(uid===ownerId?' 👑':''))),
-    uid!==ownerId&&h('div',{
-      onClick:onToggle,
-      style:{width:38,height:22,borderRadius:999,background:isAdmin?'var(--accent)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}
-    },h('div',{style:{width:18,height:18,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:isAdmin?'18px':'2px',transition:'left .2s',boxShadow:'0 1px 4px rgba(0,0,0,.3)'}}))
+    uid!==ownerId&&h('div',{onClick:onToggle,style:{width:38,height:22,borderRadius:999,background:isAdmin?'var(--accent)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}},
+      h('div',{style:{width:18,height:18,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:isAdmin?'18px':'2px',transition:'left .2s',boxShadow:'0 1px 4px rgba(0,0,0,.3)'}}))
   );
 }
 
-// ── Call Overlay ──
 function CallOverlay({peerUser,isVideo,isIncoming,onAccept,onEnd,localStream,remoteStream}){
   const localRef=useRef(),remoteRef=useRef();
   const [muted,setMuted]=useState(false);const [camOff,setCamOff]=useState(false);const [dur,setDur]=useState(0);const timerRef=useRef();
@@ -956,7 +931,6 @@ function CallOverlay({peerUser,isVideo,isIncoming,onAccept,onEnd,localStream,rem
   );
 }
 
-// ── Emoji Picker ──
 function EmojiPicker({onSelect,onClose,style}){
   useEffect(()=>{
     const h=()=>onClose();
@@ -968,7 +942,6 @@ function EmojiPicker({onSelect,onClose,style}){
   );
 }
 
-// ── Message Bubble (enhanced) ──
 function MsgBubble({m,mine,onImgClick,onEdit,onDelete,onReply,onPin,onReact,replyMsg,showReactions=true,canPin=false}){
   const [showMenu,setShowMenu]=useState(false);
   const [showEmoji,setShowEmoji]=useState(false);
@@ -1007,11 +980,7 @@ function MsgBubble({m,mine,onImgClick,onEdit,onDelete,onReply,onPin,onReact,repl
       h('div',{className:'reply-sender'},replyMsg.senderName||'...'),
       h('div',{className:'reply-msg'},replyMsg.text||'📎 Вложение')
     ),
-    h('div',{
-      style:{position:'relative',display:'inline-block',maxWidth:'100%'},
-      onContextMenu:e=>{e.preventDefault();setShowMenu(true)},
-      onDoubleClick:e=>{e.preventDefault();setShowMenu(true)}
-    },
+    h('div',{style:{position:'relative',display:'inline-block',maxWidth:'100%'},onContextMenu:e=>{e.preventDefault();setShowMenu(true)},onDoubleClick:e=>{e.preventDefault();setShowMenu(true)}},
       content(),
       showMenu&&h('div',{ref:menuRef,className:'msg-menu fade-in',style:{position:'absolute',bottom:'calc(100% + 4px)',[mine?'right':'left']:0}},
         h('div',{className:'msg-menu-item',onClick:()=>{setShowEmoji(true);setShowMenu(false)}},'😊  Реакция'),
@@ -1020,11 +989,7 @@ function MsgBubble({m,mine,onImgClick,onEdit,onDelete,onReply,onPin,onReact,repl
         mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:()=>{onEdit&&onEdit(m);setShowMenu(false)}},'✏️  Редактировать'),
         mine&&h('div',{className:'msg-menu-item danger',onClick:()=>{onDelete&&onDelete(m);setShowMenu(false)}},'🗑️  Удалить')
       ),
-      showEmoji&&h(EmojiPicker,{
-        style:{position:'absolute',bottom:'calc(100% + 4px)',[mine?'right':'left']:0},
-        onSelect:emoji=>onReact&&onReact(m,emoji),
-        onClose:()=>setShowEmoji(false)
-      })
+      showEmoji&&h(EmojiPicker,{style:{position:'absolute',bottom:'calc(100% + 4px)',[mine?'right':'left']:0},onSelect:emoji=>onReact&&onReact(m,emoji),onClose:()=>setShowEmoji(false)})
     ),
     showReactions&&Object.keys(reactionGroups).length>0&&h('div',{className:'reactions'},
       Object.entries(reactionGroups).map(([emoji,uids])=>h('div',{key:emoji,className:'reaction-chip'+(mine?' mine':''),onClick:()=>onReact&&onReact(m,emoji),title:uids.length+' чел.'},
@@ -1034,7 +999,6 @@ function MsgBubble({m,mine,onImgClick,onEdit,onDelete,onReply,onPin,onReact,repl
   );
 }
 
-// ── Input Bar ──
 function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,replyMsg=null,onCancelReply}){
   const [text,setText]=useState('');
   const [showAttach,setShowAttach]=useState(false);
@@ -1125,12 +1089,7 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
           ),
           h('button',{className:'btn btn-ghost btn-icon',style:{background:showAttach?'rgba(79,140,255,.15)':''},onClick:()=>setShowAttach(v=>!v)},'+'),
           h('input',{ref:fileRef,type:'file',style:{display:'none'},onChange:handleFile}),
-          h('input',{
-            value:text,onChange:e=>setText(e.target.value),
-            onClick:()=>setShowAttach(false),
-            onKeyDown:e=>e.key==='Enter'&&!e.shiftKey&&(e.preventDefault(),doSend({type:'text',text})),
-            placeholder:'Сообщение...',style:{borderRadius:999,padding:'9px 16px'}
-          }),
+          h('input',{value:text,onChange:e=>setText(e.target.value),onClick:()=>setShowAttach(false),onKeyDown:e=>e.key==='Enter'&&!e.shiftKey&&(e.preventDefault(),doSend({type:'text',text})),placeholder:'Сообщение...',style:{borderRadius:999,padding:'9px 16px'}}),
           (text.trim()||editMsg)?h('button',{ref:sendBtnRef,className:'btn btn-primary',style:{borderRadius:999,padding:'9px 18px',flexShrink:0,justifyContent:'center'},onClick:()=>doSend({type:'text',text})},editMsg?'✓':'→'):
           h('button',{className:'btn btn-ghost btn-icon',style:{flexShrink:0,fontSize:18},onClick:startVoice},'🎙️')
         ),
@@ -1146,7 +1105,6 @@ function previewText(p){
   if(p.type==='text')return p.text;if(p.type==='voice')return'🎙️ Голосовое';if(p.type==='video-note')return'⭕ Видеосообщение';if(p.type==='image')return'📷 Фото';if(p.type==='file-video')return'🎬 Видео';return'📎 Файл';
 }
 
-// ── Pinned Message Banner ──
 function PinnedBanner({pinnedMsg,onUnpin,canPin}){
   if(!pinnedMsg)return null;
   return h('div',{className:'pinned-bar'},
@@ -1159,7 +1117,6 @@ function PinnedBanner({pinnedMsg,onUnpin,canPin}){
   );
 }
 
-// ── DM Chat View ──
 function DMChat({me,peer,peerUser,onBack,peerInst}){
   const [msgs,setMsgs]=useState([]);
   const [peerTyping,setPeerTyping]=useState(false);
@@ -1193,14 +1150,14 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
       if(arr.length>lastCount.current&&lastCount.current>0&&arr[arr.length-1].uid!==me){
         playRecv();
         const last=arr[arr.length-1];
-        const senderName=last.senderName||'Сообщение';
-        const preview=last.type==='text'?(last.text||'').slice(0,80):last.type==='image'?'📷 Фото':last.type==='audio'?'🎤 Голосовое':last.type==='video'?'📹 Видео':last.type==='file'?'📎 Файл':'Сообщение';
+        const senderName=last.senderName||livePeer?.login||'Сообщение';
+        const preview=last.type==='text'?(last.text||'').slice(0,80):last.type==='image'?'📷 Фото':last.type==='voice'?'🎤 Голосовое':last.type==='video-note'?'⭕ Видеосообщение':last.type==='file'?'📎 Файл':'Сообщение';
         sendNotif(senderName, preview, 'dm-'+chatCid);
       }
       lastCount.current=arr.length;setMsgs(arr);
     });
     return()=>ref.off();
-  },[chatCid]);
+  },[chatCid,me,livePeer]);
 
   useEffect(()=>{
     const ref=db.ref(`dm/${chatCid}/pinned`);
@@ -1258,7 +1215,6 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
   const handleTyping=()=>{db.ref(`dm/${chatCid}/typing/${me}`).set(true);clearTimeout(typingTO.current);typingTO.current=setTimeout(()=>db.ref(`dm/${chatCid}/typing/${me}`).set(false),1500)};
 
   const grouped=useMemo(()=>{const g=[];let ld='';msgs.forEach(m=>{const d=ts2d(m.ts);if(d!==ld){g.push({type:'date',label:d});ld=d}g.push({type:'msg',m})});return g},[msgs]);
-
   const statusText=livePeer?.online?'онлайн':livePeer?.lastSeen?`был(а) ${fmtLastSeen(livePeer.lastSeen)}`:'не в сети';
 
   return h('div',{style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}},
@@ -1268,10 +1224,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
         h(Avatar,{user:livePeer,size:34}),
         h('div',null,
           h('div',{style:{fontWeight:700,fontSize:14,fontFamily:'Syne',display:'flex',alignItems:'center',gap:5}},livePeer?.login||'...',livePeer?.email&&VERIFIED_EMAILS.includes(livePeer.email)&&h('span',{style:{fontSize:12,background:'linear-gradient(135deg,#4f8cff,#9b8cff)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
-          h('div',{style:{fontSize:11,display:'flex',alignItems:'center',gap:4}},
-            h('span',{className:'status-dot '+(livePeer?.online?'online':'offline')}),
-            h('span',{style:{color:livePeer?.online?'var(--ok)':'var(--muted)'}},statusText)
-          )
+          h('div',{style:{fontSize:11,display:'flex',alignItems:'center',gap:4}},h('span',{className:'status-dot '+(livePeer?.online?'online':'offline')}),h('span',{style:{color:livePeer?.online?'var(--ok)':'var(--muted)'}},statusText))
         )
       ),
       h('div',{style:{display:'flex',gap:6}},
@@ -1310,7 +1263,6 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
   );
 }
 
-// ── Room Chat View ──
 function RoomChat({room,me,onBack}){
   const [msgs,setMsgs]=useState([]);
   const [lightbox,setLightbox]=useState(null);
@@ -1338,13 +1290,13 @@ function RoomChat({room,me,onBack}){
       if(arr.length>lastCount.current&&lastCount.current>0&&arr[arr.length-1].uid!==me){
         playRecv();
         const last=arr[arr.length-1];
-        const preview=last.type==='text'?(last.text||'').slice(0,80):last.type==='image'?'📷 Фото':last.type==='audio'?'🎤 Голосовое':last.type==='video'?'📹 Видео':last.type==='file'?'📎 Файл':'Сообщение';
-        sendNotif(room.name, (last.senderName||'Кто-то')+': '+preview, 'room-'+room.id);
+        const preview=last.type==='text'?(last.text||'').slice(0,80):last.type==='image'?'📷 Фото':last.type==='voice'?'🎤 Голосовое':last.type==='video-note'?'⭕ Видеосообщение':last.type==='file'?'📎 Файл':'Сообщение';
+        sendNotif(liveRoom.name, (last.senderName||'Кто-то')+': '+preview, 'room-'+room.id);
       }
       lastCount.current=arr.length;setMsgs(arr);
     });
     return()=>ref.off();
-  },[room.id]);
+  },[room.id,me,liveRoom.name]);
 
   useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[msgs]);
 
@@ -1363,10 +1315,7 @@ function RoomChat({room,me,onBack}){
     }
   },[room.id,me,editMsg,replyMsg]);
 
-  const deleteMsg=m=>{
-    if(!confirm('Удалить?'))return;
-    if(m.uid===me||isAdmin)db.ref(`room_msgs/${room.id}/messages/${m.k}`).remove();
-  };
+  const deleteMsg=m=>{if(!confirm('Удалить?'))return;if(m.uid===me||isAdmin)db.ref(`room_msgs/${room.id}/messages/${m.k}`).remove()};
   const pinMsg=async m=>{await db.ref(`room_msgs/${room.id}/pinned`).set({k:m.k,text:m.text||'📎 Вложение',uid:m.uid,ts:m.ts})};
   const unpinMsg=async()=>{await db.ref(`room_msgs/${room.id}/pinned`).remove()};
   const reactMsg=async(m,emoji)=>{
@@ -1413,30 +1362,18 @@ function RoomChat({room,me,onBack}){
   );
 }
 
-
-// ── Rutube Extract ID ────────────────────────────────────────────────────────
 function extractRTId(url){
   if(!url) return null;
-  // rutube.ru/video/HASH/ or rutube.ru/play/embed/HASH
   const m = url.match(/rutube\.ru\/(?:video|play\/embed)\/([a-f0-9]{32})/i);
   if(m) return m[1];
-  // short: rutube.ru/video/HASH/?... 
   const m2 = url.match(/([a-f0-9]{32})/i);
   return m2 ? m2[1] : null;
 }
 
-// ── Share YouTube Modal ───────────────────────────────────────────────────────
 function ShareRTModal({video, me, dmConvs, peerUsers, rooms, onClose}){
   const [sent, setSent] = useState({});
   const sendTo = async(type, id, name) => {
-    const payload = {
-      type: 'rutube',
-      rtId: video.id,
-      rtTitle: video.title,
-      rtChannel: video.channel,
-      rtThumb: video.thumb,
-      text: '▶️ ' + video.title
-    };
+    const payload = {type: 'rutube',rtId: video.id,rtTitle: video.title,rtChannel: video.channel,rtThumb: video.thumb,text: '▶️ ' + video.title};
     if(type === 'dm'){
       const cid = [me, id].sort().join('__');
       db.ref('dm/' + cid + '/msgs').push({uid: me, ts: Date.now(), ...payload});
@@ -1448,53 +1385,29 @@ function ShareRTModal({video, me, dmConvs, peerUsers, rooms, onClose}){
     }
     setSent(s => ({...s, [id]: true}));
   };
-
   const visibleRooms = rooms.filter(r => r.type === 'group');
-
   return h(Modal, {onClose, width: 400},
-    h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
-      h('div', {className:'syne', style:{fontWeight:700,fontSize:16}}, '📤 Поделиться'),
-      h('button', {style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22}, onClick:onClose}, '×')
-    ),
-    h('div', {style:{background:'var(--panel)',borderRadius:12,overflow:'hidden',border:'1px solid var(--border)'}},
-      h('img', {src: video.thumb, style:{width:'100%',aspectRatio:'16/9',objectFit:'cover',display:'block'}}),
-      h('div', {style:{padding:'8px 12px',fontSize:13,fontWeight:600,lineHeight:1.4}}, video.title)
-    ),
+    h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div', {className:'syne', style:{fontWeight:700,fontSize:16}}, '📤 Поделиться'),h('button', {style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22}, onClick:onClose}, '×')),
+    h('div', {style:{background:'var(--panel)',borderRadius:12,overflow:'hidden',border:'1px solid var(--border)'}},h('img', {src: video.thumb, style:{width:'100%',aspectRatio:'16/9',objectFit:'cover',display:'block'}}),h('div', {style:{padding:'8px 12px',fontSize:13,fontWeight:600,lineHeight:1.4}}, video.title)),
     h('div', {style:{maxHeight:300,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
-      dmConvs.length === 0 && visibleRooms.length === 0 &&
-        h('div', {style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}}, 'Нет контактов'),
-      dmConvs.length > 0 && h('div', {className:'section-label', style:{padding:'4px 4px 2px'}}, 'ЛИЧНЫЕ СООБЩЕНИЯ'),
+      dmConvs.length === 0 && visibleRooms.length === 0 && h('div', {style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}}, 'Нет контактов'),
       dmConvs.map(c => {
         const pu = peerUsers[c.uid];
         return h('div', {key:c.uid, className:'search-item', style:{justifyContent:'space-between'}, onClick:()=>sendTo('dm',c.uid)},
-          h('div', {style:{display:'flex',alignItems:'center',gap:10}},
-            h(Avatar, {user: pu||{id:c.uid}, size:34}),
-            h('div', {style:{fontWeight:600,fontSize:13}}, pu?.login || c.uid.slice(0,8))
-          ),
-          sent[c.uid]
-            ? h('span', {style:{fontSize:12,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено')
-            : h('span', {style:{fontSize:12,color:'var(--accent)',fontWeight:700}}, 'Отправить')
+          h('div', {style:{display:'flex',alignItems:'center',gap:10}},h(Avatar, {user: pu||{id:c.uid}, size:34}),h('div', {style:{fontWeight:600,fontSize:13}}, pu?.login || c.uid.slice(0,8))),
+          sent[c.uid] ? h('span', {style:{fontSize:12,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено') : h('span', {style:{fontSize:12,color:'var(--accent)',fontWeight:700}}, 'Отправить')
         );
       }),
-      visibleRooms.length > 0 && h('div', {className:'section-label', style:{padding:'8px 4px 2px'}}, 'ГРУППЫ'),
       visibleRooms.map(r =>
         h('div', {key:r.id, className:'search-item', style:{justifyContent:'space-between'}, onClick:()=>sendTo('room',r.id)},
-          h('div', {style:{display:'flex',alignItems:'center',gap:10}},
-            r.avatarUrl
-              ? h('img', {src:r.avatarUrl, className:'avatar-img', style:{width:34,height:34}})
-              : h('div', {style:{width:34,height:34,borderRadius:'50%',background:'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}, '👥'),
-            h('div', {style:{fontWeight:600,fontSize:13}}, r.name)
-          ),
-          sent[r.id]
-            ? h('span', {style:{fontSize:12,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено')
-            : h('span', {style:{fontSize:12,color:'var(--accent)',fontWeight:700}}, 'Отправить')
+          h('div', {style:{display:'flex',alignItems:'center',gap:10}},r.avatarUrl?h('img', {src:r.avatarUrl, className:'avatar-img', style:{width:34,height:34}}):h('div', {style:{width:34,height:34,borderRadius:'50%',background:'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}, '👥'),h('div', {style:{fontWeight:600,fontSize:13}}, r.name)),
+          sent[r.id] ? h('span', {style:{fontSize:12,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено') : h('span', {style:{fontSize:12,color:'var(--accent)',fontWeight:700}}, 'Отправить')
         )
       )
     )
   );
 }
 
-// ── YouTube Player Overlay ────────────────────────────────────────────────────
 function RTPlayer({video, me, dmConvs, peerUsers, rooms, onClose}){
   const [showShare, setShowShare] = useState(false);
   return h('div', {className:'rt-player-wrap'},
@@ -1503,17 +1416,12 @@ function RTPlayer({video, me, dmConvs, peerUsers, rooms, onClose}){
       h('div', {style:{flex:1,fontWeight:600,fontSize:14,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text)'}}, video.title),
       h('button', {className:'btn btn-primary', style:{borderRadius:999,padding:'8px 16px',flexShrink:0}, onClick:()=>setShowShare(true)}, '📤 Поделиться')
     ),
-    h('iframe', {
-      src: 'https://rutube.ru/play/embed/' + video.id + '?autoplay=1&skinColor=ff4444',
-      allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
-      allowFullScreen: true
-    }),
+    h('iframe', {src: 'https://rutube.ru/play/embed/' + video.id + '?autoplay=1&skinColor=ff4444',allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',allowFullScreen: true}),
     h('div', {style:{fontSize:12,color:'rgba(255,255,255,.35)',textAlign:'center'}}, video.channel),
     showShare && h(ShareRTModal, {video, me, dmConvs, peerUsers, rooms, onClose:()=>setShowShare(false)})
   );
 }
 
-// ── YouTube Tab ───────────────────────────────────────────────────────────────
 function RutubeTab({me, dmConvs, peerUsers, rooms}){
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -1523,22 +1431,14 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
   const [urlInput, setUrlInput] = useState('');
   const inputRef = useRef();
 
-  // Search via YouTube oEmbed + Invidious public API (no API key needed)
   const search = async(q) => {
     if(!q.trim()) return;
     setBusy(true); setErr(''); setResults([]);
     try {
-      // Use Invidious public instance — no API key, works freely
       const res = await fetch('https://rutube.ru/api/search/video/?q=' + encodeURIComponent(q) + '&type=video&fields=videoId,title,author,lengthSeconds,videoThumbnails');
       if(!res.ok) throw new Error('Ошибка ' + res.status);
       const data = await res.json();
-      setResults(data.slice(0, 20).map(v => ({
-        id: v.videoId,
-        title: v.title,
-        channel: v.author,
-        thumb: v.thumb||'',
-        duration: v.lengthSeconds ? fmtDur(v.lengthSeconds) : ''
-      })));
+      setResults(data.slice(0, 20).map(v => ({id: v.videoId,title: v.title,channel: v.author,thumb: v.thumb||'',duration: v.lengthSeconds ? fmtDur(v.lengthSeconds) : ''})));
     } catch(e) {
       setErr('Не удалось загрузить результаты. Попробуйте другой запрос.');
     }
@@ -1547,7 +1447,7 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
 
   const openByUrl = () => {
     const id = extractRTId(urlInput.trim());
-    if(!id){ setErr('Неверная ссылка Rutube (пример: https://rutube.ru/video/abc123...)'); return; }
+    if(!id){ setErr('Неверная ссылка Rutube'); return; }
     setPlaying({ id, title: 'Rutube видео', channel: '', thumb: '' });
     setUrlInput('');
   };
@@ -1556,55 +1456,28 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
     h('div', {className:'rt-search-bar'},
       h('div', {style:{display:'flex',flexDirection:'column',gap:8,flex:1}},
         h('div', {style:{display:'flex',gap:8}},
-          h('input', {
-            ref: inputRef,
-            placeholder: '🔍 Поиск видео на Rutube...',
-            value: query,
-            onChange: e => setQuery(e.target.value),
-            onKeyDown: e => e.key==='Enter' && search(query),
-            style:{flex:1}
-          }),
+          h('input', {ref: inputRef,placeholder: '🔍 Поиск видео на Rutube...',value: query,onChange: e => setQuery(e.target.value),onKeyDown: e => e.key==='Enter' && search(query),style:{flex:1}}),
           h('button', {className:'btn btn-primary', style:{flexShrink:0,borderRadius:12}, onClick:()=>search(query), disabled:busy}, busy?'...':'Найти')
         ),
         h('div', {style:{display:'flex',gap:8}},
-          h('input', {
-            placeholder: '🔗 Вставь ссылку Rutube для просмотра...',
-            value: urlInput,
-            onChange: e => setUrlInput(e.target.value),
-            onKeyDown: e => e.key==='Enter' && openByUrl(),
-            style:{flex:1}
-          }),
+          h('input', {placeholder: '🔗 Вставь ссылку Rutube...',value: urlInput,onChange: e => setUrlInput(e.target.value),onKeyDown: e => e.key==='Enter' && openByUrl(),style:{flex:1}}),
           h('button', {className:'btn btn-ghost', style:{flexShrink:0,borderRadius:12}, onClick:openByUrl}, '▶️')
         )
       )
     ),
     err && h('div', {style:{padding:'8px 16px',fontSize:12,color:'var(--danger)',background:'rgba(248,113,113,.08)',borderBottom:'1px solid var(--border)'}}, err),
-    busy && h('div', {style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,color:'var(--muted)'}},
-      h('div', {style:{width:32,height:32,border:'3px solid rgba(255,0,0,.2)',borderTopColor:'#ff4444',borderRadius:'50%',animation:'spin .7s linear infinite'}}),
-      h('div', {style:{fontSize:13}}, 'Поиск на Rutube...')
-    ),
-    !busy && results.length === 0 && h('div', {style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'var(--muted)'}},
-      h('div', {style:{fontSize:48,opacity:.2}}, '▶️'),
-      h('div', {className:'syne', style:{fontSize:18,fontWeight:800,opacity:.2}}, 'Rutube'),
-      h('div', {style:{fontSize:13,opacity:.5,textAlign:'center',maxWidth:280}}, 'Ищи видео на Rutube или вставь ссылку для просмотра и отправки друзьям')
-    ),
+    busy && h('div', {style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,color:'var(--muted)'}},h('div', {style:{width:32,height:32,border:'3px solid rgba(255,0,0,.2)',borderTopColor:'#ff4444',borderRadius:'50%',animation:'spin .7s linear infinite'}}),h('div', {style:{fontSize:13}}, 'Поиск на Rutube...')),
+    !busy && results.length === 0 && h('div', {style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'var(--muted)'}},h('div', {style:{fontSize:48,opacity:.2}}, '▶️'),h('div', {className:'syne', style:{fontSize:18,fontWeight:800,opacity:.2}}, 'Rutube'),h('div', {style:{fontSize:13,opacity:.5,textAlign:'center',maxWidth:280}}, 'Ищи видео на Rutube или вставь ссылку')),
     !busy && results.length > 0 && h('div', {className:'rt-grid'},
       results.map(v => h('div', {key:v.id, className:'rt-card', onClick:()=>setPlaying(v)},
-        h('div', {className:'rt-thumb'},
-          h('img', {src:v.thumb, loading:'lazy', alt:v.title}),
-          v.duration && h('div', {className:'duration'}, v.duration),
-          h('div', {className:'play-icon'}, h('div', {style:{width:44,height:44,borderRadius:'50%',background:'rgba(255,68,68,.9)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}, '▶'))
-        ),
-        h('div', {className:'rt-info'},
-          h('div', {className:'rt-title'}, v.title),
-          h('div', {className:'rt-meta'}, v.channel)
-        )
+        h('div', {className:'rt-thumb'},h('img', {src:v.thumb, loading:'lazy', alt:v.title}),v.duration && h('div', {className:'duration'}, v.duration),h('div', {className:'play-icon'}, h('div', {style:{width:44,height:44,borderRadius:'50%',background:'rgba(255,68,68,.9)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}, '▶'))),
+        h('div', {className:'rt-info'},h('div', {className:'rt-title'}, v.title),h('div', {className:'rt-meta'}, v.channel))
       ))
     ),
     playing && h(RTPlayer, {video:playing, me, dmConvs, peerUsers, rooms, onClose:()=>setPlaying(null)})
   );
 }
-// ── App ──
+
 function App(){
   const [user,setUser]=useState(null);const [loading,setLoading]=useState(true);
   const [dmConvs,setDmConvs]=useState([]);const [rooms,setRooms]=useState([]);
@@ -1626,7 +1499,6 @@ function App(){
         else{await ref.update({online:true,lastSeen:Date.now()});}
         userListenerRef.current=ref;ref.on('value',s=>{const v=s.val();if(v){setUser(v);setUid(v.id);}setLoading(false)});
         window.addEventListener('beforeunload',()=>ref.update({online:false,lastSeen:Date.now()}));
-        // Update online status periodically
         const interval=setInterval(()=>ref.update({online:true,lastSeen:Date.now()}),60000);
         window.addEventListener('beforeunload',()=>clearInterval(interval));
       }else{setUser(null);setUid(null);setLoading(false);}
@@ -1663,7 +1535,6 @@ function App(){
 
   useEffect(()=>{
     if(!uid)return;
-    // Request notification permission as soon as user is logged in
     requestNotifPermission();
     const ref=db.ref(`calls/${uid}/from`);
     ref.on('value',s=>{
@@ -1673,7 +1544,6 @@ function App(){
         if(fromUid){
           loadUser(fromUid);
           setActiveChat({type:'dm',id:fromUid});
-          // Send call notification
           const callerData=peerUsers[fromUid];
           const callerName=callerData?.login||'Пользователь';
           const isVideo=Object.values(v)[0]?.isVideo||false;
@@ -1738,7 +1608,6 @@ function App(){
   const navTabs=[{id:'dms',icon:'💬',label:'Чаты',badge:totalUnread},{id:'groups',icon:'👥',label:'Группы'},{id:'rt',icon:'▶️',label:'Rutube'},{id:'profile',icon:'👤',label:'Профиль'}];
 
   return h('div',{className:'app-layout',style:{height:'100dvh',display:'flex',padding:14,gap:12}},
-    // Desktop sidebar
     h('div',{className:'glass sidebar',style:{width:260,borderRadius:22,padding:'12px 10px',display:'flex',flexDirection:'column',gap:6,flexShrink:0}},
       h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'6px 8px',borderRadius:14,cursor:'pointer',transition:'background .15s'},onMouseEnter:e=>e.currentTarget.style.background='rgba(255,255,255,.05)',onMouseLeave:e=>e.currentTarget.style.background='',onClick:()=>setShowProfile(true)},
         h(Avatar,{user,size:36,ring:true}),
@@ -1756,7 +1625,6 @@ function App(){
       h('button',{style:{background:'none',border:'none',color:'var(--muted)',fontSize:12,cursor:'pointer',padding:'6px',textAlign:'center',borderRadius:8,transition:'color .15s'},onMouseEnter:e=>e.target.style.color='var(--danger)',onMouseLeave:e=>e.target.style.color='var(--muted)',onClick:signOut},'Выйти')
     ),
 
-    // Mobile list overlay
     showMobileList&&!activeChat&&h('div',{className:'mobile-list-overlay'},
       h('div',{className:'mobile-list-header'},
         h('div',{className:'syne',style:{fontWeight:800,fontSize:20}},tab==='dms'?'Сообщения':tab==='groups'?'Группы':'Каналы'),
@@ -1765,7 +1633,6 @@ function App(){
       h('div',{style:{padding:'8px 12px',display:'flex',flexDirection:'column',gap:2}},listContent())
     ),
 
-    // Main chat area
     h('div',{className:'main-area',style:{flex:1,borderRadius:22,overflow:'hidden',display:'flex',flexDirection:'column'}},
       showRT
         ?h('div',{className:'glass',style:{flex:1,height:'100%',borderRadius:22,display:'flex',flexDirection:'column',overflow:'hidden'}},
@@ -1789,7 +1656,6 @@ function App(){
               )
     ),
 
-    // Mobile bottom navigation nice
     h('div',{className:'mobile-nav'},
       navTabs.map(t=>{
         const isActive=t.id==='profile'?showProfile:t.id==='rt'?showRT&&!showProfile:!activeChat&&!showRT&&showMobileList&&tab===t.id;
