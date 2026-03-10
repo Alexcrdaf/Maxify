@@ -192,6 +192,143 @@ audio{width:180px;height:34px}
 <body>
 <div id="root" style="height:100vh"></div>
 <script>
+// ── SECURITY: DevTools detection ─────────────────────────────────────────────
+(function(){
+  'use strict';
+  let _blocked = false;
+  let _dtOpen = false;
+  let _warnCount = 0;
+
+  // Overlay element shown when devtools detected
+  function showBlock(){
+    if(_blocked) return;
+    _blocked = true;
+    const el = document.createElement('div');
+    el.id = '__sec_overlay';
+    el.style.cssText = [
+      'position:fixed','inset:0','z-index:999999',
+      'background:#07090f','display:flex','flex-direction:column',
+      'align-items:center','justify-content:center','gap:16px',
+      'font-family:Syne,sans-serif'
+    ].join(';');
+    el.innerHTML = `
+      <div style="font-size:48px">🔒</div>
+      <div style="color:#dde1f0;font-size:22px;font-weight:800;letter-spacing:-.03em">Доступ заблокирован</div>
+      <div style="color:rgba(221,225,240,.45);font-size:14px;text-align:center;max-width:340px;line-height:1.7">
+        Инструменты разработчика не допускаются.<br>
+        Закройте DevTools и обновите страницу.
+      </div>
+      <button onclick="location.reload()" style="margin-top:8px;background:#4f8cff;color:#fff;border:none;border-radius:12px;padding:12px 28px;font-family:Syne,sans-serif;font-weight:700;font-size:14px;cursor:pointer;letter-spacing:.02em">
+        Обновить страницу
+      </button>`;
+    document.body.appendChild(el);
+    // Freeze React root
+    const root = document.getElementById('root');
+    if(root) root.style.display = 'none';
+  }
+
+  function hideBlock(){
+    _blocked = false;
+    _dtOpen = false;
+    _warnCount = 0;
+    const el = document.getElementById('__sec_overlay');
+    if(el) el.remove();
+    const root = document.getElementById('root');
+    if(root) root.style.display = '';
+  }
+
+  // Method 1: window size difference (most reliable, cross-browser)
+  function checkSize(){
+    const threshold = 160;
+    const widthDiff = window.outerWidth - window.innerWidth;
+    const heightDiff = window.outerHeight - window.innerHeight;
+    return widthDiff > threshold || heightDiff > threshold;
+  }
+
+  // Method 2: console timing trick
+  let _devDetected = false;
+  const _img = new Image();
+  Object.defineProperty(_img, 'id', {
+    get: function(){
+      _devDetected = true;
+    }
+  });
+
+  // Method 3: debugger timing
+  function checkDebugger(){
+    const t0 = performance.now();
+    // eslint-disable-next-line no-debugger
+    debugger; // pauses in devtools, creating large time gap
+    const t1 = performance.now();
+    return (t1 - t0) > 100;
+  }
+
+  // Poll every 800ms
+  setInterval(function(){
+    const bySize = checkSize();
+    // Reset devDetected flag and check via console trick
+    _devDetected = false;
+    console.log('%c', _img); // triggers getter if console open
+    const byConsole = _devDetected;
+
+    if(bySize || byConsole){
+      if(!_dtOpen){
+        _dtOpen = true;
+        _warnCount++;
+        showBlock();
+      }
+    } else {
+      if(_dtOpen && _blocked){
+        hideBlock();
+      }
+    }
+  }, 800);
+
+  // Disable right-click context menu
+  document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+    return false;
+  });
+
+  // Disable common devtools keyboard shortcuts
+  document.addEventListener('keydown', function(e){
+    // F12
+    if(e.key === 'F12') { e.preventDefault(); return false; }
+    // Ctrl+Shift+I / Cmd+Option+I
+    if((e.ctrlKey||e.metaKey) && e.shiftKey && (e.key==='I'||e.key==='i')) { e.preventDefault(); return false; }
+    // Ctrl+Shift+J
+    if((e.ctrlKey||e.metaKey) && e.shiftKey && (e.key==='J'||e.key==='j')) { e.preventDefault(); return false; }
+    // Ctrl+Shift+C
+    if((e.ctrlKey||e.metaKey) && e.shiftKey && (e.key==='C'||e.key==='c')) { e.preventDefault(); return false; }
+    // Ctrl+U (view source)
+    if((e.ctrlKey||e.metaKey) && (e.key==='U'||e.key==='u')) { e.preventDefault(); return false; }
+    // Ctrl+S (save page)
+    if((e.ctrlKey||e.metaKey) && (e.key==='S'||e.key==='s')) { e.preventDefault(); return false; }
+  });
+
+  // Override console to neutralize injection attempts
+  const _noop = ()=>{};
+  const _safeConsole = {
+    log: _noop, warn: _noop, error: _noop, info: _noop,
+    debug: _noop, table: _noop, dir: _noop, group: _noop,
+    groupEnd: _noop, time: _noop, timeEnd: _noop, trace: _noop,
+    assert: _noop, clear: _noop, count: _noop, countReset: _noop
+  };
+  // Freeze the overrides so they can't be re-assigned from console
+  try {
+    Object.keys(_safeConsole).forEach(k => {
+      try { window.console[k] = _noop; } catch(e2){}
+    });
+  } catch(e) {}
+
+  // Detect if page is inside iframe (clickjacking protection)
+  if(window.self !== window.top){
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#f87171;font-size:16px;">🚫 Встраивание запрещено</div>';
+    throw new Error('Framing not allowed');
+  }
+})();
+
+// ── Firebase ─────────────────────────────────────────────────────────────────
 const FC={apiKey:"AIzaSyA6pHfRD-a50nZ5C-e_RDj5j8ijLBQPX8A",authDomain:"mymaxiscord.firebaseapp.com",databaseURL:"https://mymaxiscord-default-rtdb.firebaseio.com",projectId:"mymaxiscord",storageBucket:"mymaxiscord.firebasestorage.app",messagingSenderId:"110398248811",appId:"1:110398248811:web:1454c9bc4dc4f5e9931e2e"};
 if(!firebase.apps.length) firebase.initializeApp(FC);
 const auth=firebase.auth(), db=firebase.database();
