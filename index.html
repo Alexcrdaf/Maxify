@@ -430,7 +430,6 @@ function UserSearch({me,onSelect,onClose}){
             h('span',{style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},u.login),
             u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{title:'Разработчик',style:{fontSize:11,background:'linear-gradient(135deg,#4f8cff,#9b8cff)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
           ),
-          h('div',{style:{fontSize:11,color:'var(--muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},u.email),
           h('div',{style:{fontSize:10,color:u.online?'var(--ok)':'var(--muted)'}},u.online?'● онлайн':'○ оффлайн')
         )
       ))
@@ -520,7 +519,6 @@ function ProfileModal({user,onClose}){
         h('div',{style:{fontSize:11,color:'var(--muted)',fontWeight:600,letterSpacing:'.06em'}},'О СЕБЕ'),
         h('textarea',{value:bio,onChange:e=>setBio(e.target.value),rows:3,placeholder:'Расскажите о себе...',style:{resize:'none'}})
       ),
-      h('div',{style:{fontSize:13,display:'flex',justifyContent:'space-between',color:'var(--muted)'}},'Email',h('span',{style:{color:'var(--text)'}},user.email)),
       h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center'},onClick:save,disabled:saving},saving?'Сохранение...':'💾 Сохранить')
     ),
     tab==='avatar'&&h(React.Fragment,null,
@@ -797,7 +795,7 @@ function RoomInfoModal({room,me,onClose}){
       h('div',{style:{maxHeight:240,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
         searchRes.map(u=>h('div',{key:u.id,className:'search-item',onClick:()=>addMember(u.id)},
           h(Avatar,{user:u,size:34}),
-          h('div',{style:{flex:1}},h('div',{style:{fontWeight:600,fontSize:13}},u.login),h('div',{style:{fontSize:11,color:'var(--muted)'}},u.email)),
+          h('div',{style:{flex:1}},h('div',{style:{fontWeight:600,fontSize:13}},u.login)),
           h('span',{style:{fontSize:11,color:'var(--accent)'}},'+ Добавить')
         ))
       )
@@ -869,29 +867,67 @@ function CallOverlay({peerUser,isVideo,isIncoming,onAccept,onEnd,localStream,rem
 }
 
 // ── Message Bubble ───────────────────────────────────────────────────────────
-function MsgBubble({m,mine,onImgClick}){
-  if(m.type==='video-note') return h('video',{src:m.url,controls:true,className:'vnote',style:{cursor:'pointer'}});
-  if(m.type==='voice') return h('div',{className:(mine?'bubble-mine':'bubble-their'),style:{padding:'8px 12px',display:'flex',alignItems:'center',gap:8}},
-    h('span',{style:{fontSize:16}},'🎙️'),
-    h('audio',{src:m.url,controls:true,preload:'metadata'})
+function MsgBubble({m,mine,onImgClick,onEdit,onDelete}){
+  const [showActions, setShowActions] = useState(false);
+  const isText = m.type === 'text';
+
+  const Actions = () => h('div', {
+    style: {
+      position: 'absolute',
+      bottom: '100%',
+      [mine ? 'right' : 'left']: 0,
+      background: 'var(--attach-bg)',
+      border: '1px solid var(--border)',
+      borderRadius: 10,
+      padding: 4,
+      display: 'flex',
+      gap: 4,
+      zIndex: 100,
+      boxShadow: '0 4px 12px rgba(0,0,0,.3)',
+      marginBottom: 4
+    }
+  },
+    isText && h('button', { className: 'btn btn-ghost', style: { padding: '4px 8px', fontSize: 11 }, onClick: (e) => { e.stopPropagation(); onEdit(m); setShowActions(false); } }, '✏️'),
+    h('button', { className: 'btn btn-danger', style: { padding: '4px 8px', fontSize: 11 }, onClick: (e) => { e.stopPropagation(); onDelete(m); setShowActions(false); } }, '🗑️')
   );
-  if(m.type==='image') return h('div',{className:'img-msg'},h('img',{src:m.url,alt:'фото',onClick:()=>onImgClick(m.url),loading:'lazy'}));
-  if(m.type==='file-video') return h('div',{className:(mine?'bubble-mine':'bubble-their'),style:{padding:'8px 12px'}},
-    h('video',{src:m.url,controls:true,style:{maxWidth:250,maxHeight:180,borderRadius:10,display:'block'}}),
-    m.name&&h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:4}},m.name)
+
+  const content = () => {
+    if(m.type==='video-note') return h('video',{src:m.url,controls:true,className:'vnote',style:{cursor:'pointer'}});
+    if(m.type==='voice') return h('div',{className:(mine?'bubble-mine':'bubble-their'),style:{padding:'8px 12px',display:'flex',alignItems:'center',gap:8}},
+      h('span',{style:{fontSize:16}},'🎙️'),
+      h('audio',{src:m.url,controls:true,preload:'metadata'})
+    );
+    if(m.type==='image') return h('div',{className:'img-msg'},h('img',{src:m.url,alt:'фото',onClick:()=>onImgClick(m.url),loading:'lazy'}));
+    if(m.type==='file-video') return h('div',{className:(mine?'bubble-mine':'bubble-their'),style:{padding:'8px 12px'}},
+      h('video',{src:m.url,controls:true,style:{maxWidth:250,maxHeight:180,borderRadius:10,display:'block'}}),
+      m.name&&h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:4}},m.name)
+    );
+    if(m.type==='file') return h('div',{className:(mine?'bubble-mine':'bubble-their'),style:{padding:'10px 14px',display:'flex',alignItems:'center',gap:10}},
+      h('span',{style:{fontSize:22}},'📎'),
+      h('div',null,
+        h('div',{style:{fontSize:13,fontWeight:600,marginBottom:2}},m.name||'Файл'),
+        h('a',{href:m.url,target:'_blank',download:m.name,style:{fontSize:11,color:'var(--accent)',textDecoration:'none'}},'Скачать ↓')
+      )
+    );
+    return h('div',{className:(mine?'bubble-mine':'bubble-their'),style:{maxWidth:320,padding:'9px 14px',fontSize:14,lineHeight:1.6,wordBreak:'break-word',position:'relative'}},
+      m.text,
+      m.edited && h('span', { style: { fontSize: 9, color: 'var(--muted)', marginLeft: 6, verticalAlign: 'bottom' } }, '(ред.)')
+    );
+  };
+
+  return h('div', {
+    style: { position: 'relative' },
+    onMouseEnter: () => mine && setShowActions(true),
+    onMouseLeave: () => setShowActions(false),
+    onClick: () => mine && setShowActions(!showActions)
+  },
+    showActions && mine && h(Actions),
+    content()
   );
-  if(m.type==='file') return h('div',{className:(mine?'bubble-mine':'bubble-their'),style:{padding:'10px 14px',display:'flex',alignItems:'center',gap:10}},
-    h('span',{style:{fontSize:22}},'📎'),
-    h('div',null,
-      h('div',{style:{fontSize:13,fontWeight:600,marginBottom:2}},m.name||'Файл'),
-      h('a',{href:m.url,target:'_blank',download:m.name,style:{fontSize:11,color:'var(--accent)',textDecoration:'none'}},'Скачать ↓')
-    )
-  );
-  return h('div',{className:(mine?'bubble-mine':'bubble-their'),style:{maxWidth:320,padding:'9px 14px',fontSize:14,lineHeight:1.6,wordBreak:'break-word'}},m.text);
 }
 
 // ── Chat Input Bar ───────────────────────────────────────────────────────────
-function InputBar({onSend,chatName,canWrite=true}){
+function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit}){
   const [text,setText]=useState('');
   const [showAttach,setShowAttach]=useState(false);
   const [voiceRec,setVoiceRec]=useState(false);
@@ -908,6 +944,14 @@ function InputBar({onSend,chatName,canWrite=true}){
   const vnoteRecRef=useRef();
   const vnoteStreamRef=useRef();
   const sendBtnRef=useRef();
+
+  useEffect(() => {
+    if (editMsg) {
+      setText(editMsg.text || '');
+    } else {
+      setText('');
+    }
+  }, [editMsg]);
 
   const doSend=useCallback(payload=>{
     if(payload.type==='text'&&!payload.text?.trim()) return;
@@ -1027,6 +1071,13 @@ function InputBar({onSend,chatName,canWrite=true}){
   if(!canWrite) return h('div',{style:{padding:'12px 18px',borderTop:'1px solid var(--border)',textAlign:'center',fontSize:13,color:'var(--muted)',flexShrink:0}},'Только владелец может писать в этот канал');
 
   return h('div',{style:{flexShrink:0}},
+    editMsg && h('div', { style: { padding: '8px 14px', background: 'var(--panel)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 } },
+      h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 } },
+        h('span', null, '✏️ Редактирование'),
+        h('span', { style: { color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, editMsg.text)
+      ),
+      h('button', { style: { background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }, onClick: onCancelEdit }, 'Отмена')
+    ),
     uploading&&h('div',{className:'prog-bar'},h('div',{className:'prog-fill',style:{width:uploadPct+'%'}})),
     uploadErr&&h('div',{style:{padding:'4px 14px',fontSize:12,color:'var(--danger)',background:'rgba(248,113,113,.08)'}},uploadErr),
     voiceRec
@@ -1055,8 +1106,8 @@ function InputBar({onSend,chatName,canWrite=true}){
             placeholder:'Сообщение...',
             style:{borderRadius:999,padding:'9px 16px'}
           }),
-          text.trim()
-            ?h('button',{ref:sendBtnRef,className:'btn btn-primary',style:{borderRadius:999,padding:'9px 18px',flexShrink:0,justifyContent:'center'},onClick:()=>doSend({type:'text',text})},'→')
+          (text.trim() || editMsg)
+            ?h('button',{ref:sendBtnRef,className:'btn btn-primary',style:{borderRadius:999,padding:'9px 18px',flexShrink:0,justifyContent:'center'},onClick:()=>doSend({type:'text',text})}, editMsg ? '✓' : '→')
             :h('button',{className:'btn btn-ghost btn-icon',title:'Голосовое',style:{flexShrink:0,fontSize:18},onClick:startVoice},'🎙️')
         ),
     vnoteMode&&h('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.93)',backdropFilter:'blur(24px)',zIndex:200,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:18}},
@@ -1090,6 +1141,8 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
   const [showBlock,setShowBlock]=useState(false);
   const [showDeleteChat,setShowDeleteChat]=useState(false);
   const [isBlocked,setIsBlocked]=useState(false);
+  const [editMsg, setEditMsg] = useState(null);
+
   useEffect(()=>{
     if(!showMenu) return;
     const handler=()=>setShowMenu(false);
@@ -1136,11 +1189,6 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
     peerInst.on('call',h2);
     return()=>peerInst.off('call',h2);
   },[peerInst]);
-  useEffect(()=>{
-    const ref=db.ref(`calls/${me}/from/${peer}`);
-    ref.on('value',s=>{if(s.val()) setCallState(c=>c||{type:'in',call:null,localStream:null,remoteStream:null})});
-    return()=>ref.off();
-  },[me,peer]);
 
   const startCall=async isVid=>{
     if(!peerInst||!peerUser?.peerId){alert('Пользователь сейчас недоступен');return}
@@ -1172,11 +1220,25 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
   };
 
   const send=useCallback(payload=>{
-    db.ref(`dm/${chatCid}/msgs`).push({uid:me,ts:Date.now(),...payload});
-    db.ref(`dm/${chatCid}/last`).set({uid:me,ts:Date.now(),preview:previewText(payload)});
-    db.ref(`dm/${chatCid}/unread/${peer}`).transaction(v=>(v||0)+1);
+    if (editMsg) {
+      db.ref(`dm/${chatCid}/msgs/${editMsg.k}`).update({
+        text: payload.text,
+        edited: true
+      });
+      setEditMsg(null);
+    } else {
+      db.ref(`dm/${chatCid}/msgs`).push({uid:me,ts:Date.now(),...payload});
+      db.ref(`dm/${chatCid}/last`).set({uid:me,ts:Date.now(),preview:previewText(payload)});
+      db.ref(`dm/${chatCid}/unread/${peer}`).transaction(v=>(v||0)+1);
+    }
     db.ref(`dm/${chatCid}/typing/${me}`).set(false);
-  },[chatCid,me,peer]);
+  },[chatCid,me,peer,editMsg]);
+
+  const deleteMsg = (m) => {
+    if (confirm('Удалить сообщение?')) {
+      db.ref(`dm/${chatCid}/msgs/${m.k}`).remove();
+    }
+  };
 
   const handleTyping=()=>{
     db.ref(`dm/${chatCid}/typing/${me}`).set(true);
@@ -1220,7 +1282,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
           h('span',{style:{fontSize:11,color:'var(--muted)',background:'rgba(255,255,255,.05)',padding:'3px 10px',borderRadius:999}},item.label));
         const{m}=item,mine=m.uid===me;
         return h('div',{key:m.k||m.ts,className:'msg-in',style:{display:'flex',flexDirection:'column',alignItems:mine?'flex-end':'flex-start',gap:2}},
-          h(MsgBubble,{m,mine,onImgClick:url=>setLightbox(url)}),
+          h(MsgBubble,{m,mine,onImgClick:url=>setLightbox(url), onEdit: setEditMsg, onDelete: deleteMsg}),
           h('div',{style:{fontSize:10,color:'var(--muted)'}},ts2t(m.ts))
         );
       }),
@@ -1234,7 +1296,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
       ),
       h('div',{ref:bottomRef})
     ),
-    h(InputBar,{onSend:send,chatName:peerUser?.login,onType:handleTyping}),
+    h(InputBar,{onSend:send,chatName:peerUser?.login,onType:handleTyping, editMsg, onCancelEdit: () => setEditMsg(null)}),
     lightbox&&h('div',{className:'lightbox',onClick:()=>setLightbox(null)},h('img',{src:lightbox,onClick:e=>e.stopPropagation()})),
     callState&&h(CallOverlay,{peerUser,isVideo:callState.call?.metadata?.isVideo||false,isIncoming:callState.type==='in',onAccept:acceptCall,onEnd:endCall,localStream:callState.localStream,remoteStream:callState.remoteStream}),
     isBlocked&&h('div',{style:{position:'absolute',bottom:70,left:0,right:0,textAlign:'center',padding:'8px',background:'rgba(248,113,113,.1)',borderTop:'1px solid rgba(248,113,113,.2)',fontSize:12,color:'var(--danger)',display:'flex',justifyContent:'center',alignItems:'center',gap:8}},
@@ -1251,6 +1313,7 @@ function RoomChat({room,me,onBack}){
   const [msgs,setMsgs]=useState([]);
   const [lightbox,setLightbox]=useState(null);
   const [showInfo,setShowInfo]=useState(false);
+  const [editMsg, setEditMsg] = useState(null);
   const bottomRef=useRef();
   const lastCount=useRef(0);
   const canWrite=room.type==='group'||(room.type==='channel'&&room.owner===me);
@@ -1270,9 +1333,23 @@ function RoomChat({room,me,onBack}){
   useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[msgs]);
 
   const send=useCallback(payload=>{
-    db.ref(`room_msgs/${room.id}`).push({uid:me,ts:Date.now(),...payload});
-    db.ref('rooms/'+room.id+'/last').set({uid:me,ts:Date.now(),preview:previewText(payload)});
-  },[room.id,me]);
+    if (editMsg) {
+      db.ref(`room_msgs/${room.id}/${editMsg.k}`).update({
+        text: payload.text,
+        edited: true
+      });
+      setEditMsg(null);
+    } else {
+      db.ref(`room_msgs/${room.id}`).push({uid:me,ts:Date.now(),...payload});
+      db.ref('rooms/'+room.id+'/last').set({uid:me,ts:Date.now(),preview:previewText(payload)});
+    }
+  },[room.id,me,editMsg]);
+
+  const deleteMsg = (m) => {
+    if (confirm('Удалить сообщение?')) {
+      db.ref(`room_msgs/${room.id}/${m.k}`).remove();
+    }
+  };
 
   const [userCache,setUserCache]=useState({});
   useEffect(()=>{
@@ -1317,13 +1394,13 @@ function RoomChat({room,me,onBack}){
           !mine&&h('div',{style:{fontSize:11,color:'var(--muted)',marginBottom:2,display:'flex',alignItems:'center',gap:6}},
             h(Avatar,{user:sender,size:18}),sender?.login||'...'
           ),
-          h(MsgBubble,{m,mine,onImgClick:url=>setLightbox(url)}),
+          h(MsgBubble,{m,mine,onImgClick:url=>setLightbox(url), onEdit: setEditMsg, onDelete: deleteMsg}),
           h('div',{style:{fontSize:10,color:'var(--muted)'}},ts2t(m.ts))
         );
       }),
       h('div',{ref:bottomRef})
     ),
-    h(InputBar,{onSend:send,chatName:room.name,canWrite}),
+    h(InputBar,{onSend:send,chatName:room.name,canWrite, editMsg, onCancelEdit: () => setEditMsg(null)}),
     lightbox&&h('div',{className:'lightbox',onClick:()=>setLightbox(null)},h('img',{src:lightbox,onClick:e=>e.stopPropagation()})),
     showInfo&&h(RoomInfoModal,{room,me,onClose:()=>setShowInfo(false)})
   );
