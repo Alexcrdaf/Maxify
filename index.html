@@ -773,7 +773,7 @@ function MsgBubble({m,mine,onImgClick,onReact,onReply,onEdit,onDelete,onCtx,meUi
   },[m.reactions,meUid]);
 
   const readTick = mine && (
-    h('span',{className:'read-tick'+(m.readBy?.' read':'')},m.readBy?'✓✓':'✓')
+    h('span',{className:'read-tick'+(m.readBy?' read':'')},m.readBy?'✓✓':'✓')
   );
 
   const disappearLabel = m.disappearAt && (
