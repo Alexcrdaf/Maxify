@@ -160,50 +160,31 @@ function getBestMimeType(kind){
   return ''; // browser default
 }
 
-// ── Upload: ImgBB (фото) + Uploadcare (видео/аудио/файлы) ──────────────────
-// Uploadcare: бесплатно, без preset, просто публичный ключ
-const IMGBB_KEY='6b2f4aa4251af974124a1053b9e8b719';
-const UPLOADCARE_PUB='demopublickey'; // работает для тестов; замените на свой ключ с uploadcare.com
+// ── Upload: всё через Uploadcare ────────────────────────────────────────────
+// demopublickey = официальный тестовый ключ, файлы живут 24ч
+// Для постоянного хранения: зарегистрируйтесь на uploadcare.com и вставьте свой ключ
+const UPLOADCARE_PUB='demopublickey';
 
 async function upload(file,onPct){
-  if(file.type.startsWith('image/')){
-    // Фото → ImgBB
+  return new Promise((res,rej)=>{
     const fd=new FormData();
-    fd.append('image',file);
-    const r=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:'POST',body:fd});
-    const j=await r.json();
-    if(!j.success) throw new Error(j.error?.message||'ImgBB error');
-    onPct&&onPct(100);
-    return j.data.url;
-  } else {
-    // Видео / аудио / файлы → Uploadcare
-    // API: https://upload.uploadcare.com/base/
-    return new Promise((res,rej)=>{
-      const fd=new FormData();
-      fd.append('UPLOADCARE_PUB_KEY', UPLOADCARE_PUB);
-      fd.append('UPLOADCARE_STORE','1');
-      fd.append('file', file);
-      const xhr=new XMLHttpRequest();
-      xhr.open('POST','https://upload.uploadcare.com/base/');
-      xhr.upload.onprogress=e=>e.lengthComputable&&onPct&&onPct(e.loaded/e.total*100);
-      xhr.onload=()=>{
-        try{
-          const j=JSON.parse(xhr.responseText);
-          // Uploadcare возвращает { file: "<uuid>" }
-          if(j.file){
-            // CDN URL — прямой, без подписи, работает сразу
-            res(`https://ucarecdn.com/${j.file}/`);
-          } else {
-            rej(new Error(j.detail||JSON.stringify(j)));
-          }
-        }catch(e){rej(e)}
-      };
-      xhr.onerror=()=>rej(new Error('Нет соединения'));
-      xhr.send(fd);
-    });
-  }
+    fd.append('UPLOADCARE_PUB_KEY',UPLOADCARE_PUB);
+    fd.append('UPLOADCARE_STORE','1');
+    fd.append('file',file);
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST','https://upload.uploadcare.com/base/');
+    xhr.upload.onprogress=e=>{if(e.lengthComputable&&onPct)onPct(Math.round(e.loaded/e.total*100))};
+    xhr.onload=()=>{
+      try{
+        const j=JSON.parse(xhr.responseText);
+        if(j.file) res('https://ucarecdn.com/'+j.file+'/');
+        else rej(new Error(j.detail||'Uploadcare error: '+xhr.responseText));
+      }catch(e){rej(new Error('Uploadcare parse error'))}
+    };
+    xhr.onerror=()=>rej(new Error('Net error'));
+    xhr.send(fd);
+  });
 }
-
 // ── Avatar ───────────────────────────────────────────────────────────────────
 function Avatar({user,size=36,ring=false}){
   const name=user?.login||user||'?';
