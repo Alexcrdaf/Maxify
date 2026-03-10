@@ -673,7 +673,7 @@ function ProfileModal({user,onClose}){
   const save=async()=>{if(!name.trim())return;setSaving(true);await db.ref('users/'+user.id).update({login:name.trim(),bio:bio.trim()});setSaving(false)};
   const uploadAvatar=async e=>{const file=e.target.files[0];if(!file)return;setUploading(true);try{const url=await upload(file,p=>setUploadPct(p));await db.ref('users/'+user.id).update({avatarUrl:url});}catch(ex){alert('Ошибка: '+ex.message)}setUploading(false);setUploadPct(0);e.target.value='';};
   const [darkMode,setDarkMode]=useState(!document.body.classList.contains('light'));
-  const toggleTheme=dark=>{if(dark){document.body.classList.remove('light');localStorage.setItem('theme','dark')}else{document.body.classList.add('light');localStorage.setItem('theme','light')}setDarkMode(dark)};
+  const toggleTheme=dark=>{if(dark){document.body.classList.remove('light');localStorage.setItem('theme','dark')}else{document.body.classList.add('light');localStorage.setItem('theme','light')}setDarkMode(dark);if(window.chrome&&window.chrome.webview){try{window.chrome.webview.postMessage(JSON.stringify({type:'theme',value:dark?'dark':'light'}))}catch(e){}}};
   return h(Modal,{onClose},
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Настройки'),h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')),
     h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:10}},h(Avatar,{user,size:72,ring:true}),h('div',{className:'syne',style:{fontWeight:700,fontSize:18}},user.login)),
@@ -1488,7 +1488,7 @@ function App(){
   const [tab,setTab]=useState('dms');const [uid,setUid]=useState(null);
   const userListenerRef=useRef(null);
 
-  useEffect(()=>{if(localStorage.getItem('theme')==='light')document.body.classList.add('light')},[]);
+  useEffect(()=>{const saved=localStorage.getItem('theme')||'dark';if(saved==='light')document.body.classList.add('light');if(window.chrome&&window.chrome.webview){try{window.chrome.webview.postMessage(JSON.stringify({type:'theme',value:saved}))}catch(e){}}},[]);
 
   useEffect(()=>{
     const unsub=auth.onAuthStateChanged(async fu=>{
