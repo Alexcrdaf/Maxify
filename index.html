@@ -237,22 +237,17 @@ audio{width:180px;height:34px}
     if(root) root.style.display = '';
   }
 
-  // Detection: debugger timing (accurate — pauses only when DevTools open with "Pause on debugger" active)
-  // + firebug/devtools object check (works in Chrome/Firefox/Edge)
+  // Detection: debugger timing only — zero false positives from zoom/resize
+  // Triggers only when DevTools is open with JS debugger active
   function isDevToolsOpen(){
-    // Check 1: debugger timing — only triggers if DevTools is open AND paused
+    // Firebug legacy check
+    if(window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) return true;
+
+    // Debugger timing — normal execution: ~0ms, paused in DevTools: >150ms
     const t0 = performance.now();
     debugger;
     const t1 = performance.now();
     if((t1 - t0) > 150) return true;
-
-    // Check 2: Chrome-specific devtools object
-    if(window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) return true;
-
-    // Check 3: outerHeight/innerHeight only with very large threshold to avoid false positives
-    // (taskbar, browser chrome etc typically add <100px; devtools adds 200-400px)
-    const heightDiff = window.outerHeight - window.innerHeight;
-    if(heightDiff > 300) return true;
 
     return false;
   }
