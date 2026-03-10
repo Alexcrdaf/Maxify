@@ -578,11 +578,78 @@ function ProfileModal({user,onClose}){
   );
 }
 
+// ── Room Search Modal ────────────────────────────────────────────────────────
+function RoomSearchModal({me,onSelect,onClose}){
+  const [q,setQ]=useState('');
+  const [results,setResults]=useState([]);
+  const [busy,setBusy]=useState(false);
+
+  useEffect(()=>{
+    if(!q.trim()){setResults([]);return}
+    setBusy(true);
+    const t=setTimeout(async()=>{
+      try{
+        const snap=await db.ref('rooms').once('value');
+        const all=snap.val()||{};
+        const ql=q.trim().toLowerCase();
+        const res=Object.values(all).filter(r=>{
+          if(!r||!r.id) return false;
+          return (r.name?.toLowerCase().includes(ql) || r.desc?.toLowerCase().includes(ql));
+        });
+        setResults(res);
+      }catch(e){ console.error(e); }
+      setBusy(false);
+    },350);
+    return()=>clearTimeout(t);
+  },[q]);
+
+  const joinRoom=async room=>{
+    await db.ref('rooms/'+room.id+'/members/'+me).set(true);
+    onSelect(room);
+    onClose();
+  };
+
+  return h(Modal,{onClose},
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+      h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Поиск групп и каналов'),
+      h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')
+    ),
+    h('input',{placeholder:'Название или описание...',value:q,onChange:e=>setQ(e.target.value),autoFocus:true}),
+    h('div',{style:{maxHeight:300,overflowY:'auto',display:'flex',flexDirection:'column',gap:4,minHeight:60}},
+      busy&&h('div',{style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}},'🔍 Поиск...'),
+      !busy&&q.trim()&&results.length===0&&h('div',{style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}},'Ничего не найдено'),
+      !busy&&results.map(r=>h('div',{key:r.id,className:'search-item',onClick:()=>joinRoom(r)},
+        h('div',{style:{width:38,height:38,borderRadius:'50%',background:r.type==='channel'?'rgba(155,140,255,.2)':'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},
+          r.avatarUrl ? h('img', {src: r.avatarUrl, className:'avatar-img', style:{width:38,height:38}}) : (r.type==='channel'?'📢':'👥')
+        ),
+        h('div',{style:{flex:1,minWidth:0}},
+          h('div',{style:{fontWeight:600,fontSize:14,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},r.name),
+          h('div',{style:{fontSize:11,color:'var(--muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},r.desc||(r.type==='group'?'Группа':'Канал'))
+        ),
+        h('span',{style:{fontSize:11,color:'var(--accent)'}},'Вступить')
+      ))
+    )
+  );
+}
+
 // ── Create Group/Channel Modal ───────────────────────────────────────────────
 function CreateRoomModal({me,type,onClose}){
   const [name,setName]=useState('');
   const [desc,setDesc]=useState('');
+  const [avatarUrl,setAvatarUrl]=useState(null);
   const [busy,setBusy]=useState(false);
+  const [uploadPct,setUploadPct]=useState(0);
+  const fileRef=useRef();
+
+  const handleFile=async e=>{
+    const file=e.target.files[0]; if(!file) return;
+    setBusy(true);
+    try{
+      const url=await upload(file,p=>setUploadPct(p));
+      setAvatarUrl(url);
+    }catch(ex){alert('Ошибка загрузки: '+ex.message)}
+    setBusy(false);setUploadPct(0);
+  };
 
   const create=async()=>{
     if(!name.trim()) return;
@@ -590,7 +657,8 @@ function CreateRoomModal({me,type,onClose}){
     const ref=db.ref('rooms').push();
     await ref.set({
       id:ref.key, name:name.trim(), desc:desc.trim(),
-      type, owner:me, members:{[me]:true}, createdAt:Date.now()
+      type, owner:me, members:{[me]:true}, createdAt:Date.now(),
+      avatarUrl:avatarUrl||null
     });
     onClose();
     setBusy(false);
@@ -600,6 +668,19 @@ function CreateRoomModal({me,type,onClose}){
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
       h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},type==='group'?'Создать группу':'Создать канал'),
       h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')
+    ),
+    h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:10,padding:'10px 0'}},
+      h('div',{
+        onClick:()=>fileRef.current.click(),
+        style:{width:64,height:64,borderRadius:'50%',background:'var(--panel)',border:'2px dashed var(--border)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',overflow:'hidden',position:'relative'}
+      },
+        avatarUrl 
+          ? h('img',{src:avatarUrl,style:{width:'100%',height:'100%',objectFit:'cover'}})
+          : h('span',{style:{fontSize:24}},'📷'),
+        busy&&uploadPct>0&&h('div',{style:{position:'absolute',inset:0,background:'rgba(0,0,0,.5)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff'}},uploadPct+'%')
+      ),
+      h('input',{ref:fileRef,type:'file',accept:'image/*',style:{display:'none'},onChange:handleFile}),
+      h('div',{style:{fontSize:11,color:'var(--muted)'}},'Нажмите, чтобы загрузить аватар')
     ),
     h('input',{placeholder:type==='group'?'Название группы':'Название канала',value:name,onChange:e=>setName(e.target.value),autoFocus:true}),
     h('textarea',{placeholder:'Описание (необязательно)',value:desc,onChange:e=>setDesc(e.target.value),rows:3,style:{resize:'none'}}),
@@ -614,6 +695,11 @@ function RoomInfoModal({room,me,onClose}){
   const [searchQ,setSearchQ]=useState('');
   const [searchRes,setSearchRes]=useState([]);
   const [members,setMembers]=useState({});
+  const [editName,setEditName]=useState(room.name||'');
+  const [editDesc,setEditDesc]=useState(room.desc||'');
+  const [busy,setBusy]=useState(false);
+  const [uploadPct,setUploadPct]=useState(0);
+  const fileRef=useRef();
 
   useEffect(()=>{
     const ref=db.ref('rooms/'+room.id+'/members');
@@ -634,6 +720,34 @@ function RoomInfoModal({room,me,onClose}){
 
   const addMember=async uid=>{await db.ref('rooms/'+room.id+'/members/'+uid).set(true)};
   const removeMember=async uid=>{if(uid===room.owner)return;await db.ref('rooms/'+room.id+'/members/'+uid).remove()};
+  
+  const saveChanges=async()=>{
+    if(!editName.trim()) return;
+    setBusy(true);
+    await db.ref('rooms/'+room.id).update({name:editName.trim(),desc:editDesc.trim()});
+    setBusy(false);
+  };
+
+  const handleAvatar=async e=>{
+    const file=e.target.files[0]; if(!file) return;
+    setBusy(true);
+    try{
+      const url=await upload(file,p=>setUploadPct(p));
+      await db.ref('rooms/'+room.id).update({avatarUrl:url});
+    }catch(ex){alert('Ошибка: '+ex.message)}
+    setBusy(false);setUploadPct(0);
+  };
+
+  const toggleHide=async()=>{
+    const hidden = !((db.ref('users/'+me+'/hiddenRooms/'+room.id).once('value')).val());
+    if (hidden) {
+      await db.ref('users/'+me+'/hiddenRooms/'+room.id).set(true);
+      onClose();
+    } else {
+      await db.ref('users/'+me+'/hiddenRooms/'+room.id).remove();
+    }
+  };
+
   const deleteRoom=async()=>{
     if(!confirm('Удалить?')) return;
     await db.ref('rooms/'+room.id).remove();
@@ -652,11 +766,29 @@ function RoomInfoModal({room,me,onClose}){
       h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')
     ),
     h('div',{className:'tab-bar'},
-      ['members','add'].map(t=>h('div',{key:t,className:'tab'+(tab===t?' active':''),onClick:()=>setTab(t)},
-        t==='members'?`Участники (${Object.keys(members).length})`:'Добавить'
+      [isOwner?'edit':null,'members','add','settings'].filter(Boolean).map(t=>h('div',{key:t,className:'tab'+(tab===t?' active':''),onClick:()=>setTab(t)},
+        t==='edit'?'Редактировать':t==='members'?`Участники (${Object.keys(members).length})`:t==='add'?'Добавить':'Настройки'
       ))
     ),
     h('div',{className:'hr'}),
+    tab==='edit'&&isOwner&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+      h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:8}},
+        h('div',{
+          onClick:()=>fileRef.current.click(),
+          style:{width:64,height:64,borderRadius:'50%',background:'var(--panel)',border:'2px dashed var(--border)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',overflow:'hidden',position:'relative'}
+        },
+          room.avatarUrl 
+            ? h('img',{src:room.avatarUrl,style:{width:'100%',height:'100%',objectFit:'cover'}})
+            : h('span',{style:{fontSize:24}},'📷'),
+          busy&&uploadPct>0&&h('div',{style:{position:'absolute',inset:0,background:'rgba(0,0,0,.5)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff'}},uploadPct+'%')
+        ),
+        h('input',{ref:fileRef,type:'file',accept:'image/*',style:{display:'none'},onChange:handleAvatar}),
+        h('div',{style:{fontSize:11,color:'var(--muted)'}},'Изменить аватар')
+      ),
+      h('input',{placeholder:'Название',value:editName,onChange:e=>setEditName(e.target.value)}),
+      h('textarea',{placeholder:'Описание',value:editDesc,onChange:e=>setEditDesc(e.target.value),rows:3,style:{resize:'none'}}),
+      h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center'},onClick:saveChanges,disabled:busy||!editName.trim()},'Сохранить изменения')
+    ),
     tab==='members'&&h('div',{style:{maxHeight:260,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
       Object.keys(members).map(uid=>h(MemberRow,{key:uid,uid,isOwner,ownerId:room.owner,me,onRemove:()=>removeMember(uid)}))
     ),
@@ -669,6 +801,13 @@ function RoomInfoModal({room,me,onClose}){
           h('span',{style:{fontSize:11,color:'var(--accent)'}},'+ Добавить')
         ))
       )
+    ),
+    tab==='settings'&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+      h('button',{className:'btn btn-ghost',style:{justifyContent:'center'},onClick:async()=>{
+        await db.ref('users/'+me+'/hiddenRooms/'+room.id).set(true);
+        onClose();
+      }},'🙈 Скрыть из списка'),
+      h('div',{style:{fontSize:11,color:'var(--muted)',textAlign:'center'}},'Скрытые каналы можно найти через поиск')
     ),
     h('div',{className:'hr'}),
     h('div',{style:{display:'flex',gap:8}},
@@ -1157,7 +1296,9 @@ function RoomChat({room,me,onBack}){
     h('div',{className:'glass',style:{padding:'10px 18px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}},
       h('div',{style:{display:'flex',alignItems:'center',gap:10}},
         h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:18},onClick:onBack},'←'),
-        h('div',{style:{width:34,height:34,borderRadius:'50%',background:room.type==='channel'?'rgba(155,140,255,.3)':'rgba(79,140,255,.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}},room.type==='channel'?'📢':'👥'),
+        room.avatarUrl
+          ? h('img', {src: room.avatarUrl, className:'avatar-img', style:{width:34,height:34}})
+          : h('div',{style:{width:34,height:34,borderRadius:'50%',background:room.type==='channel'?'rgba(155,140,255,.3)':'rgba(79,140,255,.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}},room.type==='channel'?'📢':'👥'),
         h('div',null,
           h('div',{className:'syne',style:{fontWeight:700,fontSize:14}},room.name),
           room.desc&&h('div',{style:{fontSize:11,color:'var(--muted)',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},room.desc)
@@ -1256,6 +1397,7 @@ function App(){
   const [activeChat,setActiveChat]=useState(null);
   const [peerUsers,setPeerUsers]=useState({});
   const [showSearch,setShowSearch]=useState(false);
+  const [showRoomSearch,setShowRoomSearch]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
   const [createRoom,setCreateRoom]=useState(null);
   const [showMobileList,setShowMobileList]=useState(false);
@@ -1357,6 +1499,9 @@ function App(){
     return()=>ref.off();
   },[uid]);
 
+  const hiddenRooms = useMemo(() => user?.hiddenRooms || {}, [user]);
+  const visibleRooms = useMemo(() => rooms.filter(r => !hiddenRooms[r.id]), [rooms, hiddenRooms]);
+
   useEffect(()=>{
     if(!uid) return;
     const ref=db.ref(`calls/${uid}/from`);
@@ -1383,8 +1528,8 @@ function App(){
 
   const activeDMPeer=activeChat?.type==='dm'?peerUsers[activeChat.id]:null;
   const activeRoom=activeChat?.type==='room'?rooms.find(r=>r.id===activeChat.id):null;
-  const groups=rooms.filter(r=>r.type==='group');
-  const channels=rooms.filter(r=>r.type==='channel');
+  const groups=visibleRooms.filter(r=>r.type==='group');
+  const channels=visibleRooms.filter(r=>r.type==='channel');
 
   const listContent=()=>{
     if(tab==='dms') return h(React.Fragment,null,
@@ -1406,10 +1551,15 @@ function App(){
       })
     );
     if(tab==='groups') return h(React.Fragment,null,
-      h('button',{className:'btn btn-ghost',style:{justifyContent:'flex-start',padding:'8px 12px',borderRadius:12,fontSize:13,width:'100%',marginBottom:4},onClick:()=>setCreateRoom('group')},'+ Создать группу'),
+      h('div',{style:{display:'flex',gap:4,marginBottom:4}},
+        h('button',{className:'btn btn-ghost',style:{flex:1,justifyContent:'center',padding:'8px',borderRadius:12,fontSize:13},onClick:()=>setCreateRoom('group')},'+ Создать'),
+        h('button',{className:'btn btn-ghost',style:{flex:1,justifyContent:'center',padding:'8px',borderRadius:12,fontSize:13},onClick:()=>setShowRoomSearch(true)},'🔍 Поиск')
+      ),
       groups.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'12px 8px'}},'Нет групп'),
       groups.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
-        h('div',{style:{width:40,height:40,borderRadius:'50%',background:'rgba(79,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},'👥'),
+        r.avatarUrl 
+          ? h('img', {src: r.avatarUrl, className:'avatar-img', style:{width:40,height:40,flexShrink:0}})
+          : h('div',{style:{width:40,height:40,borderRadius:'50%',background:'rgba(79,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},'👥'),
         h('div',{style:{flex:1,minWidth:0}},
           h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.name),
           h('div',{style:{fontSize:12,color:'var(--muted)'}},r.last?.preview||r.desc||'Группа')
@@ -1417,10 +1567,15 @@ function App(){
       ))
     );
     if(tab==='channels') return h(React.Fragment,null,
-      h('button',{className:'btn btn-ghost',style:{justifyContent:'flex-start',padding:'8px 12px',borderRadius:12,fontSize:13,width:'100%',marginBottom:4},onClick:()=>setCreateRoom('channel')},'+ Создать канал'),
+      h('div',{style:{display:'flex',gap:4,marginBottom:4}},
+        h('button',{className:'btn btn-ghost',style:{flex:1,justifyContent:'center',padding:'8px',borderRadius:12,fontSize:13},onClick:()=>setCreateRoom('channel')},'+ Создать'),
+        h('button',{className:'btn btn-ghost',style:{flex:1,justifyContent:'center',padding:'8px',borderRadius:12,fontSize:13},onClick:()=>setShowRoomSearch(true)},'🔍 Поиск')
+      ),
       channels.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'12px 8px'}},'Нет каналов'),
       channels.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
-        h('div',{style:{width:40,height:40,borderRadius:'50%',background:'rgba(155,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},'📢'),
+        r.avatarUrl
+          ? h('img', {src: r.avatarUrl, className:'avatar-img', style:{width:40,height:40,flexShrink:0}})
+          : h('div',{style:{width:40,height:40,borderRadius:'50%',background:'rgba(155,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},'📢'),
         h('div',{style:{flex:1,minWidth:0}},
           h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.name),
           h('div',{style:{fontSize:12,color:'var(--muted)'}},r.last?.preview||r.desc||'Канал')
@@ -1506,6 +1661,7 @@ function App(){
 
     showProfile&&h(ProfileModal,{user,onClose:()=>setShowProfile(false)}),
     showSearch&&h(UserSearch,{me:user.id,onSelect:u=>{openDM(u);setShowMobileList(false)},onClose:()=>setShowSearch(false)}),
+    showRoomSearch&&h(RoomSearchModal,{me:user.id,onSelect:r=>{openRoom(r);setShowMobileList(false)},onClose:()=>setShowRoomSearch(false)}),
     createRoom&&h(CreateRoomModal,{me:user.id,type:createRoom,onClose:()=>setCreateRoom(null)})
   );
 }
