@@ -214,22 +214,6 @@ audio{width:180px;height:34px}
   .rt-grid{grid-template-columns:1fr 1fr;gap:10px;padding:10px}
   .rt-player-wrap iframe{border-radius:8px}
 }
-
-/* ── PRIVACY POLICY ── */
-.policy-wrap{display:flex;flex-direction:column;gap:14px;font-size:13px;line-height:1.7;color:var(--text)}
-.policy-section{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
-.policy-section h3{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin:0 0 6px;color:var(--accent)}
-.policy-section p{margin:0;color:var(--muted);font-size:12px}
-.policy-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.04em}
-.perm-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
-.perm-row:last-child{border-bottom:none}
-.perm-info{display:flex;flex-direction:column;gap:2px}
-.perm-name{font-weight:600;font-size:13px}
-.perm-desc{font-size:11px;color:var(--muted)}
-.perm-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px}
-.perm-granted{background:rgba(52,211,153,.15);color:#34d399}
-.perm-denied{background:rgba(248,113,113,.15);color:#f87171}
-.perm-unknown{background:rgba(148,163,184,.1);color:var(--muted)}
 </style>
 </head>
 <body>
@@ -685,33 +669,6 @@ function UserSearch({me,onSelect,onClose}){
 }
 
 // ── Profile Modal ──
-
-// ── Permission Row Component ──────────────────────────────────────────────────
-function PermRow({perm}){
-  const [status,setStatus]=useState('checking');
-  useEffect(()=>{
-    const check=async()=>{
-      const r=await perm.check();
-      setStatus(r);
-    };
-    check();
-    const interval=setInterval(check,2000);
-    return()=>clearInterval(interval);
-  },[]);
-  const label=status==='granted'?'Разрешено':status==='denied'?'Запрещено':status==='unsupported'?'Не поддерживается':'Не задано';
-  const cls=status==='granted'?'perm-granted':status==='denied'?'perm-denied':'perm-unknown';
-  return h('div',{className:'perm-row'},
-    h('div',{className:'perm-info'},
-      h('div',{className:'perm-name'},perm.icon,' ',perm.name),
-      h('div',{className:'perm-desc'},perm.desc)
-    ),
-    h('div',{style:{display:'flex',alignItems:'center',gap:8,flexShrink:0}},
-      h('span',{className:'perm-status '+cls},label),
-      status!=='granted'&&status!=='unsupported'&&h('button',{className:'btn btn-primary',style:{borderRadius:10,padding:'5px 12px',fontSize:12},onClick:perm.request},'Запросить')
-    )
-  );
-}
-
 function ProfileModal({user,onClose}){
   const [tab,setTab]=useState('edit');
   const [name,setName]=useState(user.login||'');
@@ -730,7 +687,7 @@ function ProfileModal({user,onClose}){
   return h(Modal,{onClose},
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Настройки'),h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')),
     h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:10}},h(Avatar,{user,size:72,ring:true}),h('div',{className:'syne',style:{fontWeight:700,fontSize:18}},user.login)),
-    h('div',{className:'tab-bar'},[{id:'edit',l:'Профиль'},{id:'avatar',l:'Аватар'},{id:'theme',l:'🎨 Тема'},{id:'perms',l:'🔔 Разрешения'},{id:'policy',l:'📄 Политика'},{id:'danger',l:'⚠️'}].map(t=>h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},t.l))),
+    h('div',{className:'tab-bar'},[{id:'edit',l:'Профиль'},{id:'avatar',l:'Аватар'},{id:'theme',l:'🎨 Тема'},{id:'danger',l:'⚠️'}].map(t=>h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},t.l))),
     h('div',{className:'hr'}),
     tab==='edit'&&h(React.Fragment,null,
       h('input',{value:name,onChange:e=>setName(e.target.value),placeholder:'Имя'}),
@@ -745,106 +702,6 @@ function ProfileModal({user,onClose}){
     tab==='theme'&&h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
       [{dark:true,icon:'🌙',label:'Тёмная'},{dark:false,icon:'☀️',label:'Светлая'}].map(t=>h('div',{key:t.label,onClick:()=>toggleTheme(t.dark),style:{padding:'16px 12px',borderRadius:14,cursor:'pointer',textAlign:'center',border:'2px solid '+(darkMode===t.dark?'var(--accent)':'var(--border)'),background:darkMode===t.dark?'rgba(79,140,255,.1)':'var(--panel)',transition:'all .2s'}},h('div',{style:{fontSize:28,marginBottom:6}},t.icon),h('div',{className:'syne',style:{fontWeight:700,fontSize:13}},t.label)))
     ),
-    tab==='perms'&&h('div',{style:{display:'flex',flexDirection:'column',gap:2}},
-      h('div',{style:{fontSize:11,color:'var(--muted)',marginBottom:6,lineHeight:1.5}},'Управляйте разрешениями браузера для Maxify. Нажмите «Запросить» чтобы включить функцию.'),
-      [
-        {
-          key:'notifications',
-          icon:'🔔',
-          name:'Уведомления',
-          desc:'Получать уведомления о новых сообщениях и звонках',
-          check:()=>'Notification' in window ? Notification.permission : 'unsupported',
-          request:async()=>{
-            if(!('Notification' in window)){alert('Ваш браузер не поддерживает уведомления');return}
-            if(Notification.permission==='denied'){alert('Уведомления заблокированы в настройках браузера.
-
-Чтобы разрешить:
-1. Нажмите на замок 🔒 рядом с адресом сайта
-2. Найдите «Уведомления» и выберите «Разрешить»
-3. Перезагрузите страницу');return}
-            const r=await Notification.requestPermission();
-            if(r==='granted'){
-              new Notification('✅ Maxify',{body:'Уведомления включены!',icon:'https://api.iconify.design/twemoji/speech-balloon.svg'});
-            }
-          }
-        },
-        {
-          key:'microphone',
-          icon:'🎤',
-          name:'Микрофон',
-          desc:'Необходим для голосовых сообщений и звонков',
-          check:async()=>{try{const r=await navigator.permissions.query({name:'microphone'});return r.state}catch(e){return 'unknown'}},
-          request:async()=>{try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());alert('✅ Доступ к микрофону разрешён!')}catch(e){alert('❌ Доступ к микрофону отклонён.
-
-Разрешите в настройках браузера (замок рядом с адресом сайта)')}}
-        },
-        {
-          key:'camera',
-          icon:'📷',
-          name:'Камера',
-          desc:'Необходима для видеозвонков и видеосообщений',
-          check:async()=>{try{const r=await navigator.permissions.query({name:'camera'});return r.state}catch(e){return 'unknown'}},
-          request:async()=>{try{const s=await navigator.mediaDevices.getUserMedia({video:true});s.getTracks().forEach(t=>t.stop());alert('✅ Доступ к камере разрешён!')}catch(e){alert('❌ Доступ к камере отклонён.
-
-Разрешите в настройках браузера (замок рядом с адресом сайта)')}}
-        }
-      ].map(perm=>h(PermRow,{key:perm.key,perm}))
-    ),
-
-    tab==='policy'&&h('div',{className:'policy-wrap',style:{maxHeight:420,overflowY:'auto',paddingRight:4}},
-      h('div',{style:{textAlign:'center',marginBottom:4}},
-        h('div',{style:{fontSize:32,marginBottom:6}},'📄'),
-        h('div',{className:'syne',style:{fontWeight:800,fontSize:17,letterSpacing:'-.02em'}},'Пользовательское соглашение'),
-        h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:4}},'Редакция от 10 марта 2026 г.')
-      ),
-      h('div',{className:'policy-section'},
-        h('h3',null,'1. Общие положения'),
-        h('p',null,'Maxify (далее — «Сервис», «Платформа») является некоммерческим фанатским проектом, созданным исключительно в развлекательных целях. Сервис симулирует функциональность мессенджера, однако не является полноценным коммерческим продуктом, профессиональным средством связи или платформой для деловой коммуникации. Используя Сервис, вы подтверждаете, что ознакомились с настоящим соглашением и принимаете его условия.')
-      ),
-      h('div',{className:'policy-section'},
-        h('h3',null,'2. Характер Сервиса'),
-        h('p',null,'2.1. Maxify создан в развлекательных целях и не предназначен для использования в качестве основного или официального средства связи.
-
-2.2. Сервис не предоставляет гарантий непрерывной работы, сохранности данных или доступности функций.
-
-2.3. Администрация Сервиса не несёт ответственности за ущерб, возникший вследствие использования или невозможности использования Платформы.')
-      ),
-      h('div',{className:'policy-section'},
-        h('h3',null,'3. Хранение данных'),
-        h('p',null,'3.1. Ваши персональные данные (профиль, переписка, метаданные) хранятся на серверах Firebase (Google LLC), которые обеспечивают защиту данных в соответствии с мировыми стандартами безопасности.
-
-3.2. Медиафайлы (фотографии, видео, документы, голосовые сообщения) хранятся на серверах Cloudinary Inc., ImgBB и/или Catbox.moe. Перечисленные сервисы являются независимыми платформами с собственными политиками конфиденциальности.
-
-3.3. Администрация Maxify не имеет прямого доступа к вашим файлам, хранящимся на сторонних платформах.
-
-3.4. Регистрируясь в Сервисе, вы соглашаетесь на обработку и хранение ваших данных перечисленными сторонними сервисами.')
-      ),
-      h('div',{className:'policy-section'},
-        h('h3',null,'4. Допустимое использование'),
-        h('p',null,'4.1. Использование Сервиса в незаконных целях, включая распространение запрещённого контента, вовлечение в преступную деятельность, а также любые действия, нарушающие законодательство Российской Федерации и международное право, строго запрещено.
-
-4.2. Maxify не является и не позиционирует себя как площадка для анонимного общения или обхода правоохранительных органов.
-
-4.3. Администрация оставляет за собой право заблокировать аккаунт пользователя при нарушении настоящих правил.')
-      ),
-      h('div',{className:'policy-section'},
-        h('h3',null,'5. Ограничение ответственности'),
-        h('p',null,'5.1. Сервис предоставляется «как есть» (as is) без каких-либо явных или подразумеваемых гарантий.
-
-5.2. Администрация не несёт ответственности за содержание переписки между пользователями, а также за действия третьих лиц.
-
-5.3. Максимальная ответственность Администрации перед пользователем ограничена суммой, уплаченной пользователем за использование Сервиса (Сервис бесплатен, поэтому ответственность равна нулю).')
-      ),
-      h('div',{className:'policy-section'},
-        h('h3',null,'6. Изменения соглашения'),
-        h('p',null,'Администрация оставляет за собой право в одностороннем порядке изменять настоящее соглашение. Актуальная версия всегда доступна в настройках приложения. Продолжение использования Сервиса после внесения изменений означает согласие с новой редакцией.')
-      ),
-      h('div',{style:{textAlign:'center',padding:'8px 0',borderTop:'1px solid var(--border)'}},
-        h('div',{style:{fontSize:11,color:'var(--muted)',lineHeight:1.8}},'© 2026 Maxify — Фанатский некоммерческий проект'),
-        h('div',{style:{fontSize:11,color:'var(--muted)'}},'Все права защищены в той мере, в которой это применимо к бесплатному развлекательному сервису')
-      )
-    ),
-
     tab==='danger'&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
       !confirmDel?h('button',{className:'btn btn-danger',style:{width:'100%',justifyContent:'center'},onClick:()=>setConfirmDel(true)},'🗑 Удалить аккаунт'):
       h(React.Fragment,null,
@@ -1932,7 +1789,7 @@ function App(){
               )
     ),
 
-    // Mobile bottom navigation
+    // Mobile bottom navigation nice
     h('div',{className:'mobile-nav'},
       navTabs.map(t=>{
         const isActive=t.id==='profile'?showProfile:t.id==='rt'?showRT&&!showProfile:!activeChat&&!showRT&&showMobileList&&tab===t.id;
