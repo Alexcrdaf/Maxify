@@ -1123,14 +1123,16 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
     ref.on('value',s=>setIsBlocked(!!s.val()));
     return()=>ref.off();
   },[me,peer]);
-  // Load disappear setting
-  useEffect(()=>{
-    db.ref('dm/'+chatCid+'/disappearSec').once('value').then(s=>setDisappearSec(s.val()||0));
-  },[chatCid]);
+
   const bottomRef=useRef();
   const typingTO=useRef();
   const lastCount=useRef(0);
   const chatCid=useMemo(()=>dmId(me,peer),[me,peer]);
+
+  // Load disappear setting
+  useEffect(()=>{
+    db.ref('dm/'+chatCid+'/disappearSec').once('value').then(s=>setDisappearSec(s.val()||0));
+  },[chatCid]);
 
   useEffect(()=>{
     const ref=db.ref(`dm/${chatCid}/msgs`).limitToLast(100);
