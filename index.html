@@ -355,6 +355,51 @@ function beep(freq1,freq2,dur,vol){
 }
 const playSend=()=>beep(880,1200,.16,.15);
 const playRecv=()=>beep(520,660,.2,.1);
+const playCall=()=>beep(440,550,.5,.25);
+
+// ── Push Notifications ───────────────────────────────────────────────────────
+const NOTIF_ICON = 'https://api.iconify.design/twemoji/speech-balloon.svg';
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)) return false;
+  if(Notification.permission === 'granted') return true;
+  if(Notification.permission === 'denied') return false;
+  const result = await Notification.requestPermission();
+  return result === 'granted';
+}
+
+function sendNotif(title, body, tag, onClick){
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'granted') return;
+  if(document.visibilityState === 'visible') return; // don't show if app is focused
+  try{
+    const n = new Notification(title, {
+      body: body,
+      icon: NOTIF_ICON,
+      tag: tag || 'maxify-msg',
+      renotify: true,
+      silent: false
+    });
+    if(onClick) n.onclick = ()=>{ window.focus(); onClick(); n.close(); };
+    setTimeout(()=>n.close(), 6000);
+  }catch(e){}
+}
+
+function sendCallNotif(callerName, isVideo, onClick){
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'granted') return;
+  try{
+    const n = new Notification('📞 Входящий ' + (isVideo?'видео':'аудио') + ' звонок', {
+      body: callerName + ' звонит вам',
+      icon: NOTIF_ICON,
+      tag: 'maxify-call',
+      requireInteraction: true, // stays until user interacts
+      renotify: true,
+      silent: false
+    });
+    if(onClick) n.onclick = ()=>{ window.focus(); onClick(); n.close(); };
+  }catch(e){}
+}
 
 function getBestMimeType(kind){
   const a=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4'];
@@ -1145,7 +1190,13 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
     const ref=db.ref(`dm/${chatCid}/msgs`);
     ref.on('value',s=>{
       const v=s.val();const arr=v?Object.entries(v).map(([k,m])=>({k,...m})).sort((a,b)=>a.ts-b.ts):[];
-      if(arr.length>lastCount.current&&lastCount.current>0&&arr[arr.length-1].uid!==me)playRecv();
+      if(arr.length>lastCount.current&&lastCount.current>0&&arr[arr.length-1].uid!==me){
+        playRecv();
+        const last=arr[arr.length-1];
+        const senderName=last.senderName||'Сообщение';
+        const preview=last.type==='text'?(last.text||'').slice(0,80):last.type==='image'?'📷 Фото':last.type==='audio'?'🎤 Голосовое':last.type==='video'?'📹 Видео':last.type==='file'?'📎 Файл':'Сообщение';
+        sendNotif(senderName, preview, 'dm-'+chatCid);
+      }
       lastCount.current=arr.length;setMsgs(arr);
     });
     return()=>ref.off();
@@ -1284,7 +1335,12 @@ function RoomChat({room,me,onBack}){
     const ref=db.ref(`room_msgs/${room.id}/messages`);
     ref.on('value',s=>{
       const v=s.val();const arr=v?Object.entries(v).map(([k,m])=>({k,...m})).sort((a,b)=>a.ts-b.ts):[];
-      if(arr.length>lastCount.current&&lastCount.current>0&&arr[arr.length-1].uid!==me)playRecv();
+      if(arr.length>lastCount.current&&lastCount.current>0&&arr[arr.length-1].uid!==me){
+        playRecv();
+        const last=arr[arr.length-1];
+        const preview=last.type==='text'?(last.text||'').slice(0,80):last.type==='image'?'📷 Фото':last.type==='audio'?'🎤 Голосовое':last.type==='video'?'📹 Видео':last.type==='file'?'📎 Файл':'Сообщение';
+        sendNotif(room.name, (last.senderName||'Кто-то')+': '+preview, 'room-'+room.id);
+      }
       lastCount.current=arr.length;setMsgs(arr);
     });
     return()=>ref.off();
@@ -1607,10 +1663,27 @@ function App(){
 
   useEffect(()=>{
     if(!uid)return;
+    // Request notification permission as soon as user is logged in
+    requestNotifPermission();
     const ref=db.ref(`calls/${uid}/from`);
-    ref.on('value',s=>{const v=s.val();if(v){const fromUid=Object.keys(v)[0];if(fromUid){loadUser(fromUid);setActiveChat({type:'dm',id:fromUid})}}});
+    ref.on('value',s=>{
+      const v=s.val();
+      if(v){
+        const fromUid=Object.keys(v)[0];
+        if(fromUid){
+          loadUser(fromUid);
+          setActiveChat({type:'dm',id:fromUid});
+          // Send call notification
+          const callerData=peerUsers[fromUid];
+          const callerName=callerData?.login||'Пользователь';
+          const isVideo=Object.values(v)[0]?.isVideo||false;
+          playCall();
+          sendCallNotif(callerName, isVideo, ()=>setActiveChat({type:'dm',id:fromUid}));
+        }
+      }
+    });
     return()=>ref.off();
-  },[uid,loadUser]);
+  },[uid,loadUser,peerUsers]);
 
   useEffect(()=>{
     const handler=e=>{setRtPlaying(e.detail);setShowRT(true);setActiveChat(null)};
