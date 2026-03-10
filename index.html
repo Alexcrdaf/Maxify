@@ -44,6 +44,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 input::placeholder,textarea::placeholder{color:var(--muted)}
 .btn{border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;border-radius:12px;padding:10px 18px;font-size:13px;transition:all .18s;letter-spacing:.02em;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#6fa4ff;transform:translateY(-1px);box-shadow:0 6px 24px var(--glow)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-ghost{background:rgba(255,255,255,.06);color:var(--text)}.btn-ghost:hover{background:rgba(255,255,255,.1)}
 .btn-danger{background:rgba(248,113,113,.12);color:var(--danger);border:1px solid rgba(248,113,113,.2)}.btn-danger:hover{background:rgba(248,113,113,.22)}
 .btn-icon{width:36px;height:36px;padding:0;justify-content:center;border-radius:10px;font-size:16px}
@@ -130,33 +131,21 @@ audio{width:180px;height:34px}
 
 /* ── MOBILE IMPROVEMENTS ────────────────────────────────────────────────── */
 @media(max-width:640px){
-  /* Bigger touch targets */
   .chat-row{min-height:64px;padding:10px 14px!important}
   .search-item{min-height:56px}
-  /* Bigger message bubbles text */
   .bubble-mine,.bubble-their{font-size:15px!important;padding:10px 15px!important}
-  /* Input bar taller */
-  .input-wrap input{font-size:16px!important;} /* prevent iOS zoom */
-  /* Attach menu full width on small screens */
+  .input-wrap input{font-size:16px!important;}
   .attach-menu{left:8px!important;right:8px!important;min-width:unset!important}
-  /* Voice bar compact */
   .voice-bar{padding:6px 10px!important}
   audio{width:150px!important}
-  /* Image messages smaller */
   .img-msg img{max-width:200px!important;max-height:160px!important}
-  /* Video notes smaller */
   .vnote{width:130px!important;height:130px!important}
-  /* Tab bar scrollable */
   .tab-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding:4px 2px}
   .tab{white-space:nowrap;flex-shrink:0}
-  /* Better modal on small phones */
   .modal{padding:20px 16px!important}
-  /* Swipe hint on chat list */
   .mobile-list-body{padding-bottom:12px!important}
-  /* Unread badge bigger */
   .unread{min-width:22px!important;height:22px!important;font-size:11px!important}
 }
-/* ── TABLET (641-1024px) ────────────────────────────────────────────────── */
 @media(min-width:641px) and (max-width:1024px){
   .sidebar{width:220px!important}
   .app-layout{padding:8px!important;gap:8px!important}
@@ -193,32 +182,14 @@ const playRecv=()=>beep(520,660,.2,.1);
 
 // ── FIX: Detect best supported MediaRecorder MIME type ──────────────────────
 function getBestMimeType(kind){
-  // kind = 'audio' | 'video'
-  const audioTypes=[
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/ogg;codecs=opus',
-    'audio/ogg',
-    'audio/mp4',
-  ];
-  const videoTypes=[
-    'video/webm;codecs=vp9,opus',
-    'video/webm;codecs=vp8,opus',
-    'video/webm',
-    'video/mp4',
-  ];
+  const audioTypes=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4'];
+  const videoTypes=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'];
   const list=kind==='audio'?audioTypes:videoTypes;
-  for(const t of list){
-    if(MediaRecorder.isTypeSupported(t)) return t;
-  }
-  return ''; // browser default
+  for(const t of list){if(MediaRecorder.isTypeSupported(t)) return t;}
+  return '';
 }
 
-// ── Upload: Cloudinary (бесплатно 25GB, без подписки) ───────────────────────
-// Шаг 1: зарегистрируйся на cloudinary.com (бесплатно)
-// Шаг 2: в Dashboard скопируй Cloud name
-// Шаг 3: Settings → Upload → Add upload preset → Signing Mode: Unsigned → сохрани
-// Шаг 4: вставь свои данные ниже:
+// ── Upload: Cloudinary ───────────────────────────────────────────────────────
 const CL_CLOUD  = 'djdcmj2om';
 const CL_PRESET = 'maxify';
 
@@ -226,7 +197,6 @@ async function upload(file, onPct) {
   const fd = new FormData();
   fd.append('file', file);
   fd.append('upload_preset', CL_PRESET);
-
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CL_CLOUD + '/auto/upload');
@@ -244,23 +214,32 @@ async function upload(file, onPct) {
     xhr.send(fd);
   });
 }
-// ── Avatar ───────────────────────────────────────────────────────────────────
+
 // ── Reserved / verified accounts ─────────────────────────────────────────────
 const VERIFIED_EMAILS=['dima.julbarisov01@gmail.com'];
-const RESERVED_LOGINS=['LGlittleguy']; // никто другой не может занять это имя
+const RESERVED_LOGINS=['LGlittleguy'];
 
-function Avatar({user,size=36,ring=false}){
-  const name=user?.login||user||'?';
-  const avatarUrl=user?.avatarUrl;
+// ── FIX: Avatar — безопасная обработка любого типа аргумента ────────────────
+function Avatar({user, size=36, ring=false}){
+  // user может быть объектом, строкой или null/undefined
+  const login = (typeof user === 'string' ? user : user?.login) || '?';
+  const avatarUrl = typeof user === 'object' ? user?.avatarUrl : null;
+  const isOnline  = typeof user === 'object' ? user?.online : false;
+  const email     = typeof user === 'object' ? user?.email : null;
+
   const cols=['#4f8cff','#9b8cff','#34d399','#f87171','#fbbf24','#ec4899'];
-  const col=cols[(name.charCodeAt(0)||65)%cols.length];
-  const isVerified=user?.email&&VERIFIED_EMAILS.includes(user.email);
-  const badgeSize=Math.max(12,Math.round(size*0.35));
+  // FIX: проверяем что login — строка перед charCodeAt
+  const safeLogin = typeof login === 'string' && login.length > 0 ? login : '?';
+  const col = cols[(safeLogin.charCodeAt(0) || 65) % cols.length];
+  const isVerified = email && VERIFIED_EMAILS.includes(email);
+  const badgeSize  = Math.max(12, Math.round(size * 0.35));
+  const firstChar  = safeLogin[0].toUpperCase();
+
   return h('div',{style:{position:'relative',flexShrink:0,width:size,height:size}},
     avatarUrl
       ? h('img',{src:avatarUrl,className:'avatar-img',style:{width:size,height:size,boxShadow:ring?'0 0 0 2px #4f8cff,0 0 12px rgba(79,140,255,.3)':'none'}})
-      : h('div',{style:{width:size,height:size,borderRadius:'50%',background:col,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Syne',fontWeight:700,fontSize:size*.4,boxShadow:ring?'0 0 0 2px #4f8cff,0 0 12px rgba(79,140,255,.3)':'none',userSelect:'none'}},name[0].toUpperCase()),
-    user?.online&&h('div',{className:'dot-on'}),
+      : h('div',{style:{width:size,height:size,borderRadius:'50%',background:col,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Syne',fontWeight:700,fontSize:size*.4,color:'#fff',boxShadow:ring?'0 0 0 2px #4f8cff,0 0 12px rgba(79,140,255,.3)':'none',userSelect:'none'}},firstChar),
+    isOnline&&h('div',{className:'dot-on'}),
     isVerified&&h('div',{
       title:'Разработчик Maxify',
       style:{position:'absolute',bottom:-2,right:-2,width:badgeSize,height:badgeSize,borderRadius:'50%',
@@ -285,10 +264,12 @@ function Auth(){
   const [busy,setBusy]=useState(false);
   const upd=k=>e=>setF(p=>({...p,[k]:e.target.value}));
 
+  // FIX: ensureProfile теперь возвращает профиль и не перегружает страницу
   const ensureProfile=async(u,displayName)=>{
-    const snap=await db.ref('users/'+u.uid).once('value');
+    const ref=db.ref('users/'+u.uid);
+    const snap=await ref.once('value');
     if(!snap.val()){
-      await db.ref('users/'+u.uid).set({
+      const profile={
         id:u.uid,
         login:displayName||u.displayName||u.email.split('@')[0],
         email:u.email,
@@ -296,9 +277,10 @@ function Auth(){
         online:true,
         lastSeen:Date.now(),
         createdAt:Date.now()
-      });
+      };
+      await ref.set(profile);
     } else {
-      await db.ref('users/'+u.uid).update({online:true,lastSeen:Date.now()});
+      await ref.update({online:true,lastSeen:Date.now()});
     }
   };
 
@@ -309,7 +291,7 @@ function Auth(){
       const r=await auth.signInWithPopup(provider);
       await ensureProfile(r.user);
     }catch(e){
-      if(e.code!=='auth/popup-closed-by-user') setErr('Ошибка входа через Google');
+      if(e.code!=='auth/popup-closed-by-user') setErr('Ошибка входа через Google: '+e.message);
     }
     setBusy(false);
   };
@@ -319,18 +301,33 @@ function Auth(){
     try{
       if(mode==='register'){
         if(!f.name.trim()){setErr('Введите имя');setBusy(false);return}
-        // Reserved login protection
+        if(f.name.trim().length<2){setErr('Имя слишком короткое');setBusy(false);return}
         if(RESERVED_LOGINS.map(l=>l.toLowerCase()).includes(f.name.trim().toLowerCase())
            && !VERIFIED_EMAILS.includes(f.email)){
           setErr('Это имя зарезервировано');setBusy(false);return;
         }
-        const r=await auth.createUserWithEmailAndPassword(f.email,f.pass);
+        if(!f.email.trim()){setErr('Введите email');setBusy(false);return}
+        if(f.pass.length<6){setErr('Пароль должен быть не менее 6 символов');setBusy(false);return}
+        const r=await auth.createUserWithEmailAndPassword(f.email.trim(),f.pass);
+        // FIX: обновляем displayName в Firebase Auth тоже
+        await r.user.updateProfile({displayName:f.name.trim()});
         await ensureProfile(r.user,f.name.trim());
+        // auth.onAuthStateChanged подхватит нового пользователя автоматически
       }else{
-        await auth.signInWithEmailAndPassword(f.email,f.pass);
+        if(!f.email.trim()||!f.pass){setErr('Заполните все поля');setBusy(false);return}
+        await auth.signInWithEmailAndPassword(f.email.trim(),f.pass);
       }
     }catch(e){
-      const m={'auth/user-not-found':'Пользователь не найден','auth/wrong-password':'Неверный пароль','auth/email-already-in-use':'Email занят','auth/weak-password':'Пароль слишком короткий (мин. 6)','auth/invalid-email':'Неверный email','auth/invalid-credential':'Неверный email или пароль'};
+      const m={
+        'auth/user-not-found':'Пользователь не найден',
+        'auth/wrong-password':'Неверный пароль',
+        'auth/email-already-in-use':'Email уже используется',
+        'auth/weak-password':'Пароль слишком короткий (мин. 6 символов)',
+        'auth/invalid-email':'Неверный формат email',
+        'auth/invalid-credential':'Неверный email или пароль',
+        'auth/too-many-requests':'Слишком много попыток. Подождите немного',
+        'auth/network-request-failed':'Нет подключения к сети'
+      };
       setErr(m[e.code]||e.message);
     }
     setBusy(false);
@@ -342,6 +339,7 @@ function Auth(){
         h('div',{className:'syne',style:{fontSize:32,fontWeight:800,letterSpacing:'-.04em',marginBottom:6}},'Maxify'),
         h('div',{style:{color:'var(--muted)',fontSize:13}},mode==='register'?'Создать аккаунт':'Добро пожаловать')
       ),
+      // Google sign in
       h('button',{
         className:'btn btn-ghost',
         style:{width:'100%',justifyContent:'center',gap:10,padding:'12px',borderRadius:14,fontSize:14,border:'1px solid var(--border)'},
@@ -361,48 +359,80 @@ function Auth(){
         h('div',{style:{fontSize:11,color:'var(--muted)',whiteSpace:'nowrap'}},'или через email'),
         h('div',{style:{flex:1,height:1,background:'var(--border)'}})
       ),
-      mode==='register'&&h('input',{placeholder:'Имя пользователя',value:f.name,onChange:upd('name')}),
-      h('input',{placeholder:'Email',type:'email',value:f.email,onChange:upd('email')}),
-      h('input',{placeholder:'Пароль',type:'password',value:f.pass,onChange:upd('pass'),onKeyDown:e=>e.key==='Enter'&&submit()}),
-      err&&h('div',{style:{color:'var(--danger)',fontSize:12,textAlign:'center',background:'rgba(248,113,113,.08)',padding:'8px 12px',borderRadius:8}},err),
-      h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center'},onClick:submit,disabled:busy},
-        busy?'...':(mode==='register'?'Зарегистрироваться':'Войти')
+      mode==='register'&&h('input',{placeholder:'Имя пользователя',value:f.name,onChange:upd('name'),disabled:busy}),
+      h('input',{placeholder:'Email',type:'email',value:f.email,onChange:upd('email'),disabled:busy}),
+      h('input',{placeholder:'Пароль',type:'password',value:f.pass,onChange:upd('pass'),disabled:busy,
+        onKeyDown:e=>e.key==='Enter'&&!busy&&submit()}),
+      err&&h('div',{style:{color:'var(--danger)',fontSize:12,textAlign:'center',background:'rgba(248,113,113,.08)',padding:'8px 12px',borderRadius:8,lineHeight:1.5}},err),
+      h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center',padding:'13px'},onClick:submit,disabled:busy},
+        busy
+          ? h('span',{style:{display:'flex',alignItems:'center',gap:8}},
+              h('span',{style:{width:14,height:14,border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin .7s linear infinite',display:'inline-block'}}),
+              mode==='register'?'Создаём аккаунт...':'Входим...'
+            )
+          : (mode==='register'?'Зарегистрироваться':'Войти')
       ),
-      h('div',{style:{textAlign:'center',fontSize:12,color:'var(--muted)',cursor:'pointer'},onClick:()=>{setMode(m=>m==='login'?'register':'login');setErr('')}},
+      h('div',{style:{textAlign:'center',fontSize:12,color:'var(--muted)',cursor:'pointer',padding:'4px'},onClick:()=>!busy&&(setMode(m=>m==='login'?'register':'login'),setErr(''))},
         mode==='register'?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться')
-    )
+    ),
+    h('style',null,'@keyframes spin{to{transform:rotate(360deg)}}')
   );
 }
 
-// ── User Search Modal ────────────────────────────────────────────────────────
+// ── FIX: User Search Modal — поиск теперь работает через правила Firebase ───
 function UserSearch({me,onSelect,onClose}){
   const [q,setQ]=useState('');
   const [results,setResults]=useState([]);
   const [busy,setBusy]=useState(false);
+  const [err,setErr]=useState('');
+
   useEffect(()=>{
-    if(!q.trim()){setResults([]);return}
-    setBusy(true);
+    if(!q.trim()){setResults([]);setErr('');return}
+    setBusy(true);setErr('');
     const t=setTimeout(async()=>{
-      const snap=await db.ref('users').once('value');
-      const all=snap.val()||{};
-      const ql=q.toLowerCase();
-      setResults(Object.values(all).filter(u=>u.id!==me&&(u.login?.toLowerCase().includes(ql)||u.email?.toLowerCase().includes(ql))));
+      try{
+        // FIX: читаем всех пользователей и фильтруем на клиенте
+        // (для больших баз надо добавить индекс в Firebase rules)
+        const snap=await db.ref('users').once('value');
+        const all=snap.val()||{};
+        const ql=q.trim().toLowerCase();
+        const res=Object.values(all).filter(u=>{
+          if(!u||!u.id) return false;
+          if(u.id===me) return false;
+          const loginMatch=typeof u.login==='string'&&u.login.toLowerCase().includes(ql);
+          const emailMatch=typeof u.email==='string'&&u.email.toLowerCase().includes(ql);
+          return loginMatch||emailMatch;
+        });
+        setResults(res);
+      }catch(e){
+        setErr('Ошибка поиска: '+e.message);
+        setResults([]);
+      }
       setBusy(false);
-    },300);
+    },350);
     return()=>clearTimeout(t);
-  },[q]);
+  },[q,me]);
+
   return h(Modal,{onClose},
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
       h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Найти пользователя'),
       h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')
     ),
     h('input',{placeholder:'Имя или email...',value:q,onChange:e=>setQ(e.target.value),autoFocus:true}),
-    h('div',{style:{maxHeight:300,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
-      busy&&h('div',{style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:16}},'Поиск...'),
-      !busy&&q&&results.length===0&&h('div',{style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:16}},'Никого не найдено'),
-      results.map(u=>h('div',{key:u.id,className:'search-item',onClick:()=>{onSelect(u);onClose()}},
+    h('div',{style:{maxHeight:300,overflowY:'auto',display:'flex',flexDirection:'column',gap:4,minHeight:60}},
+      busy&&h('div',{style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}},'🔍 Поиск...'),
+      err&&h('div',{style:{color:'var(--danger)',fontSize:12,textAlign:'center',padding:12}},err),
+      !busy&&q.trim()&&results.length===0&&!err&&h('div',{style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}},'Никого не найдено'),
+      !busy&&results.map(u=>h('div',{key:u.id,className:'search-item',onClick:()=>{onSelect(u);onClose()}},
         h(Avatar,{user:u,size:38}),
-        h('div',null,h('div',{style:{fontWeight:600,fontSize:14}},u.login),h('div',{style:{fontSize:11,color:'var(--muted)'}},u.email))
+        h('div',{style:{flex:1,minWidth:0}},
+          h('div',{style:{fontWeight:600,fontSize:14,display:'flex',alignItems:'center',gap:5}},
+            h('span',{style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},u.login),
+            u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{title:'Разработчик',style:{fontSize:11,background:'linear-gradient(135deg,#4f8cff,#9b8cff)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
+          ),
+          h('div',{style:{fontSize:11,color:'var(--muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},u.email),
+          h('div',{style:{fontSize:10,color:u.online?'var(--ok)':'var(--muted)'}},u.online?'● онлайн':'○ оффлайн')
+        )
       ))
     )
   );
@@ -422,8 +452,9 @@ function ProfileModal({user,onClose}){
   const fileRef=useRef();
 
   const save=async()=>{
+    if(!name.trim()) return;
     setSaving(true);
-    await db.ref('users/'+user.id).update({login:name.trim()||user.login,bio:bio.trim()});
+    await db.ref('users/'+user.id).update({login:name.trim(),bio:bio.trim()});
     setSaving(false);
   };
 
@@ -433,14 +464,12 @@ function ProfileModal({user,onClose}){
     try{
       const url=await upload(file,p=>setUploadPct(p));
       await db.ref('users/'+user.id).update({avatarUrl:url});
-    }catch(ex){alert('Ошибка загрузки')}
+    }catch(ex){alert('Ошибка загрузки: '+ex.message)}
     setUploading(false);setUploadPct(0);
     e.target.value='';
   };
 
-  const removeAvatar=async()=>{
-    await db.ref('users/'+user.id).update({avatarUrl:null});
-  };
+  const removeAvatar=async()=>{await db.ref('users/'+user.id).update({avatarUrl:null})};
 
   const deleteAccount=async()=>{
     setDelErr('');
@@ -452,6 +481,13 @@ function ProfileModal({user,onClose}){
     }catch(e){
       setDelErr(e.code==='auth/wrong-password'?'Неверный пароль':e.message);
     }
+  };
+
+  const [darkMode,setDarkMode]=useState(!document.body.classList.contains('light'));
+  const toggleTheme=(dark)=>{
+    if(dark){document.body.classList.remove('light');localStorage.setItem('theme','dark')}
+    else{document.body.classList.add('light');localStorage.setItem('theme','light')}
+    setDarkMode(dark);
   };
 
   return h(Modal,{onClose},
@@ -488,9 +524,9 @@ function ProfileModal({user,onClose}){
       h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center'},onClick:save,disabled:saving},saving?'Сохранение...':'💾 Сохранить')
     ),
     tab==='avatar'&&h(React.Fragment,null,
-      uploading&&h('div',{className:'prog-bar'},h('div',{className:'prog-fill',style:{width:uploadPct+'%'}})),
+      uploading&&h('div',{className:'prog-bar',style:{marginBottom:4}},h('div',{className:'prog-fill',style:{width:uploadPct+'%'}})),
       h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
-        h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center'},onClick:()=>fileRef.current.click()},'📷 Загрузить фото'),
+        h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center'},onClick:()=>fileRef.current.click(),disabled:uploading},uploading?'Загрузка...':'📷 Загрузить фото'),
         h('input',{ref:fileRef,type:'file',accept:'image/*',style:{display:'none'},onChange:uploadAvatar}),
         user.avatarUrl&&h('button',{className:'btn btn-danger',style:{width:'100%',justifyContent:'center'},onClick:removeAvatar},'🗑 Удалить аватар'),
         h('div',{style:{fontSize:12,color:'var(--muted)',textAlign:'center'}},'Рекомендуется квадратное фото')
@@ -501,22 +537,20 @@ function ProfileModal({user,onClose}){
         h('div',{style:{fontSize:12,color:'var(--muted)',fontWeight:600,letterSpacing:'.06em'}},'ТЕМА ОФОРМЛЕНИЯ'),
         h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
           h('div',{
-            onClick:()=>{document.body.classList.remove('light');localStorage.setItem('theme','dark')},
+            onClick:()=>toggleTheme(true),
             style:{padding:'16px 12px',borderRadius:14,cursor:'pointer',textAlign:'center',
-              border:'2px solid '+(document.body.classList.contains('light')?'var(--border)':'var(--accent)'),
-              background:document.body.classList.contains('light')?'var(--panel)':'rgba(79,140,255,.1)',
-              transition:'all .2s'}
+              border:'2px solid '+(darkMode?'var(--accent)':'var(--border)'),
+              background:darkMode?'rgba(79,140,255,.1)':'var(--panel)',transition:'all .2s'}
           },
             h('div',{style:{fontSize:28,marginBottom:6}},'🌙'),
             h('div',{className:'syne',style:{fontWeight:700,fontSize:13}},'Тёмная'),
             h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:2}},'По умолчанию')
           ),
           h('div',{
-            onClick:()=>{document.body.classList.add('light');localStorage.setItem('theme','light')},
+            onClick:()=>toggleTheme(false),
             style:{padding:'16px 12px',borderRadius:14,cursor:'pointer',textAlign:'center',
-              border:'2px solid '+(document.body.classList.contains('light')?'var(--accent)':'var(--border)'),
-              background:document.body.classList.contains('light')?'rgba(37,99,235,.1)':'var(--panel)',
-              transition:'all .2s'}
+              border:'2px solid '+(!darkMode?'var(--accent)':'var(--border)'),
+              background:!darkMode?'rgba(37,99,235,.1)':'var(--panel)',transition:'all .2s'}
           },
             h('div',{style:{fontSize:28,marginBottom:6}},'☀️'),
             h('div',{className:'syne',style:{fontWeight:700,fontSize:13}},'Светлая'),
@@ -556,9 +590,7 @@ function CreateRoomModal({me,type,onClose}){
     const ref=db.ref('rooms').push();
     await ref.set({
       id:ref.key, name:name.trim(), desc:desc.trim(),
-      type,
-      owner:me, members:{[me]:true},
-      createdAt:Date.now()
+      type, owner:me, members:{[me]:true}, createdAt:Date.now()
     });
     onClose();
     setBusy(false);
@@ -595,7 +627,7 @@ function RoomInfoModal({room,me,onClose}){
       const snap=await db.ref('users').once('value');
       const all=snap.val()||{};
       const ql=searchQ.toLowerCase();
-      setSearchRes(Object.values(all).filter(u=>!members[u.id]&&(u.login?.toLowerCase().includes(ql)||u.email?.toLowerCase().includes(ql))));
+      setSearchRes(Object.values(all).filter(u=>u&&u.id&&!members[u.id]&&(u.login?.toLowerCase().includes(ql)||u.email?.toLowerCase().includes(ql))));
     },300);
     return()=>clearTimeout(t);
   },[searchQ,members]);
@@ -719,7 +751,7 @@ function MsgBubble({m,mine,onImgClick}){
   return h('div',{className:(mine?'bubble-mine':'bubble-their'),style:{maxWidth:320,padding:'9px 14px',fontSize:14,lineHeight:1.6,wordBreak:'break-word'}},m.text);
 }
 
-// ── Chat Input Bar (FIXED) ───────────────────────────────────────────────────
+// ── Chat Input Bar ───────────────────────────────────────────────────────────
 function InputBar({onSend,chatName,canWrite=true}){
   const [text,setText]=useState('');
   const [showAttach,setShowAttach]=useState(false);
@@ -730,12 +762,12 @@ function InputBar({onSend,chatName,canWrite=true}){
   const [uploadPct,setUploadPct]=useState(0);
   const [uploadErr,setUploadErr]=useState('');
   const fileRef=useRef();
-  const voiceRef=useRef();       // MediaRecorder instance
-  const voiceStreamRef=useRef(); // FIX: store stream separately
+  const voiceRef=useRef();
+  const voiceStreamRef=useRef();
   const voiceTO=useRef();
-  const vnoteRef=useRef();       // video preview element
-  const vnoteRecRef=useRef();    // MediaRecorder instance
-  const vnoteStreamRef=useRef(); // FIX: store stream separately
+  const vnoteRef=useRef();
+  const vnoteRecRef=useRef();
+  const vnoteStreamRef=useRef();
   const sendBtnRef=useRef();
 
   const doSend=useCallback(payload=>{
@@ -763,41 +795,25 @@ function InputBar({onSend,chatName,canWrite=true}){
     e.target.value='';
   };
 
-  // ── FIX: Voice recording ─────────────────────────────────────────────────
   const startVoice=async()=>{
     setUploadErr('');
     let stream;
-    try{
-      stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    }catch(e){
-      setUploadErr('Нет доступа к микрофону');
-      return;
-    }
-    voiceStreamRef.current=stream; // FIX: save stream ref
-
-    const mimeType=getBestMimeType('audio'); // FIX: detect supported codec
-    const options=mimeType?{mimeType}:{};
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}
+    catch(e){setUploadErr('Нет доступа к микрофону');return}
+    voiceStreamRef.current=stream;
+    const mimeType=getBestMimeType('audio');
     let rec;
-    try{
-      rec=new MediaRecorder(stream,options);
-    }catch(e){
-      rec=new MediaRecorder(stream); // fallback: no options
-    }
+    try{rec=new MediaRecorder(stream,mimeType?{mimeType}:{})}
+    catch(e){rec=new MediaRecorder(stream)}
     voiceRef.current=rec;
-
-    setVoiceRec(true);
-    setVoiceDur(0);
+    setVoiceRec(true);setVoiceDur(0);
     voiceTO.current=setInterval(()=>setVoiceDur(d=>d+1),1000);
-
     const chunks=[];
     rec.ondataavailable=e=>{if(e.data&&e.data.size>0) chunks.push(e.data)};
     rec.onstop=async()=>{
-      clearInterval(voiceTO.current);
-      setVoiceRec(false);
-      // FIX: stop tracks via saved ref
+      clearInterval(voiceTO.current);setVoiceRec(false);
       voiceStreamRef.current?.getTracks().forEach(t=>t.stop());
       voiceStreamRef.current=null;
-
       if(chunks.length===0) return;
       const actualMime=rec.mimeType||'audio/webm';
       const ext=actualMime.includes('ogg')?'ogg':actualMime.includes('mp4')?'mp4':'webm';
@@ -810,76 +826,40 @@ function InputBar({onSend,chatName,canWrite=true}){
       }catch(ex){setUploadErr('Ошибка загрузки: '+ex.message)}
       setUploading(false);setUploadPct(0);
     };
-
-    rec.start(250); // FIX: collect chunks every 250ms (timeslice) for reliability
+    rec.start(250);
   };
 
-  const stopVoice=()=>{
-    if(voiceRef.current&&voiceRef.current.state!=='inactive'){
-      voiceRef.current.stop();
-    }
-  };
-
+  const stopVoice=()=>{if(voiceRef.current&&voiceRef.current.state!=='inactive') voiceRef.current.stop()};
   const cancelVoice=()=>{
     clearInterval(voiceTO.current);
     if(voiceRef.current&&voiceRef.current.state!=='inactive'){
-      // FIX: remove onstop before stopping so we don't upload
-      voiceRef.current.ondataavailable=null;
-      voiceRef.current.onstop=null;
+      voiceRef.current.ondataavailable=null;voiceRef.current.onstop=null;
       try{voiceRef.current.stop()}catch(e){}
     }
-    voiceStreamRef.current?.getTracks().forEach(t=>t.stop()); // FIX
-    voiceStreamRef.current=null;
-    voiceRef.current=null;
-    setVoiceRec(false);
-    setVoiceDur(0);
+    voiceStreamRef.current?.getTracks().forEach(t=>t.stop());
+    voiceStreamRef.current=null;voiceRef.current=null;
+    setVoiceRec(false);setVoiceDur(0);
   };
 
-  // ── FIX: Video note recording ────────────────────────────────────────────
   const startVnote=async()=>{
     setUploadErr('');
     let stream;
-    try{
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:true});
-    }catch(e){
-      try{
-        stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
-      }catch(e2){
-        setUploadErr('Нет доступа к камере');
-        return;
-      }
-    }
-    vnoteStreamRef.current=stream; // FIX: save stream ref
-    setVnoteMode(true);
-    setShowAttach(false);
-
-    // Attach stream to preview video ASAP
-    // Use a tiny delay so the DOM element exists after state update
-    setTimeout(()=>{
-      if(vnoteRef.current){
-        vnoteRef.current.srcObject=stream;
-        vnoteRef.current.play().catch(()=>{});
-      }
-    },80);
-
-    const mimeType=getBestMimeType('video'); // FIX: detect supported codec
-    const options=mimeType?{mimeType}:{};
+    try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:true})}
+    catch(e){try{stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true})}
+    catch(e2){setUploadErr('Нет доступа к камере');return}}
+    vnoteStreamRef.current=stream;setVnoteMode(true);setShowAttach(false);
+    setTimeout(()=>{if(vnoteRef.current){vnoteRef.current.srcObject=stream;vnoteRef.current.play().catch(()=>{})}},80);
+    const mimeType=getBestMimeType('video');
     let rec;
-    try{
-      rec=new MediaRecorder(stream,options);
-    }catch(e){
-      rec=new MediaRecorder(stream);
-    }
+    try{rec=new MediaRecorder(stream,mimeType?{mimeType}:{})}
+    catch(e){rec=new MediaRecorder(stream)}
     vnoteRecRef.current=rec;
-
     const chunks=[];
     rec.ondataavailable=e=>{if(e.data&&e.data.size>0) chunks.push(e.data)};
     rec.onstop=async()=>{
       setVnoteMode(false);
-      // FIX: stop tracks via saved ref
       vnoteStreamRef.current?.getTracks().forEach(t=>t.stop());
       vnoteStreamRef.current=null;
-
       if(chunks.length===0) return;
       const actualMime=rec.mimeType||'video/webm';
       const ext=actualMime.includes('mp4')?'mp4':'webm';
@@ -892,26 +872,17 @@ function InputBar({onSend,chatName,canWrite=true}){
       }catch(ex){setUploadErr('Ошибка загрузки: '+ex.message)}
       setUploading(false);setUploadPct(0);
     };
-
-    rec.start(250); // FIX: timeslice
+    rec.start(250);
   };
 
-  const stopVnote=()=>{
-    if(vnoteRecRef.current&&vnoteRecRef.current.state!=='inactive'){
-      vnoteRecRef.current.stop();
-    }
-  };
-
+  const stopVnote=()=>{if(vnoteRecRef.current&&vnoteRecRef.current.state!=='inactive') vnoteRecRef.current.stop()};
   const cancelVnote=()=>{
     if(vnoteRecRef.current&&vnoteRecRef.current.state!=='inactive'){
-      vnoteRecRef.current.ondataavailable=null;
-      vnoteRecRef.current.onstop=null;
+      vnoteRecRef.current.ondataavailable=null;vnoteRecRef.current.onstop=null;
       try{vnoteRecRef.current.stop()}catch(e){}
     }
-    vnoteStreamRef.current?.getTracks().forEach(t=>t.stop()); // FIX
-    vnoteStreamRef.current=null;
-    vnoteRecRef.current=null;
-    setVnoteMode(false);
+    vnoteStreamRef.current?.getTracks().forEach(t=>t.stop());
+    vnoteStreamRef.current=null;vnoteRecRef.current=null;setVnoteMode(false);
   };
 
   if(!canWrite) return h('div',{style:{padding:'12px 18px',borderTop:'1px solid var(--border)',textAlign:'center',fontSize:13,color:'var(--muted)',flexShrink:0}},'Только владелец может писать в этот канал');
@@ -949,7 +920,6 @@ function InputBar({onSend,chatName,canWrite=true}){
             ?h('button',{ref:sendBtnRef,className:'btn btn-primary',style:{borderRadius:999,padding:'9px 18px',flexShrink:0,justifyContent:'center'},onClick:()=>doSend({type:'text',text})},'→')
             :h('button',{className:'btn btn-ghost btn-icon',title:'Голосовое',style:{flexShrink:0,fontSize:18},onClick:startVoice},'🎙️')
         ),
-    // video note overlay
     vnoteMode&&h('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.93)',backdropFilter:'blur(24px)',zIndex:200,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:18}},
       h('div',{style:{fontSize:12,color:'var(--muted)',letterSpacing:'.1em'}},'ВИДЕОСООБЩЕНИЕ — ЗАПИСЬ'),
       h('video',{ref:vnoteRef,autoPlay:true,muted:true,playsInline:true,className:'vnote',style:{width:220,height:220,border:'3px solid var(--danger)',animation:'pulsered 1.4s ease-in-out infinite'}}),
@@ -959,6 +929,16 @@ function InputBar({onSend,chatName,canWrite=true}){
       )
     )
   );
+}
+
+// ── Shared preview helper ────────────────────────────────────────────────────
+function previewText(p){
+  if(p.type==='text') return p.text;
+  if(p.type==='voice') return '🎙️ Голосовое';
+  if(p.type==='video-note') return '⭕ Видеосообщение';
+  if(p.type==='image') return '📷 Фото';
+  if(p.type==='file-video') return '🎬 Видео';
+  return '📎 Файл';
 }
 
 // ── DM Chat View ─────────────────────────────────────────────────────────────
@@ -971,14 +951,12 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
   const [showBlock,setShowBlock]=useState(false);
   const [showDeleteChat,setShowDeleteChat]=useState(false);
   const [isBlocked,setIsBlocked]=useState(false);
-  // Close menu on outside click
   useEffect(()=>{
     if(!showMenu) return;
     const handler=()=>setShowMenu(false);
     setTimeout(()=>document.addEventListener('click',handler),0);
     return()=>document.removeEventListener('click',handler);
   },[showMenu]);
-  // Check if peer is blocked
   useEffect(()=>{
     const ref=db.ref('blocked/'+me+'/'+peer);
     ref.on('value',s=>setIsBlocked(!!s.val()));
@@ -1216,9 +1194,7 @@ function BlockModal({me,peerUser,onClose,onDone}){
   const block=async()=>{
     setBusy(true);
     await db.ref('blocked/'+me+'/'+peerUser.id).set({ts:Date.now(),login:peerUser.login});
-    onDone&&onDone();
-    onClose();
-    setBusy(false);
+    onDone&&onDone();onClose();setBusy(false);
   };
   return h(Modal,{onClose},
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
@@ -1232,9 +1208,7 @@ function BlockModal({me,peerUser,onClose,onDone}){
         h('div',{style:{fontSize:12,color:'var(--muted)'}},'Пользователь не сможет писать вам')
       )
     ),
-    h('div',{style:{fontSize:13,color:'var(--muted)',lineHeight:1.6,background:'rgba(248,113,113,.06)',padding:'10px 12px',borderRadius:10}},
-      'После блокировки этот человек не сможет отправлять вам сообщения. Вы всегда сможете разблокировать его в настройках.'
-    ),
+    h('div',{style:{fontSize:13,color:'var(--muted)',lineHeight:1.6,background:'rgba(248,113,113,.06)',padding:'10px 12px',borderRadius:10}},'После блокировки этот человек не сможет отправлять вам сообщения.'),
     h('div',{style:{display:'flex',gap:8}},
       h('button',{className:'btn btn-ghost',style:{flex:1,justifyContent:'center'},onClick:onClose},'Отмена'),
       h('button',{className:'btn btn-danger',style:{flex:1,justifyContent:'center'},onClick:block,disabled:busy},busy?'...':'🚫 Заблокировать')
@@ -1249,15 +1223,9 @@ function DeleteChatModal({me,peerId,peerUser,onClose,onDone}){
   const chatCid=useMemo(()=>dmId(me,peerId),[me,peerId]);
   const del=async()=>{
     setBusy(true);
-    if(forBoth){
-      await db.ref('dm/'+chatCid).remove();
-    } else {
-      // Only delete unread counter and mark as deleted for me
-      await db.ref('dm/'+chatCid+'/deletedFor/'+me).set(true);
-    }
-    onDone&&onDone();
-    onClose();
-    setBusy(false);
+    if(forBoth){await db.ref('dm/'+chatCid).remove()}
+    else{await db.ref('dm/'+chatCid+'/deletedFor/'+me).set(true)}
+    onDone&&onDone();onClose();setBusy(false);
   };
   return h(Modal,{onClose},
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
@@ -1279,16 +1247,6 @@ function DeleteChatModal({me,peerId,peerUser,onClose,onDone}){
   );
 }
 
-// ── Shared preview helper ────────────────────────────────────────────────────
-function previewText(p){
-  if(p.type==='text') return p.text;
-  if(p.type==='voice') return '🎙️ Голосовое';
-  if(p.type==='video-note') return '⭕ Видеосообщение';
-  if(p.type==='image') return '📷 Фото';
-  if(p.type==='file-video') return '🎬 Видео';
-  return '📎 Файл';
-}
-
 // ── App ───────────────────────────────────────────────────────────────────────
 function App(){
   const [user,setUser]=useState(null);
@@ -1303,78 +1261,111 @@ function App(){
   const [showMobileList,setShowMobileList]=useState(false);
   const [peerInst,setPeerInst]=useState(null);
   const [tab,setTab]=useState('dms');
+  // FIX: track uid separately so Firebase listener isn't duplicated
+  const [uid,setUid]=useState(null);
+  const userListenerRef=useRef(null);
 
-  // Restore saved theme
   useEffect(()=>{
     if(localStorage.getItem('theme')==='light') document.body.classList.add('light');
   },[]);
 
+  // FIX: proper auth → profile listener setup without duplicates
   useEffect(()=>{
-    return auth.onAuthStateChanged(u=>{
-      if(u){
-        const ref=db.ref('users/'+u.uid);
-        ref.update({online:true,lastSeen:Date.now()});
-        ref.on('value',s=>{setUser(s.val());setLoading(false)});
+    const unsub=auth.onAuthStateChanged(async firebaseUser=>{
+      // Cleanup old listener
+      if(userListenerRef.current){
+        userListenerRef.current.off();
+        userListenerRef.current=null;
+      }
+      if(firebaseUser){
+        const ref=db.ref('users/'+firebaseUser.uid);
+        // Ensure profile exists first
+        const snap=await ref.once('value');
+        if(!snap.val()){
+          await ref.set({
+            id:firebaseUser.uid,
+            login:firebaseUser.displayName||firebaseUser.email.split('@')[0],
+            email:firebaseUser.email,
+            avatarUrl:firebaseUser.photoURL||null,
+            online:true,lastSeen:Date.now(),createdAt:Date.now()
+          });
+        } else {
+          await ref.update({online:true,lastSeen:Date.now()});
+        }
+        // Now subscribe to live updates
+        userListenerRef.current=ref;
+        ref.on('value',s=>{
+          const val=s.val();
+          if(val){setUser(val);setUid(val.id);}
+          setLoading(false);
+        });
         window.addEventListener('beforeunload',()=>ref.update({online:false,lastSeen:Date.now()}));
-      }else{setUser(null);setLoading(false)}
+      }else{
+        setUser(null);setUid(null);setLoading(false);
+      }
     });
+    return()=>unsub();
   },[]);
 
   useEffect(()=>{
-    if(!user) return;
-    const id='mx-'+user.id.replace(/[^a-zA-Z0-9]/g,'-');
+    if(!uid) return;
+    const id='mx-'+uid.replace(/[^a-zA-Z0-9]/g,'-');
     const p=new Peer(id,{debug:0});
-    p.on('open',pid=>{setPeerInst(p);db.ref('users/'+user.id).update({peerId:pid})});
+    p.on('open',pid=>{setPeerInst(p);db.ref('users/'+uid).update({peerId:pid})});
     p.on('error',err=>{
       if(err.type==='unavailable-id'){
         const p2=new Peer(undefined,{debug:0});
-        p2.on('open',pid=>{setPeerInst(p2);db.ref('users/'+user.id).update({peerId:pid})});
+        p2.on('open',pid=>{setPeerInst(p2);db.ref('users/'+uid).update({peerId:pid})});
         setPeerInst(p2);
       }
     });
     return()=>p.destroy();
-  },[user?.id]);
+  },[uid]);
 
-  const loadUser=useCallback(uid=>{
-    if(!uid) return;
-    db.ref('users/'+uid).on('value',s=>{const v=s.val();if(v)setPeerUsers(p=>({...p,[uid]:v}))});
+  const loadUser=useCallback(u=>{
+    if(!u) return;
+    db.ref('users/'+u).on('value',s=>{const v=s.val();if(v)setPeerUsers(p=>({...p,[u]:v}))});
   },[]);
 
   useEffect(()=>{
-    if(!user) return;
+    if(!uid) return;
     const ref=db.ref('dm');
     ref.on('value',s=>{
       const all=s.val()||{};
-      const mine=Object.entries(all).filter(([k])=>k.includes(user.id)).map(([k,v])=>{
-        const other=k.split('__').find(p=>p!==user.id);
-        return{uid:other,last:v.last||null,unread:v.unread?.[user.id]||0};
-      }).sort((a,b)=>(b.last?.ts||0)-(a.last?.ts||0));
+      const mine=Object.entries(all)
+        .filter(([k])=>k.includes(uid))
+        .map(([k,v])=>{
+          const other=k.split('__').find(p=>p!==uid);
+          return{uid:other,last:v.last||null,unread:v.unread?.[uid]||0};
+        })
+        .filter(c=>c.uid)
+        .sort((a,b)=>(b.last?.ts||0)-(a.last?.ts||0));
       setDmConvs(mine);
       mine.forEach(c=>loadUser(c.uid));
     });
     return()=>ref.off();
-  },[user?.id]);
+  },[uid]);
 
   useEffect(()=>{
-    if(!user) return;
+    if(!uid) return;
     const ref=db.ref('rooms');
     ref.on('value',s=>{
       const all=s.val()||{};
-      const mine=Object.values(all).filter(r=>r.members&&r.members[user.id]);
+      const mine=Object.values(all).filter(r=>r&&r.members&&r.members[uid]);
       setRooms(mine);
     });
     return()=>ref.off();
-  },[user?.id]);
+  },[uid]);
 
   useEffect(()=>{
-    if(!user) return;
-    const ref=db.ref(`calls/${user.id}/from`);
+    if(!uid) return;
+    const ref=db.ref(`calls/${uid}/from`);
     ref.on('value',s=>{
       const v=s.val();
       if(v){const fromUid=Object.keys(v)[0];if(fromUid){loadUser(fromUid);setActiveChat({type:'dm',id:fromUid})}}
     });
     return()=>ref.off();
-  },[user?.id]);
+  },[uid]);
 
   const openDM=u=>{setActiveChat({type:'dm',id:u.id});loadUser(u.id)};
   const openRoom=r=>setActiveChat({type:'room',id:r.id});
@@ -1383,7 +1374,11 @@ function App(){
     auth.signOut();
   };
 
-  if(loading) return h('div',{style:{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)',fontFamily:'Syne',letterSpacing:'.12em'}},'MAXIFY...');
+  if(loading) return h('div',{style:{height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'var(--muted)'}},
+    h('div',{style:{width:36,height:36,border:'3px solid rgba(79,140,255,.2)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .7s linear infinite'}}),
+    h('div',{className:'syne',style:{letterSpacing:'.12em',fontSize:13}},'MAXIFY'),
+    h('style',null,'@keyframes spin{to{transform:rotate(360deg)}}')
+  );
   if(!user) return h(Auth);
 
   const activeDMPeer=activeChat?.type==='dm'?peerUsers[activeChat.id]:null;
@@ -1398,7 +1393,7 @@ function App(){
       dmConvs.map(c=>{
         const pu=peerUsers[c.uid];
         return h('div',{key:c.uid,className:'chat-row'+(activeChat?.id===c.uid&&activeChat?.type==='dm'?' active':''),onClick:()=>{openDM({id:c.uid,...(pu||{})});setShowMobileList(false)}},
-          h(Avatar,{user:pu,size:40}),
+          h(Avatar,{user:pu||c.uid,size:40}),
           h('div',{style:{flex:1,minWidth:0}},
             h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',display:'flex',alignItems:'center',gap:4}},
               pu?.login||c.uid.slice(0,8),
