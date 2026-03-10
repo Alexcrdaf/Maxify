@@ -160,30 +160,51 @@ function getBestMimeType(kind){
   return ''; // browser default
 }
 
-// ── Upload: всё через Uploadcare ────────────────────────────────────────────
-// demopublickey = официальный тестовый ключ, файлы живут 24ч
-// Для постоянного хранения: зарегистрируйтесь на uploadcare.com и вставьте свой ключ
-const UPLOADCARE_PUB='demopublickey';
+// ── Upload via 0x0.st (анонимный, без регистрации, CORS открыт) ──────────────
+// Лимит: 512MB на файл, хранение от 30 дней (зависит от размера)
+// Fallback: catbox.moe
 
-async function upload(file,onPct){
-  return new Promise((res,rej)=>{
-    const fd=new FormData();
-    fd.append('UPLOADCARE_PUB_KEY',UPLOADCARE_PUB);
-    fd.append('UPLOADCARE_STORE','1');
-    fd.append('file',file);
-    const xhr=new XMLHttpRequest();
-    xhr.open('POST','https://upload.uploadcare.com/base/');
-    xhr.upload.onprogress=e=>{if(e.lengthComputable&&onPct)onPct(Math.round(e.loaded/e.total*100))};
-    xhr.onload=()=>{
-      try{
-        const j=JSON.parse(xhr.responseText);
-        if(j.file) res('https://ucarecdn.com/'+j.file+'/');
-        else rej(new Error(j.detail||'Uploadcare error: '+xhr.responseText));
-      }catch(e){rej(new Error('Uploadcare parse error'))}
-    };
-    xhr.onerror=()=>rej(new Error('Net error'));
-    xhr.send(fd);
-  });
+async function uploadTo0x0(file, onPct){
+  const fd = new FormData();
+  fd.append('file', file);
+  // 0x0.st не поддерживает progress через fetch, симулируем
+  onPct && onPct(10);
+  const r = await fetch('https://0x0.st', { method:'POST', body:fd });
+  onPct && onPct(90);
+  if(!r.ok) throw new Error('0x0.st HTTP ' + r.status);
+  const url = (await r.text()).trim();
+  if(!url.startsWith('http')) throw new Error('0x0.st bad response: ' + url);
+  onPct && onPct(100);
+  return url;
+}
+
+async function uploadToCatbox(file, onPct){
+  const fd = new FormData();
+  fd.append('reqtype', 'fileupload');
+  fd.append('userhash', '');
+  fd.append('fileToUpload', file);
+  onPct && onPct(10);
+  const r = await fetch('https://catbox.moe/user/api.php', { method:'POST', body:fd });
+  onPct && onPct(90);
+  if(!r.ok) throw new Error('catbox HTTP ' + r.status);
+  const url = (await r.text()).trim();
+  if(!url.startsWith('http')) throw new Error('catbox bad response: ' + url);
+  onPct && onPct(100);
+  return url;
+}
+
+async function upload(file, onPct){
+  // Пробуем 0x0.st, при ошибке — catbox.moe
+  try {
+    return await uploadTo0x0(file, onPct);
+  } catch(e1) {
+    console.warn('0x0.st failed:', e1.message, '— trying catbox.moe');
+    try {
+      return await uploadToCatbox(file, onPct);
+    } catch(e2) {
+      throw new Error('Все сервисы недоступны. 0x0: ' + e1.message + ' | catbox: ' + e2.message);
+    }
+  }
 }
 // ── Avatar ───────────────────────────────────────────────────────────────────
 function Avatar({user,size=36,ring=false}){
