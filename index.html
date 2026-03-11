@@ -1283,6 +1283,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
       setReplyMsg(null);
     }
     db.ref(`dm/${chatCid}/typing/${me}`).set(false);
+    if(window.innerWidth>640)bottomRef.current?.scrollIntoView({behavior:'smooth'});
   },[chatCid,me,peer,editMsg,replyMsg]);
 
   const deleteMsg=m=>{if(confirm('Удалить?'))db.ref(`dm/${chatCid}/msgs/${m.k}`).remove()};
