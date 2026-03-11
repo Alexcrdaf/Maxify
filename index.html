@@ -1572,12 +1572,15 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
       for(const inst of pipedInstances){
         try{
           const r=await fetch(inst+'/search?q='+encodeURIComponent(q)+'&filter=videos');
+          if(!r.ok) continue;
           const data=await r.json();
           if(data.items&&data.items.length>0){
             setResults(data.items.slice(0,24).map(v=>({id:v.url.replace('/watch?v=',''),title:v.title,channel:v.uploaderName,thumb:v.thumbnail||'',duration:v.duration?fmtDur(v.duration):'',src:'yt'})));
             ok=true;break;
           }
-        }catch(e){}
+        }catch(e){
+          console.error('Piped API error:', e);
+        }
       }
       
       // Fallback to Invidious if Piped fails
@@ -1586,20 +1589,44 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
         for(const inst of invidiousInstances){
           try{
             const r=await fetch(inst+'/api/v1/search?q='+encodeURIComponent(q)+'&type=video&region=RU');
+            if(!r.ok) continue;
             const data=await r.json();
             if(Array.isArray(data)&&data.length>0){
               setResults(data.slice(0,24).map(v=>({id:v.videoId,title:v.title,channel:v.author,thumb:v.videoThumbnails?.[0]?.url||'',duration:v.lengthSeconds?fmtDur(v.lengthSeconds):'',src:'yt'})));
               ok=true;break;
             }
-          }catch(e){}
+          }catch(e){
+            console.error('Invidious API error:', e);
+          }
+        }
+      }
+      
+      // Final fallback - use CORS proxy for YouTube search
+      if(!ok){
+        try{
+          const corsProxy = 'https://corsproxy.io/?';
+          const r=await fetch(corsProxy + encodeURIComponent('https://www.youtube.com/results?search_query='+encodeURIComponent(q)+'&sp=EgIQAQ%253D%253D'));
+          if(r.ok){
+            const text=await r.text();
+            // Simple regex to extract video IDs from YouTube search page
+            const videoIds = [...text.matchAll(/watch\?v=([a-zA-Z0-9_-]{11})/g)].map(m=>m[1]);
+            const uniqueIds = [...new Set(videoIds)].slice(0,12);
+            if(uniqueIds.length>0){
+              setResults(uniqueIds.map(id=>({id,title:'YouTube видео',channel:'YouTube',thumb:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,duration:'',src:'yt'})));
+              ok=true;
+            }
+          }
+        }catch(e){
+          console.error('YouTube fallback error:', e);
         }
       }
       
       if(!ok)setErr('Не удалось найти на YouTube. Попробуйте позже.');
     }else{
       try{
-        // Updated Rutube API endpoint with proper headers
-        const res=await fetch('https://rutube.ru/api/search/video/?query='+encodeURIComponent(q)+'&format=json&fields=id,title,author,thumbnail_url,duration',{
+        // Use CORS proxy for Rutube API to avoid CORS issues
+        const corsProxy = 'https://corsproxy.io/?';
+        const res = await fetch(corsProxy + encodeURIComponent('https://rutube.ru/api/search/video/?query='+encodeURIComponent(q)+'&format=json&fields=id,title,author,thumbnail_url,duration'),{
           headers: {
             'Accept': 'application/json',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -1610,7 +1637,10 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
         const items=(data.results||data||[]).slice(0,24);
         if(!items.length)throw new Error('empty');
         setResults(items.map(v=>({id:v.id||v.videoId||v.video_id||'',title:v.title||'Без названия',channel:v.author?.name||v.author||'',thumb:v.thumbnail_url||v.poster||'',duration:v.duration?fmtDur(v.duration):'',src:'rt'})).filter(v=>v.id));
-      }catch(e){setErr('Не удалось загрузить результаты Rutube. Попробуйте позже.');}
+      }catch(e){
+        console.error('Rutube search error:', e);
+        setErr('Не удалось загрузить результаты Rutube. Попробуйте позже.');
+      }
     }
     setBusy(false);
   };
@@ -1733,6 +1763,11 @@ function PCSettingsTab({me}){
     ),
     h(Row,{icon:'🚀',title:'Автозапуск при старте Windows',desc:'Maxify запустится автоматически при включении компьютера',checked:autostart,onChange:toggleAutostart}),
     h(Row,{icon:'🔄',title:'Фоновый режим',desc:'При закрытии окна приложение остаётся в системном трее',checked:bgMode,onChange:toggleBgMode}),
+    h('div',{style:{padding:'10px 0',borderTop:'1px solid var(--border)'}},
+      h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center'},onClick:()=>window.open('https://drive.google.com/drive/folders/1PZMmCfQoKMAG5KSPaPqx8fXCGe9JwnCs?usp=sharing','_blank')},
+        '📥 Скачать приложение для ПК'
+      )
+    ),
     isWV2&&h('div',{style:{fontSize:11,color:'var(--muted)',textAlign:'center',lineHeight:1.6,padding:'4px 8px'}},
       'Изменения применяются сразу. Автозапуск добавляет Maxify в реестр Windows.'
     )
