@@ -1206,7 +1206,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
     return()=>ref.off();
   },[chatCid]);
 
-  useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[msgs]);
+  useEffect(()=>{if(window.innerWidth>640)bottomRef.current?.scrollIntoView({behavior:'smooth'})},[msgs]);
   useEffect(()=>{db.ref(`dm/${chatCid}/unread/${me}`).set(0)},[chatCid,me]);
   useEffect(()=>{
     const ref=db.ref(`dm/${chatCid}/typing/${peer}`);
@@ -1380,7 +1380,7 @@ function RoomChat({room,me,onBack}){
     return()=>ref.off();
   },[room.id,me,liveRoom.name]);
 
-  useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[msgs]);
+  useEffect(()=>{if(window.innerWidth>640)bottomRef.current?.scrollIntoView({behavior:'smooth'})},[msgs]);
 
   const isOwner=me===room.owner;const isAdmin=admins[me]||isOwner;
   const canWrite=room.type==='group'||(room.type==='channel'&&(isOwner||isAdmin));
@@ -2475,7 +2475,7 @@ function App(){
     );
   };
 
-  const navTabs=[{id:'dms',icon:'💬',label:'Чаты',badge:totalUnread},{id:'groups',icon:'👥',label:'Группы'},{id:'feed',icon:'📸',label:'Лента'},{id:'rt',icon:'▶️',label:'Rutube'},{id:'download',icon:'📥',label:'Скачать'},{id:'profile',icon:'👤',label:'Профиль'}];
+  const navTabs=[{id:'dms',icon:'💬',label:'Чаты',badge:totalUnread},{id:'groups',icon:'👥',label:'Группы'},{id:'channels',icon:'📢',label:'Каналы'},{id:'feed',icon:'📸',label:'Лента'},{id:'rt',icon:'▶️',label:'Rutube'},{id:'profile',icon:'👤',label:'Профиль'}];
 
   return h('div',{className:'app-layout',style:{height:'100dvh',display:'flex',padding:14,gap:12}},
     h('div',{className:'glass sidebar',style:{width:260,borderRadius:22,padding:'12px 10px',display:'flex',flexDirection:'column',gap:6,flexShrink:0}},
@@ -2541,7 +2541,7 @@ function App(){
     h('div',{className:'mobile-nav'},
       navTabs.map(t=>{
         const isActive=t.id==='profile'?showProfile:t.id==='rt'?showRT&&!showProfile&&!showFeed:t.id==='feed'?showFeed&&!showProfile:!activeChat&&!showRT&&!showFeed&&showMobileList&&tab===t.id;
-        return h('div',{key:t.id,className:'mobile-nav-btn'+(isActive?' active':''),onClick:()=>{if(t.id==='profile'){setShowProfile(true);setShowMobileList(false);setShowRT(false);setShowFeed(false);return}if(t.id==='rt'){setShowRT(true);setShowFeed(false);setShowProfile(false);setActiveChat(null);setShowMobileList(false);return}if(t.id==='feed'){setShowFeed(true);setShowRT(false);setShowProfile(false);setActiveChat(null);setShowMobileList(false);return}if(t.id==='download'){window.open('https://drive.google.com/drive/folders/1PZMmCfQoKMAG5KSPaPqx8fXCGe9JwnCs?usp=sharing','_blank');return}setShowProfile(false);setShowRT(false);setShowFeed(false);setTab(t.id);setActiveChat(null);setShowMobileList(true)}},
+        return h('div',{key:t.id,className:'mobile-nav-btn'+(isActive?' active':''),onClick:()=>{if(t.id==='profile'){setShowProfile(true);setShowMobileList(false);setShowRT(false);setShowFeed(false);return}if(t.id==='rt'){setShowRT(true);setShowFeed(false);setShowProfile(false);setActiveChat(null);setShowMobileList(false);return}if(t.id==='feed'){setShowFeed(true);setShowRT(false);setShowProfile(false);setActiveChat(null);setShowMobileList(false);return}setShowProfile(false);setShowRT(false);setShowFeed(false);setTab(t.id);setActiveChat(null);setShowMobileList(true)}},
           h('div',{className:'nav-icon',style:{position:'relative'}},t.icon,t.badge&&t.badge>0&&h('span',{style:{position:'absolute',top:-4,right:-6,minWidth:16,height:16,borderRadius:999,background:'var(--danger)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,border:'2px solid var(--nav-bg)'}},t.badge>99?'99+':t.badge)),
           h('div',{className:'nav-label'},t.label)
         );
