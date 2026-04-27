@@ -578,6 +578,8 @@ const VERIFIED_EMAILS=['dima.julbarisov01@gmail.com'];
 const RESERVED_LOGINS=['LGlittleguy'];
 const OFFICIAL_ROOM_NAME='Maxify';
 const EMOJI_LIST=['👍','❤️','😂','😮','😢','🔥','👏','🎉','💯','😍','🤔','😎'];
+const isDeveloper=email=>VERIFIED_EMAILS.includes(email);
+const isDev=uid=>uid==='dima.julbarisov01@gmail.com'||VERIFIED_EMAILS.some(e=>e.includes(uid));
 const ACHIEVEMENTS=[{id:'first_msg',name:'Первое сообщение',icon:'💬',desc:'Отправьте первое сообщение'},{id:'chat Starter',name:'Чат энтузиаст',icon:'🎉',desc:'Создайте первый чат'},{id:'socialite',name:'Душа компании',icon:'🎭',desc:'30 друзей в контактах'},{id:'poster',name:'Постоялец',icon:'📰',desc:'Опубликуйте 10 постов'},{id:'influencer',name:'Инфлюенсер',icon:'⭐',desc:'100 подписчиков'},{id:'nightowl',name:'Ночная сова',icon:'🦉',desc:'Активность ночью'},{id:'earlybird',name:'Ранняя пташка',icon:'🐦',desc:'Активность утром'},{id:'reactor',name:'Реактор',icon:'⚛️',desc:'100 реакций'},{id:'helper',name:'Помощник',icon:'🤝',desc:'Помогите 10 пользователям'}];
 const STATUS_EMOJIS=['😺','😸','😻','😼','😽','🙀','😿','😺','💪','🔥','💯','✨','🌟','🎮','🎵','🎬','📸','🏃','🚴','🧘','💤','🍕','☕','🍺','🌙','☀️'];
 
@@ -739,7 +741,9 @@ function ProfileModal({user,onClose}){
   return h(Modal,{onClose},
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Настройки'),h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')),
     h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:10}},h(Avatar,{user,size:72,ring:true}),h('div',{className:'syne',style:{fontWeight:700,fontSize:18}},user.login)),
-    h('div',{className:'tab-bar'},[{id:'edit',l:'Профиль'},{id:'avatar',l:'Аватар'},{id:'theme',l:'🎨 Тема'},{id:'pc',l:'🖥️ ПК'},{id:'danger',l:'⚠️'}].map(t=>h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},t.l))),
+    h('div',{className:'tab-bar'},[{id:'edit',l:'Профиль'},{id:'avatar',l:'Аватар'},{id:'theme',l:'🎨 Тема'},{id:'pc',l:'🖥️ ПК'},{id:'danger',l:'⚠️'}].map(t=>h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},
+        t.l+(t.id==='danger'?' ⚠️':''))),
+    isDeveloper(user?.email)&&h('div',{className:'tab-bar',marginTop:8},[{id:'dev',l:'🔧 Разработка'}].map(t=>h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},t.l))),
     h('div',{className:'hr'}),
     tab==='edit'&&h(React.Fragment,null,
       h('input',{value:name,onChange:e=>setName(e.target.value),placeholder:'Имя'}),
@@ -755,6 +759,14 @@ function ProfileModal({user,onClose}){
       [{dark:true,icon:'🌙',label:'Тёмная'},{dark:false,icon:'☀️',label:'Светлая'}].map(t=>h('div',{key:t.label,onClick:()=>toggleTheme(t.dark),style:{padding:'16px 12px',borderRadius:14,cursor:'pointer',textAlign:'center',border:'2px solid '+(darkMode===t.dark?'var(--accent)':'var(--border)'),background:darkMode===t.dark?'rgba(79,140,255,.1)':'var(--panel)',transition:'all .2s'}},h('div',{style:{fontSize:28,marginBottom:6}},t.icon),h('div',{className:'syne',style:{fontWeight:700,fontSize:13}},t.label)))
     ),
     tab==='pc'&&h(PCSettingsTab,{me:user.id}),
+    tab==='dev'&&isDeveloper(user?.email)&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+      h('div',{style:{fontSize:13,fontWeight:700,color:'var(--accent)',marginBottom:4}},'🔧 Панель разработчика'),
+      h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center'},onClick:async()=>{const snap=await db.ref('users').once('value');const users=snap.val()||{};alert('Всего пользователей: '+Object.keys(users).length)}}, '📊 Статистика'),
+      h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center'},onClick:async()=>{const snap=await db.ref('rooms').once('value');const rooms=snap.val()||{};alert('Всего чатов: '+Object.keys(rooms).length)}}, '💬 Чаты'),
+      h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center'},onClick:async()=>{const snap=await db.ref('posts').once('value');const posts=snap.val()||{};alert('Всего постов: '+Object.keys(posts).length)}}, '📸 Посты'),
+      h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center',background:'rgba(248,113,113,.1)',borderColor:'var(--danger)'},onClick:()=>{if(confirm('Очистить все сообщения? Это действие необратимо!')){alert('Требуется подтверждение')}}}, '🗑️ Очистка данных'),
+      h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:8}},'Версия: 1.0.0 • Maxify Developer')
+    ),
     tab==='danger'&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
       !confirmDel?h('button',{className:'btn btn-danger',style:{width:'100%',justifyContent:'center'},onClick:()=>setConfirmDel(true)},'🗑 Удалить аккаунт'):
       h(React.Fragment,null,
