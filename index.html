@@ -45,12 +45,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 input,textarea,select{background:var(--input-bg);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px 14px;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;transition:border .18s,box-shadow .18s;width:100%}
 input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
 input::placeholder,textarea::placeholder{color:var(--muted)}
-.btn{border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;border-radius:12px;padding:10px 18px;font-size:13px;transition:all .18s;letter-spacing:.02em;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#6fa4ff;transform:translateY(-1px);box-shadow:0 6px 24px var(--glow)}
+.btn{border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;border-radius:12px;padding:10px 18px;font-size:13px;transition:all .2s cubic-bezier(.25,1,.5,1);letter-spacing:.02em;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#6fa4ff;transform:translateY(-2px);box-shadow:0 8px 28px var(--glow)}.btn-primary:active{transform:translateY(0);box-shadow:0 4px 16px var(--glow)}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-ghost{background:rgba(255,255,255,.06);color:var(--text)}.btn-ghost:hover{background:rgba(255,255,255,.1)}
-.btn-danger{background:rgba(248,113,113,.12);color:var(--danger);border:1px solid rgba(248,113,113,.2)}.btn-danger:hover{background:rgba(248,113,113,.22)}
-.btn-icon{width:36px;height:36px;padding:0;justify-content:center;border-radius:10px;font-size:16px}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text)}.btn-ghost:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}.btn-ghost:active{transform:translateY(0)}
+.btn-danger{background:rgba(248,113,113,.12);color:var(--danger);border:1px solid rgba(248,113,113,.2)}.btn-danger:hover{background:rgba(248,113,113,.22);transform:translateY(-1px)}.btn-danger:active{transform:translateY(0)}
+.btn-icon{width:36px;height:36px;padding:0;justify-content:center;border-radius:10px;font-size:16px;transition:all .2s cubic-bezier(.25,1,.5,1)}.btn-icon:hover{transform:scale(1.05)}.btn-icon:active{transform:scale(.95)}
 .bubble-mine{background:var(--bubble-mine);border:1px solid var(--bubble-mine-border);border-radius:16px 4px 16px 16px}
 .bubble-their{background:var(--bubble-their);border:1px solid var(--bubble-their-border);border-radius:4px 16px 16px 16px}
 .msg-in{animation:msgIn .22s cubic-bezier(.34,1.56,.64,1) both}
@@ -144,37 +144,43 @@ audio{width:180px;height:34px}
 .admin-badge{font-size:9px;padding:1px 6px;border-radius:999px;background:rgba(251,191,36,.15);color:#fbbf24;font-weight:700;border:1px solid rgba(251,191,36,.25)}
 
 @media(max-width:640px){
-  body{overflow:hidden}
+  body{overflow:hidden;touch-action:manipulation}
   html,body,#root{height:100%;height:100dvh}
   .sidebar{display:none!important}
   .app-layout{flex-direction:column!important;padding:0!important;gap:0!important;height:100dvh!important;}
   .main-area{flex:1!important;min-height:0!important;border-radius:0!important;overflow:hidden!important;margin-bottom:var(--nav-h)!important;}
-  .chat-header{padding:10px 14px!important;padding-top:max(10px,env(safe-area-inset-top))!important;}
-  .msgs-area{padding:10px 12px!important;}
-  .input-wrap{padding:8px 10px!important;padding-bottom:calc(8px + env(safe-area-inset-bottom))!important;}
-  .attach-menu{bottom:52px!important;left:8px!important;}
+  .chat-header{padding:12px 14px!important;padding-top:max(12px,env(safe-area-inset-top))!important;}
+  .msgs-area{padding:12px 14px!important;}
+  .input-wrap{padding:10px 12px!important;padding-bottom:calc(10px + env(safe-area-inset-bottom))!important;}
+  .attach-menu{bottom:54px!important;left:10px!important;min-width:180px!important}
   .mobile-nav{display:flex!important;position:fixed!important;bottom:0;left:0;right:0;height:var(--nav-h)!important;padding-bottom:env(safe-area-inset-bottom)!important;background:var(--nav-bg)!important;backdrop-filter:blur(20px)!important;border-top:1px solid var(--border)!important;z-index:200!important;align-items:center!important;justify-content:space-around!important;}
-  .mobile-nav-btn{display:flex!important;flex-direction:column!important;align-items:center!important;gap:3px!important;padding:6px 16px!important;border-radius:14px!important;cursor:pointer!important;color:var(--muted)!important;transition:color .15s,background .15s!important;-webkit-tap-highlight-color:transparent!important;}
-  .mobile-nav-btn.active{color:var(--accent)!important}
-  .mobile-nav-btn .nav-icon{font-size:24px;line-height:1}
+  .mobile-nav-btn{display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important;padding:8px 18px!important;border-radius:16px!important;cursor:pointer!important;color:var(--muted)!important;transition:all .2s cubic-bezier(.25,1,.5,1)!important;-webkit-tap-highlight-color:transparent!important;min-width:56px;}
+  .mobile-nav-btn:active{transform:scale(.92)!important}
+  .mobile-nav-btn.active{color:var(--accent)!important;background:rgba(79,140,255,.08)!important}
+  .mobile-nav-btn .nav-icon{font-size:26px;line-height:1;transition:transform .2s}
+  .mobile-nav-btn:active .nav-icon{transform:scale(.9)}
   .mobile-nav-btn .nav-label{font-size:10px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.03em}
-  .mobile-list-overlay{display:flex!important;position:fixed!important;inset:0!important;bottom:var(--nav-h)!important;background:var(--bg)!important;z-index:90!important;overflow-y:auto!important;flex-direction:column!important;}
-  .mobile-list-header{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:16px 16px 8px!important;padding-top:max(16px,env(safe-area-inset-top))!important;position:sticky!important;top:0!important;background:var(--bg)!important;z-index:2!important;border-bottom:1px solid var(--border)!important;}
+  .mobile-list-overlay{display:flex!important;position:fixed!important;inset:0!important;bottom:var(--nav-h)!important;background:var(--bg)!important;z-index:90!important;overflow-y:auto!important;flex-direction:column!important;animation:slideUp .3s ease both}
+  .mobile-list-header{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:18px 16px 10px!important;padding-top:max(18px,env(safe-area-inset-top))!important;position:sticky!important;top:0!important;background:var(--bg)!important;z-index:2!important;border-bottom:1px solid var(--border)!important;}
   .mobile-list-body{padding:8px 12px!important;}
-  .modal-bg{align-items:flex-end!important}
-  .modal{width:100%!important;max-height:92dvh!important;overflow-y:auto!important;border-radius:24px 24px 0 0!important;padding-bottom:calc(24px + env(safe-area-inset-bottom))!important;}
+  .modal-bg{align-items:flex-end!important;animation:fadeIn .2s ease both}
+  .modal{width:100%!important;max-height:92dvh!important;overflow-y:auto!important;border-radius:24px 24px 0 0!important;padding-bottom:calc(24px + env(safe-area-inset-bottom))!important;animation:slideUp .3s ease both}
   .call-wrap{padding:20px!important}
-  .btn-icon{width:42px!important;height:42px!important}
-  .chat-row{padding:10px 12px!important;min-height:64px}
-  .bubble-mine,.bubble-their{font-size:15px!important;padding:10px 15px!important}
+  .btn-icon{width:44px!important;height:44px!important;min-width:44px;min-height:44px}
+  .chat-row{padding:12px 14px!important;min-height:68px;transition:background .2s}
+  .chat-row:active{background:rgba(79,140,255,.15)!important}
+  .bubble-mine,.bubble-their{font-size:15px!important;padding:11px 14px!important}
   .input-wrap input{font-size:16px!important}
-  .img-msg img{max-width:200px!important;max-height:160px!important}
-  .vnote{width:130px!important;height:130px!important}
+  .img-msg img{max-width:220px!important;max-height:180px!important}
+  .vnote{width:140px!important;height:140px!important}
   .tab-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding:4px 2px}
-  .tab{white-space:nowrap;flex-shrink:0}
-  .msg-menu{right:0!important;left:auto!important}
-  .emoji-picker{right:0!important;left:auto!important}
-  audio{width:150px!important}
+  .tab{white-space:nowrap;flex-shrink:0;padding:8px 16px}
+  .msg-menu{right:0!important;left:auto!important;min-width:180px!important}
+  .emoji-picker{right:0!important;left:auto!important;width:180px!important}
+  audio{width:160px!important}
+  .btn{min-height:44px;min-width:44px}
+  .btn-ghost:active{background:rgba(79,140,255,.15)!important}
+  .btn-primary:active{transform:scale(.96)!important}
 }
 @media(min-width:641px){
   .mobile-nav{display:none!important}
@@ -187,6 +193,19 @@ audio{width:180px;height:34px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .fade-in{animation:fadeIn .18s ease both}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:none}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.bounce{animation:bounce .4s ease}
+.shake{animation:shake .3s ease}
+.slide-up{animation:slideUp .3s ease both}
+.slide-down{animation:slideDown .3s ease both}
+.scale-in{animation:scaleIn .25s ease both}
+.pulse{animation:pulse 2s ease-in-out infinite}
 
 /* ── RUTUBE TAB ── */
 .rt-search-bar{display:flex;gap:8px;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -1021,16 +1040,16 @@ function MsgBubble({m,mine,onImgClick,onEdit,onDelete,onReply,onPin,onReact,repl
       h('div',{className:'reply-sender'},replyMsg.senderName||'...'),
       h('div',{className:'reply-msg'},replyMsg.text||'📎 Вложение')
     ),
-    h('div',{style:{position:'relative',display:'inline-block',maxWidth:'100%'},onContextMenu:e=>{e.preventDefault();setShowMenu(true)},onDoubleClick:e=>{e.preventDefault();setShowMenu(true)}},
+    h('div',{style:{position:'relative',display:'inline-block',maxWidth:'100%'},onContextMenu:e=>{e.preventDefault();e.stopPropagation();setShowMenu(true)},onDoubleClick:e=>{e.preventDefault();e.stopPropagation();setShowMenu(true)}},
       content(),
-      showMenu&&h('div',{ref:menuRef,className:'msg-menu fade-in',style:{position:'absolute',bottom:'calc(100% + 4px)',[mine?'right':'left']:0}},
-        h('div',{className:'msg-menu-item',onClick:()=>{setShowEmoji(true);setShowMenu(false)}},'😊  Реакция'),
-        h('div',{className:'msg-menu-item',onClick:()=>{onReply&&onReply(m);setShowMenu(false)}},'↩️  Ответить'),
-        canPin&&h('div',{className:'msg-menu-item',onClick:()=>{onPin&&onPin(m);setShowMenu(false)}},'📌  Закрепить'),
-        mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:()=>{onEdit&&onEdit(m);setShowMenu(false)}},'✏️  Редактировать'),
-        mine&&h('div',{className:'msg-menu-item danger',onClick:()=>{onDelete&&onDelete(m);setShowMenu(false)}},'🗑️  Удалить')
+      showMenu&&h('div',{ref:menuRef,className:'msg-menu fade-in',style:{position:'absolute',bottom:'calc(100% + 4px)',[mine?'right':'left']:0},onClick:e=>e.stopPropagation()},
+        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();setShowEmoji(true);setShowMenu(false)}},'😊  Реакция'),
+        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onReply){onReply(m);}setShowMenu(false)}},'↩️  Ответить'),
+        canPin&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onPin){onPin(m);}setShowMenu(false)}},'📌  Закрепить'),
+        mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onEdit){onEdit(m);}setShowMenu(false)}},'✏️  Редактировать'),
+        mine&&h('div',{className:'msg-menu-item danger',onClick:e=>{e.stopPropagation();if(onDelete){onDelete(m);}setShowMenu(false)}},'🗑️  Удалить')
       ),
-      showEmoji&&h(EmojiPicker,{style:{position:'absolute',bottom:'calc(100% + 4px)',[mine?'right':'left']:0},onSelect:emoji=>onReact&&onReact(m,emoji),onClose:()=>setShowEmoji(false)})
+      showEmoji&&h(EmojiPicker,{style:{position:'absolute',bottom:'calc(100% + 4px)',[mine?'right':'left']:0},onSelect:emoji=>{if(onReact){onReact(m,emoji)}},onClose:()=>setShowEmoji(false)})
     ),
     showReactions&&Object.keys(reactionGroups).length>0&&h('div',{className:'reactions'},
       Object.entries(reactionGroups).map(([emoji,uids])=>h('div',{key:emoji,className:'reaction-chip'+(mine?' mine':''),onClick:()=>onReact&&onReact(m,emoji),title:uids.length+' чел.'},
@@ -1246,12 +1265,18 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
     }
     // Сигнализируем собеседнику через Firebase
     await db.ref(`calls/${peer}/from/${me}`).set({isVideo:isVid,ts:Date.now(),callerPeerId:peerInst.id});
-    const call=peerInst.call(livePeer.peerId,stream,{metadata:{isVideo:isVid,callerUid:me}});
-    if(!call){alert('Не удалось создать звонок. Проверьте peerId собеседника.');stream.getTracks().forEach(t=>t.stop());return}
-    setCallState({type:'out',call,localStream:stream,remoteStream:null});
-    call.on('stream',rs=>setCallState(s=>({...s,remoteStream:rs})));
-    call.on('close',()=>endCall());
-    call.on('error',err=>{console.warn('call error',err);endCall()});
+    try{
+      const call=peerInst.call(livePeer.peerId,stream,{metadata:{isVideo:isVid,callerUid:me}});
+      if(!call){alert('Не удалось создать звонок. Проверьте peerId собеседника.');stream.getTracks().forEach(t=>t.stop());return}
+      setCallState({type:'out',call,localStream:stream,remoteStream:null});
+      call.on('stream',rs=>setCallState(s=>({...s,remoteStream:rs})));
+      call.on('close',()=>endCall());
+      call.on('error',err=>{console.warn('call error',err);endCall()});
+    }catch(err){
+      alert('Ошибка при звонке: '+err.message);
+      stream.getTracks().forEach(t=>t.stop());
+      endCall();
+    }
   };
   const acceptCall=async()=>{
     if(!callState?.call)return;
@@ -2524,7 +2549,7 @@ function App(){
                 h('div',{style:{padding:'10px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,flexShrink:0}},
                   h('div',{className:'syne',style:{fontWeight:700,fontSize:15}},'📸 Лента'),
                   h('div',{style:{flex:1}}),
-                  h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:13},onClick:()=>setShowFeed(false)},'✕ Закрыть')
+                  h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:13,padding:'4px 8px',borderRadius:8,transition:'background .15s'},onClick:e=>{e.stopPropagation();setShowFeed(false);setActiveChat(null);setShowMobileList(false)},onMouseEnter:e=>e.target.style.background='rgba(255,255,255,.1)',onMouseLeave:e=>e.target.style.background=''},'✕ Закрыть')
                 ),
         h(FeedTab,{me:user.id,user,onOpenProfile:uid=>{setViewProfile(uid);setShowFeed(false)}})
               )
