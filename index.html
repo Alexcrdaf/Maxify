@@ -393,11 +393,9 @@ const playCall=()=>beep(440,550,.5,.25);
 // ── Push Notifications ───────────────────────────────────────────────────────
 const NOTIF_ICON = 'https://api.iconify.design/twemoji/speech-balloon.svg';
 
-// Определяем запущены ли мы в WebView2 (Windows приложение)
 const isWebView2 = !!(window.chrome && window.chrome.webview);
 
 async function requestNotifPermission(){
-  // В WebView2 разрешение не нужно — уведомления через Windows
   if(isWebView2) return true;
   if(!('Notification' in window)) return false;
   if(Notification.permission === 'granted') return true;
@@ -406,9 +404,7 @@ async function requestNotifPermission(){
   return result === 'granted';
 }
 
-// ── ГЛАВНАЯ ФУНКЦИЯ: отправляет уведомление в Windows через WebView2 ──
 function sendNotif(title, body, tag, onClick){
-  // Если запущено как Windows .exe — отправляем через WebView2 в C++
   if(isWebView2){
     try{
       window.chrome.webview.postMessage(JSON.stringify({
@@ -419,7 +415,6 @@ function sendNotif(title, body, tag, onClick){
     }catch(e){}
     return;
   }
-  // Браузерный вариант (обычный браузер)
   if(!('Notification' in window)) return;
   if(Notification.permission !== 'granted') return;
   if(document.visibilityState === 'visible') return;
@@ -436,12 +431,10 @@ function sendNotif(title, body, tag, onClick){
   }catch(e){}
 }
 
-// ── УВЕДОМЛЕНИЕ О ЗВОНКЕ ──
 function sendCallNotif(callerName, isVideo, onClick){
   const title = '📞 Входящий ' + (isVideo ? 'видео' : 'аудио') + ' звонок';
   const body = String(callerName || 'Пользователь') + ' звонит вам';
 
-  // Если запущено как Windows .exe — отправляем через WebView2 в C++
   if(isWebView2){
     try{
       window.chrome.webview.postMessage(JSON.stringify({
@@ -452,7 +445,6 @@ function sendCallNotif(callerName, isVideo, onClick){
     }catch(e){}
     return;
   }
-  // Браузерный вариант
   if(!('Notification' in window)) return;
   if(Notification.permission !== 'granted') return;
   try{
@@ -817,7 +809,7 @@ function CreateRoomModal({me,type,onClose}){
     h('textarea',{placeholder:'Описание',value:desc,onChange:e=>setDesc(e.target.value),rows:3,style:{resize:'none'}}),
     h('label',{style:{display:'flex',alignItems:'center',gap:12,cursor:'pointer',padding:'11px 14px',borderRadius:12,background:'var(--panel)',border:'1px solid var(--border)'}},
       h('div',{style:{flex:1}},
-        h('div',{style:{fontWeight:600,fontSize:13,display:'flex',alignItems:'center',gap:6}},'🔒 Закрытый '+(type==='group'?'группа':'канал')),
+        h('div',{style:{fontWeight:600,fontSize:13,display:'flex',alignItems:'center',gap:6}},'🔒 '+(type==='group'?'Закрытая группа':'Закрытый канал')),
         h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:2}},'Не отображается в поиске, войти только по приглашению')
       ),
       h('div',{onClick:()=>setIsPrivate(v=>!v),style:{width:38,height:22,borderRadius:999,background:isPrivate?'var(--accent)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}},
@@ -895,7 +887,7 @@ function RoomInfoModal({room,me,onClose}){
       h('textarea',{placeholder:'Описание',value:editDesc,onChange:e=>setEditDesc(e.target.value),rows:3,style:{resize:'none'}}),
       h('label',{style:{display:'flex',alignItems:'center',gap:12,cursor:'pointer',padding:'11px 14px',borderRadius:12,background:'var(--panel)',border:'1px solid var(--border)'}},
         h('div',{style:{flex:1}},
-          h('div',{style:{fontWeight:600,fontSize:13,display:'flex',alignItems:'center',gap:6}},'🔒 Закрытый'),
+          h('div',{style:{fontWeight:600,fontSize:13,display:'flex',alignItems:'center',gap:6}},'🔒 '+(room.type==='group'?'Закрытая группа':'Закрытый канал')),
           h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:2}},'Скрыт из поиска, только по приглашению')
         ),
         h('div',{onClick:()=>setIsPrivate(v=>!v),style:{width:38,height:22,borderRadius:999,background:isPrivate?'var(--accent)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}},
@@ -1232,17 +1224,15 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
     ref.on('value',s=>setPeerTyping(!!s.val()));
     return()=>ref.off();
   },[chatCid,peer]);
-  // Слушаем входящие звонки через peerInst (глобально, не только от текущего пира)
+
   useEffect(()=>{
     if(!peerInst)return;
     const onCall=call=>{
-      // Принимаем звонок только если он от нашего собеседника
       const callerPeerId=call.peer;
-      // Ищем uid по peerId
       db.ref('users').orderByChild('peerId').equalTo(callerPeerId).once('value',s=>{
         const v=s.val();
         const callerUid=v?Object.keys(v)[0]:null;
-        if(!callerUid||callerUid!==peer)return; // не наш пир
+        if(!callerUid||callerUid!==peer)return;
         setCallState({type:'in',call,localStream:null,remoteStream:null});
         call.on('stream',rs=>setCallState(s2=>({...s2,remoteStream:rs})));
         call.on('close',()=>endCall());
@@ -1263,7 +1253,6 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
       try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
       catch(e2){alert('Нет доступа к микрофону/камере: '+e2.message);return}
     }
-    // Сигнализируем собеседнику через Firebase
     await db.ref(`calls/${peer}/from/${me}`).set({isVideo:isVid,ts:Date.now(),callerPeerId:peerInst.id});
     try{
       const call=peerInst.call(livePeer.peerId,stream,{metadata:{isVideo:isVid,callerUid:me}});
@@ -1536,7 +1525,6 @@ function RTPlayer({video, me, dmConvs, peerUsers, rooms, onClose}){
   );
 }
 
-// ── Curated Rutube trending IDs (real, verified) ────────────────────────────
 const RT_TRENDING = [
   {id:'970b71f3bdc1d080e0b52820c5e98aab',title:'Русская природа — Кавказ и горные реки',channel:'Природа России',thumb:'https://pic.rutube.ru/video/97/0b/970b71f3bdc1d080e0b52820c5e98aab.jpg'},
   {id:'ca559e5e52e6f3adf0ca697cfab5f7c8',title:'Документальный фильм: Байкал — жемчужина Сибири',channel:'Россия 1',thumb:'https://pic.rutube.ru/video/ca/55/ca559e5e52e6f3adf0ca697cfab5f7c8.jpg'},
@@ -1548,7 +1536,6 @@ const RT_TRENDING = [
   {id:'1122334455667788990011223344556a',title:'Авто обзор: Лучшие новинки 2024',channel:'АвтоВести',thumb:'https://rutube.ru/media/video/11/22/1122334455667788990011223344556a/thumbnail.jpg'},
 ];
 
-// Popular search categories for Rutube
 const RT_CATEGORIES = ['Тренды','Новости','Спорт','Музыка','Кино','Природа','Технологии','Кулинария'];
 
 function RutubeTab({me, dmConvs, peerUsers, rooms}){
@@ -1558,12 +1545,11 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
   const [err, setErr] = useState('');
   const [playing, setPlaying] = useState(null);
   const [urlInput, setUrlInput] = useState('');
-  const [platform, setPlatform] = useState('rt'); // 'rt' | 'yt'
+  const [platform, setPlatform] = useState('rt'); 
   const [ytRecs, setYtRecs] = useState([]);
   const [ytBusy, setYtBusy] = useState(false);
   const [mode, setMode] = useState('home');
 
-  // Загружаем YouTube trending через Invidious API при переключении
   useEffect(()=>{
     if(platform!=='yt'||ytRecs.length>0) return;
     setYtBusy(true);
@@ -1592,7 +1578,6 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
     if(!q.trim()) return;
     setMode('search'); setBusy(true); setErr(''); setResults([]);
     if(platform==='yt'){
-      // Alternative YouTube search using Piped API (more reliable)
       const pipedInstances=['https://pipedapi.kavin.rocks','https://pipedapi-libre.kavin.rocks','https://pipedapi.moomoo.me'];
       let ok=false;
       for(const inst of pipedInstances){
@@ -1609,7 +1594,6 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
         }
       }
       
-      // Fallback to Invidious if Piped fails
       if(!ok){
         const invidiousInstances=['https://inv.nadeko.net','https://invidious.fdn.fr','https://iv.ggtyler.dev'];
         for(const inst of invidiousInstances){
@@ -1627,14 +1611,12 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
         }
       }
       
-      // Final fallback - use CORS proxy for YouTube search
       if(!ok){
         try{
           const corsProxy = 'https://corsproxy.io/?';
           const r=await fetch(corsProxy + encodeURIComponent('https://www.youtube.com/results?search_query='+encodeURIComponent(q)+'&sp=EgIQAQ%253D%253D'));
           if(r.ok){
             const text=await r.text();
-            // Simple regex to extract video IDs from YouTube search page
             const videoIds = [...text.matchAll(/watch\?v=([a-zA-Z0-9_-]{11})/g)].map(m=>m[1]);
             const uniqueIds = [...new Set(videoIds)].slice(0,12);
             if(uniqueIds.length>0){
@@ -1650,7 +1632,6 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
       if(!ok)setErr('Не удалось найти на YouTube. Попробуйте позже.');
     }else{
       try{
-        // Use CORS proxy for Rutube API to avoid CORS issues
         const corsProxy = 'https://corsproxy.io/?';
         const res = await fetch(corsProxy + encodeURIComponent('https://rutube.ru/api/search/video/?query='+encodeURIComponent(q)+'&format=json&fields=id,title,author,thumbnail_url,duration'),{
           headers: {
@@ -1701,12 +1682,10 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
   const isBusy = busy||(platform==='yt'&&ytBusy&&mode==='home');
 
   return h('div',{style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}},
-    // Platform switcher
     h('div',{style:{display:'flex',padding:'10px 16px 0',gap:0,flexShrink:0}},
       h('button',{className:'btn',style:{borderRadius:'12px 0 0 12px',padding:'8px 20px',fontSize:13,justifyContent:'center',flex:1,background:platform==='rt'?'var(--accent)':'var(--panel)',color:platform==='rt'?'#fff':'var(--muted)',border:'1px solid var(--border)',transition:'all .2s'},onClick:()=>{setPlatform('rt');setResults([]);setMode('home');setErr('')}},'▶️ Rutube'),
       h('button',{className:'btn',style:{borderRadius:'0 12px 12px 0',padding:'8px 20px',fontSize:13,justifyContent:'center',flex:1,background:platform==='yt'?'#ff0000':'var(--panel)',color:platform==='yt'?'#fff':'var(--muted)',border:'1px solid var(--border)',borderLeft:'none',transition:'all .2s'},onClick:()=>{setPlatform('yt');setResults([]);setMode('home');setErr('')}},'▶ YouTube')
     ),
-    // Search bar
     h('div',{className:'rt-search-bar',style:{paddingTop:10}},
       h('div',{style:{display:'flex',flexDirection:'column',gap:8,flex:1}},
         h('div',{style:{display:'flex',gap:8}},
@@ -1720,7 +1699,6 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
         )
       )
     ),
-    // Categories (Rutube only)
     platform==='rt'&&mode==='home'&&h('div',{style:{display:'flex',gap:8,padding:'8px 16px',borderBottom:'1px solid var(--border)',overflowX:'auto',flexShrink:0,WebkitOverflowScrolling:'touch'}},
       RT_CATEGORIES.map(cat=>h('button',{key:cat,className:'btn btn-ghost',style:{flexShrink:0,borderRadius:999,padding:'5px 14px',fontSize:12,fontWeight:600},onClick:()=>{setQuery(cat);search(cat)}},cat))
     ),
@@ -1745,10 +1723,6 @@ function RutubeTab({me, dmConvs, peerUsers, rooms}){
   );
 }
 
-
-
-
-// ── PC SETTINGS (autostart, background mode) ─────────────────────────────────
 function PCSettingsTab({me}){
   const isWV2=!!(window.chrome&&window.chrome.webview);
   const [autostart,setAutostart]=useState(()=>localStorage.getItem('maxify_autostart')==='1');
@@ -1841,7 +1815,18 @@ function StoryViewer({stories, startIdx, onClose, me}){
           h(Avatar,{user:{id:story.uid,login:story.login,avatarUrl:story.avatarUrl},size:34}),
           h('div',{style:{color:'#fff',fontWeight:700,fontSize:14}},story.login),
           h('div',{style:{fontSize:11,color:'rgba(255,255,255,.6)',marginLeft:4}},ts2d(story.ts)),
-          h('button',{style:{marginLeft:'auto',background:'none',border:'none',color:'#fff',fontSize:22,cursor:'pointer',pointerEvents:'auto'},onClick:onClose},'×')
+          (me && story.uid === me) && h('button', {
+            style: {marginLeft: 'auto', background: 'none', border: 'none', color: '#f87171', fontSize: 18, cursor: 'pointer', pointerEvents: 'auto', padding: '0 8px'},
+            onClick: async (e) => {
+              e.stopPropagation();
+              if(confirm('Удалить эту историю?')) {
+                clearInterval(timerRef.current);
+                await db.ref('stories/' + me + '/' + story.k).remove();
+                onClose();
+              }
+            }
+          }, '🗑'),
+          h('button',{style:{marginLeft: (me && story.uid === me) ? 0 : 'auto', background:'none', border:'none', color:'#fff', fontSize:26, cursor:'pointer', pointerEvents:'auto', padding: '0 8px'},onClick:onClose},'×')
         ),
         story.text&&h('div',{style:{padding:'0 16px 20px',background:'linear-gradient(to top,rgba(0,0,0,.7),transparent)',color:'#fff',fontSize:14,lineHeight:1.6}},story.text)
       ),
@@ -1910,7 +1895,7 @@ function StoriesBar({me, meUser}){
         h('div',{className:'story-label'},allStories[uid][0]?.login||uid.slice(0,6))
       ))
     ),
-    viewing&&h(StoryViewer,{stories:viewing.stories,startIdx:0,onClose:()=>setViewing(null)})
+    viewing&&h(StoryViewer,{stories:viewing.stories,startIdx:0,onClose:()=>setViewing(null), me})
   );
 }
 
@@ -2089,106 +2074,6 @@ function FeedTab({me, meUser, onOpenProfile}){
   );
 }
 
-
-// ══/ ══════════════════════════════════════════════
-// ПОСТЫ, СТОРИС, ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ (Дублирующие старые функции для обратной совместимости, если где-то вызываются)
-// ══════════════════════════════════════════════
-
-function CreateStoryModal({me, user, onClose}){
-  const [type,setType]=useState('text');
-  const [text,setText]=useState('');
-  const [bg,setBg]=useState('linear-gradient(135deg,#4f8cff,#9b8cff)');
-  const [busy,setBusy]=useState(false);
-  const fileRef=useRef();
-  const BG_OPTS=['linear-gradient(135deg,#4f8cff,#9b8cff)','linear-gradient(135deg,#f87171,#fb923c)','linear-gradient(135deg,#34d399,#059669)','linear-gradient(135deg,#a78bfa,#ec4899)','linear-gradient(135deg,#fbbf24,#f59e0b)','#1a1d2e'];
-  const submit=async()=>{
-    setBusy(true);
-    const ref=db.ref('stories').push();
-    const data={id:ref.key,uid:me,authorName:user.login,authorAvatar:user.avatarUrl||null,ts:Date.now(),type,expiresAt:Date.now()+86400000};
-    if(type==='text'){data.text=text;data.bg=bg;}
-    await ref.set(data);
-    onClose();setBusy(false);
-  };
-  const handleFile=async e=>{
-    const file=e.target.files[0];if(!file)return;setBusy(true);
-    try{const url=await upload(file);const t=file.type.startsWith('video/')?'video':'image';const ref=db.ref('stories').push();await ref.set({id:ref.key,uid:me,authorName:user.login,authorAvatar:user.avatarUrl||null,ts:Date.now(),type:t,url,expiresAt:Date.now()+86400000});onClose();}
-    catch(ex){alert('Ошибка: '+ex.message)}
-    setBusy(false);
-  };
-  return h(Modal,{onClose},
-    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:16}},'Создать сторис'),h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22},onClick:onClose},'×')),
-    h('div',{className:'tab-bar'},[{id:'text',l:'✍️ Текст'},{id:'photo',l:'📷 Фото/Видео'}].map(t=>h('div',{key:t.id,className:'tab'+(type===t.id?' active':''),onClick:()=>setType(t.id)},t.l))),
-    type==='text'&&h(React.Fragment,null,
-      h('div',{style:{borderRadius:16,overflow:'hidden',aspectRatio:'9/16',maxHeight:260,display:'flex',alignItems:'center',justifyContent:'center',background:bg,padding:20,marginBottom:4}},
-        h('div',{style:{color:'#fff',fontSize:18,fontWeight:700,textAlign:'center',wordBreak:'break-word'}},text||'Ваш текст...')
-      ),
-      h('div',{style:{display:'flex',gap:6,flexWrap:'wrap'}},
-        BG_OPTS.map(b=>h('div',{key:b,onClick:()=>setBg(b),style:{width:28,height:28,borderRadius:8,background:b,cursor:'pointer',border:bg===b?'3px solid var(--accent)':'3px solid transparent'}}))
-      ),
-      h('textarea',{placeholder:'Напишите что-нибудь...',value:text,onChange:e=>setText(e.target.value),rows:3,style:{resize:'none'}}),
-      h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center'},onClick:submit,disabled:busy||!text.trim()},busy?'...':'Опубликовать')
-    ),
-    type==='photo'&&h(React.Fragment,null,
-      h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center',padding:14},onClick:()=>fileRef.current.click(),disabled:busy},busy?'Загрузка...':'📷 Выбрать фото или видео'),
-      h('input',{ref:fileRef,type:'file',accept:'image/*,video/*',style:{display:'none'},onChange:handleFile})
-    )
-  );
-}
-
-function UserProfilePage({uid, me, onClose, onStartDM}){
-  const [profileUser,setProfileUser]=useState(null);
-  const [posts,setPosts]=useState([]);
-  const [stories,setStories]=useState([]);
-  const [storyView,setStoryView]=useState(null);
-  useEffect(()=>{
-    db.ref('users/'+uid).on('value',s=>{const v=s.val();if(v)setProfileUser(v)});
-    db.ref('posts').orderByChild('uid').equalTo(uid).on('value',s=>{const v=s.val()||{};setPosts(Object.values(v).sort((a,b)=>b.ts-a.ts))});
-    const now=Date.now();
-    db.ref('stories').orderByChild('uid').equalTo(uid).on('value',s=>{const v=s.val()||{};setStories(Object.values(v).filter(s=>!s.expiresAt||s.expiresAt>now).sort((a,b)=>a.ts-b.ts))});
-    return()=>{db.ref('users/'+uid).off();db.ref('posts').off();db.ref('stories').off()};
-  },[uid]);
-  if(!profileUser)return h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center'}},h('div',{style:{width:28,height:28,border:'3px solid rgba(79,140,255,.2)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .7s linear infinite'}}));
-  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',borderRadius:22,overflow:'hidden'}},
-    h('div',{style:{padding:'14px 18px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10}},
-      h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:18,padding:'4px 8px',borderRadius:8},onClick:onClose},'←'),
-      h('div',{className:'syne',style:{fontWeight:700,fontSize:16,flex:1}},profileUser.login),
-      uid!==me&&onStartDM&&h('button',{className:'btn btn-primary',style:{borderRadius:999,padding:'7px 16px',fontSize:13},onClick:()=>{onStartDM({id:uid,...profileUser});onClose()}},'💬 Написать')
-    ),
-    h('div',{style:{overflowY:'auto',flex:1}},
-      // Profile header kool
-      h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:8,padding:'24px 16px 16px',borderBottom:'1px solid var(--border)'}},
-        h(Avatar,{user:profileUser,size:80,ring:true}),
-        h('div',{className:'syne',style:{fontWeight:800,fontSize:20}},profileUser.login),
-        profileUser.bio&&h('div',{style:{fontSize:13,color:'var(--muted)',textAlign:'center',maxWidth:320}},profileUser.bio),
-        h('div',{style:{display:'flex',gap:24,marginTop:8}},
-          h('div',{style:{textAlign:'center'}},h('div',{className:'syne',style:{fontWeight:700,fontSize:18}},posts.length),h('div',{style:{fontSize:11,color:'var(--muted)'}},'постов')),
-          stories.length>0&&h('div',{style:{textAlign:'center',cursor:'pointer'},onClick:()=>setStoryView(stories)},h('div',{className:'syne',style:{fontWeight:700,fontSize:18}},stories.length),h('div',{style:{fontSize:11,color:'var(--muted)'}},'сторис'))
-        )
-      ),
-      // Stories preview new
-      stories.length>0&&h('div',{style:{display:'flex',gap:10,padding:'12px 16px',overflowX:'auto',borderBottom:'1px solid var(--border)'}},
-        stories.map((s,i)=>h('div',{key:s.id,style:{width:70,height:100,borderRadius:12,overflow:'hidden',cursor:'pointer',flexShrink:0,border:'2px solid var(--accent)'},onClick:()=>setStoryView({stories,idx:i})},
-          s.type==='image'?h('img',{src:s.url,style:{width:'100%',height:'100%',objectFit:'cover'}}):
-          s.type==='video'?h('video',{src:s.url,style:{width:'100%',height:'100%',objectFit:'cover'}}):
-          h('div',{style:{width:'100%',height:'100%',background:s.bg||'var(--accent)',display:'flex',alignItems:'center',justifyContent:'center',padding:6}},h('div',{style:{color:'#fff',fontSize:11,textAlign:'center',overflow:'hidden'}},s.text))
-        ))
-      ),
-      // Posts grid
-      posts.length>0&&h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:2,padding:2}},
-        posts.filter(p=>p.mediaUrl).map(p=>h('div',{key:p.id,style:{aspectRatio:'1',overflow:'hidden',cursor:'pointer',background:'var(--panel)'}},
-          p.mediaType==='video'?h('video',{src:p.mediaUrl,style:{width:'100%',height:'100%',objectFit:'cover'}}):
-          h('img',{src:p.mediaUrl,style:{width:'100%',height:'100%',objectFit:'cover'}})
-        ))
-      ),
-      // Posts list (text posts)
-      h('div',{style:{padding:'14px 16px'}},
-        posts.map(p=>h(PostCard,{key:p.id,post:p,me,onOpenProfile:null}))
-      )
-    ),
-    storyView&&h(StoryViewer,{stories:storyView.stories||storyView,startIdx:storyView.idx||0,onClose:()=>setStoryView(null)})
-  );
-}
-
 function App(){
   const [user,setUser]=useState(null);const [loading,setLoading]=useState(true);
   const [dmConvs,setDmConvs]=useState([]);const [rooms,setRooms]=useState([]);
@@ -2272,7 +2157,6 @@ function App(){
     return()=>window.removeEventListener('rt-open',handler);
   },[]);
 
-  // ИСПРАВЛЕНИЕ ТУТ: Добавлен сброс состояний showFeed, showRT и viewProfile
   const openDM=u=>{
     setActiveChat({type:'dm',id:u.id});
     loadUser(u.id);
@@ -2315,7 +2199,7 @@ function App(){
       groups.length===0&&h('div',{style:{color:'var(--muted)',fontSize:12,textAlign:'center',padding:'12px 8px'}},'Нет групп'),
       groups.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
         r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:40,height:40,flexShrink:0}}):h('div',{style:{width:40,height:40,borderRadius:'50%',background:'rgba(79,140,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}},'👥'),
-        h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:14,display:'flex',alignItems:'center',gap:4}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытый',style:{fontSize:11,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:12,color:'var(--muted)'}},r.last?.preview||r.desc||'Группа'))
+        h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:14,display:'flex',alignItems:'center',gap:4}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытая',style:{fontSize:11,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:12,color:'var(--muted)'}},r.last?.preview||r.desc||'Группа'))
       ))
     );
     if(tab==='channels')return h(React.Fragment,null,
@@ -2339,7 +2223,6 @@ function App(){
       h('div',{className:'hr'}),
       h('button',{className:'btn btn-ghost',style:{justifyContent:'flex-start',padding:'8px 12px',borderRadius:12,fontSize:13,width:'100%'},onClick:()=>setShowSearch(true)},'🔍  Найти пользователя'),
       
-      // ИСПРАВЛЕНИЕ ТУТ: При переключении вкладок слева (ЛС/Группы/Каналы) также сбрасываем ленту и рутуб
       h('div',{className:'tab-bar',style:{padding:'2px 0'}},
         [{id:'dms',label:'ЛС'},{id:'groups',label:'Группы'},{id:'channels',label:'Каналы'}].map(t=>h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),style:{flex:1,textAlign:'center',position:'relative'},onClick:()=>{setTab(t.id);setShowRT(false);setShowFeed(false);setViewProfile(null);}},t.label,t.id==='dms'&&totalUnread>0&&h('span',{style:{position:'absolute',top:2,right:2,minWidth:14,height:14,borderRadius:999,background:'var(--danger)',color:'#fff',fontSize:9,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}},totalUnread)))
       ),
@@ -2347,7 +2230,6 @@ function App(){
       h('div',{style:{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:2}},listContent()),
       h('div',{className:'hr'}),
       
-      // ИСПРАВЛЕНИЕ ТУТ: Добавлен сброс профиля при переходе в Ленту и Rutube
       h('button',{className:'btn btn-ghost',style:{justifyContent:'center',width:'100%',borderRadius:12,fontSize:13,marginBottom:4,background:showFeed&&!showRT?'rgba(79,140,255,.1)':'',color:showFeed&&!showRT?'var(--accent)':'var(--text)'},onClick:()=>{setShowFeed(true);setShowRT(false);setActiveChat(null);setShowMobileList(false);setViewProfile(null);}},'📸  Лента'),
       h('button',{className:'btn btn-ghost',style:{justifyContent:'center',width:'100%',borderRadius:12,fontSize:13,marginBottom:4,background:showRT?'rgba(255,68,68,.1)':'',color:showRT?'#ff4444':'var(--text)'},onClick:()=>{setShowRT(true);setShowFeed(false);setActiveChat(null);setShowMobileList(false);setViewProfile(null);}},'▶️  Rutube'),
       
@@ -2384,7 +2266,7 @@ function App(){
                   h('div',{style:{flex:1}}),
                   h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:13,padding:'4px 8px',borderRadius:8,transition:'background .15s'},onClick:e=>{e.stopPropagation();setShowFeed(false);setActiveChat(null);setShowMobileList(false)},onMouseEnter:e=>e.target.style.background='rgba(255,255,255,.1)',onMouseLeave:e=>e.target.style.background=''},'✕ Закрыть')
                 ),
-        h(FeedTab,{me:user.id,user,onOpenProfile:uid=>{setViewProfile(uid);setShowFeed(false)}})
+        h(FeedTab,{me:user.id,meUser:user,onOpenProfile:uid=>{setViewProfile(uid);setShowFeed(false)}})
               )
             :activeChat?.type==='dm'
               ?h(DMChat,{key:activeChat.id,me:user.id,peer:activeChat.id,peerUser:activeDMPeer,onBack:()=>{setActiveChat(null);setShowMobileList(true)},peerInst})
