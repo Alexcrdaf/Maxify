@@ -388,7 +388,7 @@ const {useState,useEffect,useRef,useCallback,useMemo}=React;
 
 const dmId=(a,b)=>[a,b].sort().join('__');
 const ts2t=ts=>{if(!ts)return'';const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')};
-const ts2d=ts=>{if(!ts)return'';const d=new Date(ts),t=new Date();if(d.toDateString()===t.toDateString())return'сегодня';const y=new Date(t);y.setDate(y.getDate()-1);if(d.toDateString()===y.toDateString())return'вчера';return d.toLocaleDateString('ru')};
+const ts2d=ts=>{if(!ts)return'';const d=new Date(ts);const t=new Date();if(d.toDateString()===t.toDateString())return'сегодня';const y=new Date(t);y.setDate(y.getDate()-1);if(d.toDateString()===y.toDateString())return'вчера';return d.toLocaleDateString('ru')};
 const fmtDur=s=>`${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
 const fmtLastSeen=ts=>{if(!ts)return'не в сети';const d=Date.now()-ts;if(d<60000)return'только что';if(d<3600000)return`${Math.floor(d/60000)} мин. назад`;if(d<86400000)return`${Math.floor(d/3600000)} ч. назад`;return new Date(ts).toLocaleDateString('ru')};
 
