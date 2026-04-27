@@ -255,19 +255,17 @@ audio{width:180px;height:34px}
 .story-ui{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
 .story-header{display:flex;align-items:center;gap:10px;padding:48px 14px 10px;background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent)}
 /* ── FEED POSTS ── */
-.feed-post{background:var(--panel);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,.15);transition:all .2s cubic-bezier(.25,1,.5,1)}
-.feed-post:hover{border-color:rgba(79,140,255,.2);box-shadow:0 8px 32px rgba(79,140,255,.08)}
+.feed-post{background:var(--panel);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:14px}
 .post-header{display:flex;align-items:center;gap:10px;padding:12px 16px}
-.post-image{width:100%;max-height:500px;object-fit:cover;display:block;cursor:zoom-in;transition:transform .2s}
-.post-image:hover{transform:scale(1.02)}
-.post-video{width:100%;max-height:500px;display:block;border-radius:0}
-.post-actions{display:flex;align-items:center;gap:14px;padding:8px 16px 2px}
-.post-action-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:24px;padding:6px;borderRadius:12px;transition:all .2s cubic-bezier(.25,1,.5,1)}
-.post-action-btn:hover{transform:scale(1.2);color:var(--text)}
-.post-action-btn.liked{color:#f87171;transform:scale(1.1)}
+.post-image{width:100%;max-height:500px;object-fit:cover;display:block;cursor:zoom-in}
+.post-video{width:100%;max-height:500px;display:block}
+.post-actions{display:flex;align-items:center;gap:14px;padding:10px 16px 4px}
+.post-action-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;padding:4px;transition:transform .15s,color .15s}
+.post-action-btn:hover{transform:scale(1.15);color:var(--text)}
+.post-action-btn.liked{color:#f87171}
 .post-likes{font-size:13px;font-weight:700;padding:0 16px 4px}
-.post-caption{padding:2px 16px 10px;font-size:14px;line-height:1.6}
-.post-time{padding:0 16px 12px;fontSize:12px;color:var(--muted)}
+.post-caption{padding:2px 16px 10px;font-size:13px;line-height:1.6}
+.post-time{padding:0 16px 12px;font-size:11px;color:var(--muted)}
 /* ── PROFILE PAGE ── */
 .profile-page{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .profile-cover{height:120px;background:linear-gradient(135deg,rgba(79,140,255,.2),rgba(155,140,255,.15));flex-shrink:0}
@@ -1915,7 +1913,6 @@ function PostCard({post, me, userData, onOpenProfile, onOpenComments}){
   const [liked,setLiked]=useState(!!(post.likes&&post.likes[me]));
   const [likeCount,setLikeCount]=useState(Object.keys(post.likes||{}).length);
   const [lightbox,setLightbox]=useState(null);
-  const [showMenu,setShowMenu]=useState(false);
   const author=userData||{id:post.uid,login:post.login||'Загрузка...',avatarUrl:post.avatarUrl};
 
   const toggleLike=async()=>{
@@ -1927,59 +1924,26 @@ function PostCard({post, me, userData, onOpenProfile, onOpenComments}){
 
   const commentCount=Object.keys(post.comments||{}).length;
 
-  return h('div',{className:'feed-post slide-up',style:{animationDelay:Math.random()*0.15+'s'}},
-    h('div',{className:'post-header',style:{padding:'14px 16px'}},
-      h('div',{style:{cursor:'pointer',padding:4,margin:-4,borderRadius:14,transition:'background .2s'},onClick:()=>onOpenProfile&&onOpenProfile(post.uid),
-        onMouseEnter:e=>e.currentTarget.style.background='rgba(79,140,255,.08)',
-        onMouseLeave:e=>e.currentTarget.style.background='',
-        h(Avatar,{user:author,size:42})
+  return h('div',{className:'feed-post slide-up'},
+    h('div',{className:'post-header'},
+      h('div',{style:{cursor:'pointer'},onClick:()=>onOpenProfile&&onOpenProfile(post.uid)},h(Avatar,{user:author,size:38})),
+      h('div',{style:{flex:1,cursor:'pointer'},onClick:()=>onOpenProfile&&onOpenProfile(post.uid)},
+        h('div',{style:{fontWeight:700,fontSize:14}},author.login),
+        h('div',{style:{fontSize:11,color:'var(--muted)'}},ts2d(post.ts)+' · '+ts2t(post.ts))
       ),
-      h('div',{style:{flex:1,marginLeft:2},onClick:()=>onOpenProfile&&onOpenProfile(post.uid)},
-        h('div',{style:{fontWeight:700,fontSize:15,fontFamily:'Syne',display:'flex',alignItems:'center',gap:6}},author.login,author.email&&VERIFIED_EMAILS.includes(author.email)&&h('span',{style:{fontSize:11,background:'linear-gradient(135deg,#4f8cff,#9b8cff)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
-        h('div',{style:{fontSize:12,color:'var(--muted)',marginTop:2}},ts2d(post.ts)+' · '+ts2t(post.ts))
-      ),
-      h('div',{style:{position:'relative'}},
-        h('button',{style:{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:16,padding:'6px',borderRadius:10,transition:'all .2s'},onClick:()=>setShowMenu(v=>!v),
-          onMouseEnter:e=>e.currentTarget.style.background='rgba(255,255,255,.08)',
-          onMouseLeave:e=>e.currentTarget.style.background='',
-          onMouseDown:e=>e.currentTarget.style.transform='scale(.9)',
-          onMouseUp:e=>e.currentTarget.style.transform='scale(1)',
-        },'⋯'),
-        showMenu&&h('div',{style:{position:'absolute',top:'calc(100% + 4px)',right:0,background:'var(--attach-bg)',border:'1px solid var(--border)',borderRadius:14,padding:6,zIndex:9999,minWidth:170,boxShadow:'0 12px 40px rgba(0,0,0,.6)'},onClick:()=>setShowMenu(false)},
-          post.uid===me&&h('div',{className:'attach-item',style:{color:'var(--danger)'},onClick:async()=>{if(confirm('Удалить пост?'))await db.ref('posts/'+post.k).remove()}},'🗑 Удалить'),
-          h('div',{className:'attach-item',onClick:()=>{navigator.clipboard?.writeText(window.location.href).catch(()=>{})}},'📋 Копировать ссылку')
-        )
-      )
+      post.uid===me&&h('button',{style:{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:18,padding:'4px'},onClick:async()=>{if(confirm('Удалить пост?'))await db.ref('posts/'+post.k).remove()}},'🗑')
     ),
-    post.text&&h('div',{className:'post-caption',style:{padding:'4px 16px 12px',fontSize:15,lineHeight:1.6,whiteSpace:'pre-wrap'}},post.text),
+    post.text&&h('div',{className:'post-caption'},post.text),
     post.mediaUrl&&(post.mediaType==='video'
-      ?h('video',{src:post.mediaUrl,controls:true,className:'post-video',playsInline:true,style:{width:'100%',maxHeight:500}})
-      :h('div',{style:{position:'relative',overflow:'hidden'},onClick:()=>setLightbox(post.mediaUrl)},
-        h('img',{src:post.mediaUrl,className:'post-image',alt:'',style:{width:'100%',maxHeight:500,objectFit:'cover',cursor:'zoom-in'},loading:'lazy'}),
-        h('div',{style:{position:'absolute',inset:0,background:'linear-gradient(to top,rgba(0,0,0,.4),transparent)',opacity:0,transition:'opacity .2s',pointerEvents:'none'},onMouseEnter:e=>e.currentTarget.style.opacity=1,onMouseLeave:e=>e.currentTarget.style.opacity=0})
-      )
+      ?h('video',{src:post.mediaUrl,controls:true,className:'post-video',playsInline:true})
+      :h('img',{src:post.mediaUrl,className:'post-image',alt:'',onClick:()=>setLightbox(post.mediaUrl),loading:'lazy'})
     ),
-    h('div',{className:'post-actions',style:{padding:'8px 16px 4px',gap:16}},
-      h('button',{className:'post-action-btn'+(liked?' liked':''),onClick:toggleLike,
-        style:{transition:'all .2s cubic-bezier(.25,1,.5,1),transform:liked?'scale(1.1)':'scale(1)',
-          onMouseEnter:e=>!liked&&(e.currentTarget.style.transform='scale(1.15)'),
-          onMouseLeave:e=>e.currentTarget.style.transform='scale(1)'
-        }
-      },liked?'❤️':'🤍',h('span',{style:{fontSize:14,fontWeight:700,color:'var(--text)'}},likeCount||'')),
-      h('button',{className:'post-action-btn',onClick:()=>onOpenComments&&onOpenComments(post),
-        style:{transition:'all .2s cubic-bezier(.25,1,.5,1),transform:'scale(1)',
-          onMouseEnter:e=>e.currentTarget.style.transform='scale(1.15)',
-          onMouseLeave:e=>e.currentTarget.style.transform='scale(1)'
-        }
-      },'💬',commentCount>0&&h('span',{style:{fontSize:14,fontWeight:700,color:'var(--text)'}},commentCount)),
-      h('button',{className:'post-action-btn',onClick:()=>{navigator.clipboard?.writeText(window.location.href).catch(()=>{})},
-        style:{transition:'all .2s cubic-bezier(.25,1,.5,1),transform:'scale(1)',
-          onMouseEnter:e=>e.currentTarget.style.transform='scale(1.15)',
-          onMouseLeave:e=>e.currentTarget.style.transform='scale(1)'
-        }
-      }, '🔗')
+    h('div',{className:'post-actions'},
+      h('button',{className:'post-action-btn'+(liked?' liked':''),onClick:toggleLike},liked?'❤️':'🤍',h('span',{style:{fontSize:13,fontWeight:700,color:'var(--text)'}},likeCount||'')),
+      h('button',{className:'post-action-btn',onClick:()=>onOpenComments&&onOpenComments(post)},'💬',commentCount>0&&h('span',{style:{fontSize:13,fontWeight:700,color:'var(--text)'}},commentCount)),
+      h('button',{className:'post-action-btn',onClick:()=>{navigator.clipboard?.writeText(window.location.href).catch(()=>{})}}, '🔗')
     ),
-    h('div',{className:'post-time',style:{padding:'0 16px 14px',fontSize:12}},ts2d(post.ts)),
+    h('div',{className:'post-time'},ts2d(post.ts)),
     lightbox&&h('div',{className:'lightbox',onClick:()=>setLightbox(null)},h('img',{src:lightbox,onClick:e=>e.stopPropagation()}))
   );
 }
@@ -2109,13 +2073,10 @@ function FeedTab({me, meUser, onOpenProfile}){
 
   return h('div',{style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}},
     h(StoriesBar,{me,meUser}),
-    h('div',{style:{padding:'14px 16px',borderBottom:'1px solid var(--border)',flexShrink:0}},
-      h('div',{style:{display:'flex',alignItems:'center',gap:12,padding:'10px 16px',background:'var(--panel)',borderRadius:20,cursor:'pointer',border:'1px solid var(--border)',transition:'all .2s cubic-bezier(.25,1,.5,1)'},onClick:()=>setShowCreate(true),
-        onMouseEnter:e=>{e.currentTarget.style.background='rgba(79,140,255,.08)';e.currentTarget.style.borderColor='var(--accent)';e.currentTarget.style.transform='translateY(-1px)';},
-        onMouseLeave:e=>{e.currentTarget.style.background='var(--panel)';e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.transform='translateY(0)';},
-        h(Avatar,{user:meUser,size:38,ring:true}),
-        h('div',{style:{flex:1,color:'var(--muted)',fontSize:14,fontWeight:500}},'Что у вас нового?'),
-        h('div',{style:{background:'var(--accent)',color:'#fff',borderRadius:8,padding:'6px 14px',fontSize:12,fontWeight:700,fontFamily:'Syne'}},'+ Пост')
+    h('div',{style:{padding:'10px 16px',borderBottom:'1px solid var(--border)',flexShrink:0}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',background:'var(--input-bg)',borderRadius:999,cursor:'pointer',border:'1px solid var(--border)'},onClick:()=>setShowCreate(true)},
+        h(Avatar,{user:meUser,size:30}),
+        h('div',{style:{flex:1,color:'var(--muted)',fontSize:13}},'Что у вас нового?')
       )
     ),
     loading?h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}},'Загрузка...'):
@@ -2124,7 +2085,7 @@ function FeedTab({me, meUser, onOpenProfile}){
       h('div',{className:'syne',style:{fontSize:18,fontWeight:800,opacity:.2}},'Пока пусто'),
       h('div',{style:{fontSize:13,opacity:.5}},'Будьте первым, кто опубликует пост!')
     ):
-    h('div',{style:{flex:1,overflowY:'auto',padding:'16px'}},
+    h('div',{style:{flex:1,overflowY:'auto',padding:'14px 16px'}},
       posts.map(p=>h(PostCard,{key:p.k,post:p,me:me,userData:getUserData(p.uid),onOpenProfile,onOpenComments:setCommentPost}))
     ),
     showCreate&&h(CreatePostModal,{me,meUser,onClose:()=>setShowCreate(false)}),
