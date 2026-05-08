@@ -274,6 +274,9 @@ audio{width:180px;height:34px}
 .post-likes{font-size:13px;font-weight:700;padding:0 16px 4px}
 .post-caption{padding:2px 16px 10px;font-size:13px;line-height:1.6}
 .post-time{padding:0 16px 12px;font-size:11px;color:var(--muted)}
+.feed-close-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:4px 8px;border-radius:8px;transition:background .15s,color .15s}
+.feed-close-btn:hover{background:rgba(79,140,255,.12);color:var(--text)}
+.feed-close-btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--glow);border-radius:10px}
 /* ── PROFILE PAGE ── */
 .profile-page{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .profile-cover{height:120px;background:linear-gradient(135deg,rgba(79,140,255,.2),rgba(155,140,255,.15));flex-shrink:0}
@@ -697,7 +700,7 @@ function Auth(){
   );
 }
 
-function UserSearch({me,onSelect,onClose}){
+function UserSearch({me,onSelect,onOpenProfile,onClose}){
   const [q,setQ]=useState('');const [results,setResults]=useState([]);const [busy,setBusy]=useState(false);const [err,setErr]=useState('');
   useEffect(()=>{
     if(!q.trim()){setResults([]);return}
@@ -717,15 +720,18 @@ function UserSearch({me,onSelect,onClose}){
       busy&&h('div',{style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}},'🔍 Поиск...'),
       err&&h('div',{style:{color:'var(--danger)',fontSize:12,textAlign:'center',padding:12}},err),
       !busy&&q.trim()&&results.length===0&&!err&&h('div',{style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}},'Никого не найдено'),
-      !busy&&results.map(u=>h('div',{key:u.id,className:'search-item',onClick:()=>{onSelect(u);onClose()}},
-        h(Avatar,{user:u,size:38}),
-        h('div',{style:{flex:1,minWidth:0}},
-          h('div',{style:{fontWeight:600,fontSize:14,display:'flex',alignItems:'center',gap:5}},u.login,u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:11,background:'linear-gradient(135deg,#4f8cff,#9b8cff)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
-          h('div',{style:{fontSize:10,color:u.online?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:4}},
-            h('span',{className:'status-dot '+(u.online?'online':'offline')}),
-            u.online?'онлайн':fmtLastSeen(u.lastSeen)
+      !busy&&results.map(u=>h('div',{key:u.id,className:'search-item',style:{justifyContent:'space-between'},onClick:()=>{onSelect(u);onClose()}},
+        h('div',{style:{display:'flex',alignItems:'center',gap:10,flex:1,minWidth:0}},
+          h(Avatar,{user:u,size:38}),
+          h('div',{style:{flex:1,minWidth:0}},
+            h('div',{style:{fontWeight:600,fontSize:14,display:'flex',alignItems:'center',gap:5}},u.login,u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:11,background:'linear-gradient(135deg,#4f8cff,#9b8cff)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
+            h('div',{style:{fontSize:10,color:u.online?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:4}},
+              h('span',{className:'status-dot '+(u.online?'online':'offline')}),
+              u.online?'онлайн':fmtLastSeen(u.lastSeen)
+            )
           )
-        )
+        ),
+        onOpenProfile&&h('button',{className:'btn btn-ghost btn-icon',style:{width:34,height:34,minWidth:34,minHeight:34,flexShrink:0},onClick:e=>{e.stopPropagation();onOpenProfile(u.id);onClose()}},'👤')
       ))
     )
   );
@@ -841,7 +847,7 @@ function CreateRoomModal({me,type,onClose}){
   );
 }
 
-function RoomInfoModal({room,me,onClose}){
+function RoomInfoModal({room,me,onClose,onOpenProfile}){
   const [tab,setTab]=useState('members');
   const [searchQ,setSearchQ]=useState('');
   const [searchRes,setSearchRes]=useState([]);
@@ -942,7 +948,7 @@ function RoomInfoModal({room,me,onClose}){
       h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center'},onClick:saveChanges,disabled:busy||!editName.trim()},'Сохранить')
     ),
     tab==='members'&&h('div',{style:{maxHeight:280,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
-      Object.keys(members).map(uid=>h(MemberRow,{key:uid,uid,isOwner,isAdmin,ownerId:room.owner,admins,me,onRemove:async()=>{if(uid===room.owner)return;await db.ref('rooms/'+room.id+'/members/'+uid).remove()}}))
+      Object.keys(members).map(uid=>h(MemberRow,{key:uid,uid,isOwner,isAdmin,ownerId:room.owner,admins,me,onOpenProfile,onRemove:async()=>{if(uid===room.owner)return;await db.ref('rooms/'+room.id+'/members/'+uid).remove()}}))
     ),
     tab==='add'&&isAdmin&&h('div',{style:{display:'flex',flexDirection:'column',gap:8}},
       h('input',{placeholder:'Поиск...',value:searchQ,onChange:e=>setSearchQ(e.target.value),autoFocus:true}),
@@ -982,18 +988,20 @@ function RoomInfoModal({room,me,onClose}){
   );
 }
 
-function MemberRow({uid,isOwner,isAdmin,ownerId,admins,me,onRemove}){
+function MemberRow({uid,isOwner,isAdmin,ownerId,admins,me,onOpenProfile,onRemove}){
   const [u,setU]=useState(null);
   useEffect(()=>{db.ref('users/'+uid).once('value').then(s=>setU(s.val()))},[uid]);
   if(!u)return null;
   const canRemove=(isOwner||isAdmin)&&uid!==ownerId&&uid!==me;
   return h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',borderRadius:12}},
-    h(Avatar,{user:u,size:34}),
-    h('div',{style:{flex:1}},
-      h('div',{style:{fontWeight:600,fontSize:13,display:'flex',alignItems:'center',gap:6}},u.login,uid===ownerId&&h('span',null,'👑'),admins?.[uid]&&uid!==ownerId&&h('span',{className:'admin-badge'},'ADMIN')),
-      h('div',{style:{fontSize:11,color:'var(--muted)'}},u.online?'онлайн':fmtLastSeen(u.lastSeen))
+    h('div',{style:{display:'flex',alignItems:'center',gap:10,flex:1,cursor:onOpenProfile?'pointer':'default'},onClick:()=>onOpenProfile&&onOpenProfile(uid)},
+      h(Avatar,{user:u,size:34}),
+      h('div',null,
+        h('div',{style:{fontWeight:600,fontSize:13,display:'flex',alignItems:'center',gap:6}},u.login,uid===ownerId&&h('span',null,'👑'),admins?.[uid]&&uid!==ownerId&&h('span',{className:'admin-badge'},'ADMIN')),
+        h('div',{style:{fontSize:11,color:'var(--muted)'}},u.online?'онлайн':fmtLastSeen(u.lastSeen))
+      )
     ),
-    canRemove&&h('button',{className:'btn btn-danger',style:{padding:'4px 10px',fontSize:11},onClick:onRemove},'Удалить')
+    canRemove&&h('button',{className:'btn btn-danger',style:{padding:'4px 10px',fontSize:11},onClick:e=>{e.stopPropagation();onRemove()}},'Удалить')
   );
 }
 
@@ -1414,7 +1422,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
   );
 }
 
-function RoomChat({room,me,onBack}){
+function RoomChat({room,me,onBack,onOpenProfile}){
   const [msgs,setMsgs]=useState([]);
   const [lightbox,setLightbox]=useState(null);
   const [showInfo,setShowInfo]=useState(false);
@@ -1509,7 +1517,7 @@ function RoomChat({room,me,onBack}){
     ),
     h(InputBar,{onSend:send,chatName:liveRoom.name,canWrite,editMsg,onCancelEdit:()=>setEditMsg(null),replyMsg,onCancelReply:()=>setReplyMsg(null)}),
     lightbox&&h('div',{className:'lightbox',onClick:()=>setLightbox(null)},h('img',{src:lightbox,onClick:e=>e.stopPropagation()})),
-    showInfo&&h(RoomInfoModal,{room:liveRoom,me,onClose:()=>setShowInfo(false)})
+    showInfo&&h(RoomInfoModal,{room:liveRoom,me,onClose:()=>setShowInfo(false),onOpenProfile})
   );
 }
 
@@ -2138,6 +2146,80 @@ function FeedTab({me, meUser, onOpenProfile}){
   );
 }
 
+function UserProfilePage({uid,me,onClose,onStartDM}){
+  const [u,setU]=useState(null);
+  const [posts,setPosts]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [lightbox,setLightbox]=useState(null);
+
+  useEffect(()=>{
+    const ref=db.ref('users/'+uid);
+    ref.on('value',s=>{const v=s.val();if(v)setU(v)});
+    return()=>ref.off();
+  },[uid]);
+
+  useEffect(()=>{
+    setLoading(true);
+    const ref=db.ref('posts').orderByChild('uid').equalTo(uid).limitToLast(60);
+    ref.on('value',s=>{
+      const v=s.val()||{};
+      const arr=Object.entries(v).map(([k,p])=>({k,...p})).sort((a,b)=>(b.ts||0)-(a.ts||0));
+      setPosts(arr);
+      setLoading(false);
+    });
+    return()=>ref.off();
+  },[uid]);
+
+  const mediaPosts=useMemo(()=>posts.filter(p=>p.mediaUrl),[posts]);
+  const likeCount=useMemo(()=>posts.reduce((sum,p)=>sum+Object.keys(p.likes||{}).length,0),[posts]);
+  const commentCount=useMemo(()=>posts.reduce((sum,p)=>sum+Object.keys(p.comments||{}).length,0),[posts]);
+
+  return h('div',{className:'profile-page'},
+    h('div',{style:{padding:'10px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,flexShrink:0}},
+      h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:18,padding:'4px 8px',borderRadius:8},onClick:onClose},'←'),
+      h('div',{className:'syne',style:{fontWeight:700,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},u?.login||'Профиль'),
+      h('div',{style:{flex:1}}),
+      uid!==me&&u&&h('button',{className:'btn btn-primary',style:{padding:'8px 12px',borderRadius:12,fontSize:12,justifyContent:'center'},onClick:()=>onStartDM&&onStartDM(u)},'💬 Написать')
+    ),
+    h('div',{className:'profile-cover'}),
+    h('div',{className:'profile-info-row'},
+      h(Avatar,{user:u||{id:uid},size:74,ring:true}),
+      h('div',{style:{flex:1,minWidth:0,paddingBottom:6}},
+        h('div',{className:'syne',style:{fontSize:20,fontWeight:800,display:'flex',alignItems:'center',gap:6,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},
+          u?.login||uid.slice(0,8),
+          u?.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:12,background:'linear-gradient(135deg,#4f8cff,#9b8cff)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
+        ),
+        h('div',{style:{fontSize:12,color:'var(--muted)',marginTop:2,display:'flex',alignItems:'center',gap:6}},
+          h('span',{className:'status-dot '+(u?.online?'online':'offline')}),
+          u?.online?'онлайн':fmtLastSeen(u?.lastSeen)
+        )
+      )
+    ),
+    u?.bio&&h('div',{style:{padding:'0 20px 14px',fontSize:13,lineHeight:1.7,color:'var(--text)'}},u.bio),
+    h('div',{className:'profile-stats'},
+      h('div',{className:'profile-stat'},h('div',{className:'profile-stat-n'},posts.length),h('div',{className:'profile-stat-l'},'Посты')),
+      h('div',{className:'profile-stat'},h('div',{className:'profile-stat-n'},likeCount),h('div',{className:'profile-stat-l'},'Лайки')),
+      h('div',{className:'profile-stat'},h('div',{className:'profile-stat-n'},commentCount),h('div',{className:'profile-stat-l'},'Комментарии'))
+    ),
+    loading
+      ?h('div',{style:{padding:24,color:'var(--muted)',textAlign:'center'}},'Загрузка...')
+      :mediaPosts.length===0
+        ?h('div',{style:{padding:24,color:'var(--muted)',textAlign:'center'}},'Постов с фото/видео пока нет')
+        :h('div',{className:'profile-grid'},
+            mediaPosts.map(p=>h('div',{key:p.k,className:'profile-grid-item',onClick:()=>setLightbox({url:p.mediaUrl,type:p.mediaType||'image'})},
+              (p.mediaType==='video')
+                ?h('video',{src:p.mediaUrl,muted:true,playsInline:true,preload:'metadata'})
+                :h('img',{src:p.mediaUrl,loading:'lazy',decoding:'async'})
+            ))
+          ),
+    lightbox&&h('div',{className:'lightbox',onClick:()=>setLightbox(null)},
+      lightbox.type==='video'
+        ?h('video',{src:lightbox.url,controls:true,autoPlay:true,playsInline:true,style:{maxWidth:'92vw',maxHeight:'92vh',borderRadius:12,display:'block'},onClick:e=>e.stopPropagation()})
+        :h('img',{src:lightbox.url,onClick:e=>e.stopPropagation()})
+    )
+  );
+}
+
 function App(){
   const [user,setUser]=useState(null);const [loading,setLoading]=useState(true);
   const [dmConvs,setDmConvs]=useState([]);const [rooms,setRooms]=useState([]);
@@ -2234,6 +2316,15 @@ function App(){
     setShowRT(false);
     setViewProfile(null);
   };
+  const openUserProfile=uid=>{
+    setViewProfile(uid);
+    setShowFeed(false);
+    setShowRT(false);
+    setActiveChat(null);
+    setShowMobileList(false);
+    setShowSearch(false);
+    setShowRoomSearch(false);
+  };
   const signOut=async()=>{if(user)await db.ref('users/'+user.id).update({online:false,lastSeen:Date.now()});auth.signOut()};
 
   if(loading)return h('div',{style:{height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'var(--muted)'}},h('div',{style:{width:36,height:36,border:'3px solid rgba(79,140,255,.2)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .7s linear infinite'}}),h('div',{className:'syne',style:{letterSpacing:'.12em',fontSize:13}},'MAXIFY'));
@@ -2255,6 +2346,7 @@ function App(){
           h('div',{style:{fontWeight:600,fontSize:14,display:'flex',alignItems:'center',gap:4}},pu?.login||c.uid.slice(0,8),pu?.email&&VERIFIED_EMAILS.includes(pu.email)&&h('span',{style:{fontSize:11,background:'linear-gradient(135deg,#4f8cff,#9b8cff)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')),
           h('div',{style:{fontSize:12,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},c.last?.preview||'...')
         ),
+        h('button',{className:'btn btn-ghost btn-icon',style:{width:34,height:34,minWidth:34,minHeight:34},onClick:e=>{e.stopPropagation();openUserProfile(c.uid)}},'👤'),
         c.unread>0&&h('div',{className:'unread'},c.unread)
       )})
     );
@@ -2328,14 +2420,14 @@ function App(){
                 h('div',{style:{padding:'10px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,flexShrink:0}},
                   h('div',{className:'syne',style:{fontWeight:700,fontSize:15}},'📸 Лента'),
                   h('div',{style:{flex:1}}),
-                  h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:13,padding:'4px 8px',borderRadius:8,transition:'background .15s'},onClick:e=>{e.stopPropagation();setShowFeed(false);setActiveChat(null);setShowMobileList(false)},onMouseEnter:e=>e.target.style.background='rgba(255,255,255,.1)',onMouseLeave:e=>e.target.style.background=''},'✕ Закрыть')
+                  h('button',{className:'feed-close-btn',onClick:e=>{e.stopPropagation();setShowFeed(false);setActiveChat(null);setShowMobileList(false)}},'✕ Закрыть')
                 ),
-        h(FeedTab,{me:user.id,meUser:user,onOpenProfile:uid=>{setViewProfile(uid);setShowFeed(false)}})
+        h(FeedTab,{me:user.id,meUser:user,onOpenProfile:openUserProfile})
               )
             :activeChat?.type==='dm'
               ?h(DMChat,{key:activeChat.id,me:user.id,peer:activeChat.id,peerUser:activeDMPeer,onBack:()=>{setActiveChat(null);setShowMobileList(true)},peerInst})
               :activeChat?.type==='room'&&activeRoom
-                ?h(RoomChat,{key:activeRoom.id,room:activeRoom,me:user.id,onBack:()=>{setActiveChat(null);setShowMobileList(true)}})
+                ?h(RoomChat,{key:activeRoom.id,room:activeRoom,me:user.id,onBack:()=>{setActiveChat(null);setShowMobileList(true)},onOpenProfile:openUserProfile})
                 :h('div',{className:'glass',style:{flex:1,height:'100%',borderRadius:22,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12}},
                     h('div',{style:{fontSize:48,opacity:.15}},'💬'),
                     h('div',{className:'syne',style:{fontSize:22,fontWeight:800,opacity:.2,letterSpacing:'-.03em'}},'Maxify'),
@@ -2354,7 +2446,7 @@ function App(){
     ),
 
     showProfile&&h(ProfileModal,{user,onClose:()=>setShowProfile(false)}),
-    showSearch&&h(UserSearch,{me:user.id,onSelect:u=>{openDM(u);setShowMobileList(false)},onClose:()=>setShowSearch(false)}),
+    showSearch&&h(UserSearch,{me:user.id,onSelect:u=>{openDM(u);setShowMobileList(false)},onOpenProfile:openUserProfile,onClose:()=>setShowSearch(false)}),
     showRoomSearch&&h(RoomSearchModal,{me:user.id,onSelect:r=>{openRoom(r);setShowMobileList(false)},onClose:()=>setShowRoomSearch(false)}),
     createRoom&&h(CreateRoomModal,{me:user.id,type:createRoom,onClose:()=>setCreateRoom(null)})
   );
