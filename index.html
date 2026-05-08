@@ -222,29 +222,6 @@ audio{width:180px;height:34px}
 .slide-down{animation:slideDown .3s ease both}
 .scale-in{animation:scaleIn .25s ease both}
 .pulse{animation:pulse 2s ease-in-out infinite}
-
-/* ── RUTUBE TAB ── */
-.rt-search-bar{display:flex;gap:8px;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
-.rt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;padding:16px;overflow-y:auto;flex:1}
-.rt-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .18s,box-shadow .18s}
-.rt-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.35)}
-.rt-thumb{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden}
-.rt-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.rt-thumb .duration{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.85);color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px}
-.rt-thumb .play-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;background:rgba(0,0,0,.3)}
-.rt-card:hover .play-icon{opacity:1}
-.rt-info{padding:10px 12px}
-.rt-title{font-size:13px;font-weight:600;line-height:1.4;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-clamp:2}
-.rt-meta{font-size:11px;color:var(--muted)}
-.rt-player-wrap{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px}
-.rt-player-wrap iframe{width:min(860px,95vw);aspect-ratio:16/9;border:none;border-radius:14px}
-.rt-share-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:860px;width:100%}
-.rt-msg-bubble{background:var(--bubble-their);border:1px solid var(--bubble-their-border);border-radius:14px;overflow:hidden;max-width:320px;cursor:pointer;transition:transform .15s}
-.rt-msg-bubble:hover{transform:scale(1.01)}
-.rt-msg-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
-.rt-msg-info{padding:8px 12px}
-.rt-msg-title{font-size:13px;font-weight:600;line-height:1.4;margin-bottom:2px}
-.rt-msg-channel{font-size:11px;color:var(--muted)}
 /* ── STORIES ── */
 .stories-bar{display:flex;gap:12px;padding:12px 16px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch}
 .stories-bar::-webkit-scrollbar{display:none}
@@ -289,10 +266,6 @@ audio{width:180px;height:34px}
 .profile-grid-item{aspect-ratio:1;overflow:hidden;cursor:pointer;position:relative}
 .profile-grid-item img,.profile-grid-item video{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
 .profile-grid-item:hover img,.profile-grid-item:hover video{transform:scale(1.04)}
-@media(max-width:640px){
-  .rt-grid{grid-template-columns:1fr 1fr;gap:10px;padding:10px}
-  .rt-player-wrap iframe{border-radius:8px}
-}
 </style>
 </head>
 <body>
@@ -1069,13 +1042,19 @@ function MsgBubble({m,mine,onImgClick,onEdit,onDelete,onReply,onPin,onReact,repl
     if(m.type==='voice')return h('div',{className:bubbleClass,style:{padding:'8px 12px',display:'flex',alignItems:'center',gap:8}},h('span',{style:{fontSize:16}},'🎙️'),h('audio',{src:m.url,controls:true,preload:'metadata'}));
     if(m.type==='image')return h('div',{className:'img-msg'},h('img',{src:m.url,alt:'фото',onClick:()=>onImgClick(m.url),loading:'lazy'}));
     if(m.type==='file-video')return h('div',{className:bubbleClass,style:{padding:'8px 12px'}},h('video',{src:m.url,controls:true,style:{maxWidth:250,maxHeight:180,borderRadius:10,display:'block'}}),m.name&&h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:4}},m.name));
-    if(m.type==='rutube')return h('div',{className:'rt-msg-bubble',onClick:()=>{const ev=new CustomEvent('rt-open',{detail:{id:m.rtId,title:m.rtTitle,channel:m.rtChannel,thumb:m.rtThumb}});window.dispatchEvent(ev)}},
-      h('img',{src:m.rtThumb||'',className:'rt-msg-thumb',loading:'lazy'}),
-      h('div',{className:'rt-msg-info'},
-        h('div',{className:'rt-msg-title'},m.rtTitle||'Rutube видео'),
-        h('div',{className:'rt-msg-channel',style:{display:'flex',alignItems:'center',gap:4}},h('span',{style:{color:'#ff4444'}},'▶'),m.rtChannel||'Rutube')
-      )
-    );
+    if(m.type==='rutube'){
+      const id=m.rtId;
+      const isYT=typeof id==='string'&&id.length===11;
+      const href=m.url||(id?(isYT?('https://youtube.com/watch?v='+id):('https://rutube.ru/video/'+id+'/')):null);
+      return h('div',{className:bubbleClass,style:{maxWidth:320,padding:'10px 14px',display:'flex',flexDirection:'column',gap:8}},
+        m.rtThumb&&h('img',{src:m.rtThumb,alt:'',loading:'lazy',decoding:'async',style:{width:'100%',aspectRatio:'16/9',objectFit:'cover',borderRadius:12,display:'block'}}),
+        h('div',null,
+          h('div',{style:{fontSize:13,fontWeight:600,lineHeight:1.4}},m.rtTitle||'Видео'),
+          h('div',{style:{fontSize:11,color:'var(--muted)',marginTop:2}},m.rtChannel||''),
+          href&&h('a',{href,target:'_blank',rel:'noopener',style:{display:'inline-block',marginTop:6,fontSize:12,color:'var(--accent)',textDecoration:'none'}},'Открыть ↗')
+        )
+      );
+    }
     if(m.type==='file')return h('div',{className:bubbleClass,style:{padding:'10px 14px',display:'flex',alignItems:'center',gap:10}},h('span',{style:{fontSize:22}},'📎'),h('div',null,h('div',{style:{fontSize:13,fontWeight:600,marginBottom:2}},m.name||'Файл'),h('a',{href:m.url,target:'_blank',download:m.name,style:{fontSize:11,color:'var(--accent)',textDecoration:'none'}},'Скачать ↓')));
     return h('div',{className:bubbleClass,style:{maxWidth:320,padding:'9px 14px',fontSize:14,lineHeight:1.6,wordBreak:'break-word'}},m.text,m.edited&&h('span',{style:{fontSize:9,color:'var(--muted)',marginLeft:6,verticalAlign:'bottom'}},'(ред.)'));
   };
@@ -1518,270 +1497,6 @@ function RoomChat({room,me,onBack,onOpenProfile}){
     h(InputBar,{onSend:send,chatName:liveRoom.name,canWrite,editMsg,onCancelEdit:()=>setEditMsg(null),replyMsg,onCancelReply:()=>setReplyMsg(null)}),
     lightbox&&h('div',{className:'lightbox',onClick:()=>setLightbox(null)},h('img',{src:lightbox,onClick:e=>e.stopPropagation()})),
     showInfo&&h(RoomInfoModal,{room:liveRoom,me,onClose:()=>setShowInfo(false),onOpenProfile})
-  );
-}
-
-function extractRTId(url){
-  if(!url) return null;
-  const m = url.match(/rutube\.ru\/(?:video|play\/embed)\/([a-f0-9]{32})/i);
-  if(m) return m[1];
-  const m2 = url.match(/([a-f0-9]{32})/i);
-  return m2 ? m2[1] : null;
-}
-
-function ShareRTModal({video, me, dmConvs, peerUsers, rooms, onClose}){
-  const [sent, setSent] = useState({});
-  const sendTo = async(type, id, name) => {
-    const payload = {type: 'rutube',rtId: video.id,rtTitle: video.title,rtChannel: video.channel,rtThumb: video.thumb,text: '▶️ ' + video.title};
-    if(type === 'dm'){
-      const cid = [me, id].sort().join('__');
-      db.ref('dm/' + cid + '/msgs').push({uid: me, ts: Date.now(), ...payload});
-      db.ref('dm/' + cid + '/last').set({uid: me, ts: Date.now(), preview: '▶️ ' + video.title});
-      db.ref('dm/' + cid + '/unread/' + id).transaction(v => (v||0)+1);
-    } else {
-      db.ref('room_msgs/' + id + '/messages').push({uid: me, ts: Date.now(), ...payload});
-      db.ref('rooms/' + id + '/last').set({uid: me, ts: Date.now(), preview: '▶️ ' + video.title});
-    }
-    setSent(s => ({...s, [id]: true}));
-  };
-  const visibleRooms = rooms.filter(r => r.type === 'group');
-  return h(Modal, {onClose, width: 400},
-    h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div', {className:'syne', style:{fontWeight:700,fontSize:16}}, '📤 Поделиться'),h('button', {style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:22}, onClick:onClose}, '×')),
-    h('div', {style:{background:'var(--panel)',borderRadius:12,overflow:'hidden',border:'1px solid var(--border)'}},h('img', {src: video.thumb, style:{width:'100%',aspectRatio:'16/9',objectFit:'cover',display:'block'}}),h('div', {style:{padding:'8px 12px',fontSize:13,fontWeight:600,lineHeight:1.4}}, video.title)),
-    h('div', {style:{maxHeight:300,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
-      dmConvs.length === 0 && visibleRooms.length === 0 && h('div', {style:{color:'var(--muted)',fontSize:13,textAlign:'center',padding:20}}, 'Нет контактов'),
-      dmConvs.map(c => {
-        const pu = peerUsers[c.uid];
-        return h('div', {key:c.uid, className:'search-item', style:{justifyContent:'space-between'}, onClick:()=>sendTo('dm',c.uid)},
-          h('div', {style:{display:'flex',alignItems:'center',gap:10}},h(Avatar, {user: pu||{id:c.uid}, size:34}),h('div', {style:{fontWeight:600,fontSize:13}}, pu?.login || c.uid.slice(0,8))),
-          sent[c.uid] ? h('span', {style:{fontSize:12,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено') : h('span', {style:{fontSize:12,color:'var(--accent)',fontWeight:700}}, 'Отправить')
-        );
-      }),
-      visibleRooms.map(r =>
-        h('div', {key:r.id, className:'search-item', style:{justifyContent:'space-between'}, onClick:()=>sendTo('room',r.id)},
-          h('div', {style:{display:'flex',alignItems:'center',gap:10}},r.avatarUrl?h('img', {src:r.avatarUrl, className:'avatar-img', style:{width:34,height:34}}):h('div', {style:{width:34,height:34,borderRadius:'50%',background:'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}, '👥'),h('div', {style:{fontWeight:600,fontSize:13}}, r.name)),
-          sent[r.id] ? h('span', {style:{fontSize:12,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено') : h('span', {style:{fontSize:12,color:'var(--accent)',fontWeight:700}}, 'Отправить')
-        )
-      )
-    )
-  );
-}
-
-function RTPlayer({video, me, dmConvs, peerUsers, rooms, onClose}){
-  const [showShare, setShowShare] = useState(false);
-  const isYT = video.src==='yt';
-  const embedSrc = isYT
-    ? 'https://www.youtube.com/embed/'+video.id+'?autoplay=1&rel=0'
-    : 'https://rutube.ru/play/embed/'+video.id+'?autoplay=1&skinColor=ff4444';
-  const ytLink = isYT ? 'https://youtube.com/watch?v='+video.id : null;
-  return h('div', {className:'rt-player-wrap'},
-    h('div', {style:{display:'flex',alignItems:'center',gap:10,width:'min(860px,95vw)'}},
-      h('button', {className:'btn btn-ghost', style:{borderRadius:999,padding:'8px 14px'}, onClick:onClose}, '← Назад'),
-      h('div', {style:{flex:1,fontWeight:600,fontSize:14,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text)'}}, video.title),
-      ytLink&&h('a',{href:ytLink,target:'_blank',rel:'noopener',className:'btn btn-ghost',style:{borderRadius:999,padding:'8px 14px',flexShrink:0,textDecoration:'none',fontSize:12}},'↗ Открыть в YouTube'),
-      h('button', {className:'btn btn-primary', style:{borderRadius:999,padding:'8px 16px',flexShrink:0}, onClick:()=>setShowShare(true)}, '📤 Поделиться')
-    ),
-    h('iframe', {src:embedSrc, allow:'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture', allowFullScreen:true}),
-    h('div', {style:{fontSize:12,color:'rgba(255,255,255,.35)',textAlign:'center'}}, video.channel),
-    showShare && h(ShareRTModal, {video, me, dmConvs, peerUsers, rooms, onClose:()=>setShowShare(false)})
-  );
-}
-
-const RT_TRENDING = [
-  {id:'970b71f3bdc1d080e0b52820c5e98aab',title:'Русская природа — Кавказ и горные реки',channel:'Природа России',thumb:'https://pic.rutube.ru/video/97/0b/970b71f3bdc1d080e0b52820c5e98aab.jpg'},
-  {id:'ca559e5e52e6f3adf0ca697cfab5f7c8',title:'Документальный фильм: Байкал — жемчужина Сибири',channel:'Россия 1',thumb:'https://pic.rutube.ru/video/ca/55/ca559e5e52e6f3adf0ca697cfab5f7c8.jpg'},
-  {id:'d356d79cc3b4e9168e37cc52d8fb9e95',title:'Красная площадь — история и современность',channel:'RT Documentary',thumb:'https://pic.rutube.ru/video/d3/56/d356d79cc3b4e9168e37cc52d8fb9e95.jpg'},
-  {id:'7e5e07b0a1ba27c6dac2c5e0d10bc45f',title:'Хоккей: Лучшие голы сезона КХЛ',channel:'КХЛ ТВ',thumb:'https://pic.rutube.ru/video/7e/5e/7e5e07b0a1ba27c6dac2c5e0d10bc45f.jpg'},
-  {id:'f3aebe5db5bb8e38f50fe6cc7bd0e826',title:'Музыка без границ: Живой концерт',channel:'Первый канал',thumb:'https://pic.rutube.ru/video/f3/ae/f3aebe5db5bb8e38f50fe6cc7bd0e826.jpg'},
-  {id:'2c3d7f21a2e4b49c823e5f6789abcd01',title:'Кулинарное шоу: Рецепты от шеф-повара',channel:'Еда ТВ',thumb:'https://pic.rutube.ru/video/2c/3d/2c3d7f21a2e4b49c823e5f6789abcd01.jpg'},
-  {id:'ab12cd34ef56gh78ij90kl12mn34op56',title:'Фитнес дома: 30-минутная тренировка',channel:'Фитнес ТВ',thumb:'https://rutube.ru/media/video/ab/12/ab12cd34ef56gh78ij90kl12mn34op56/thumbnail.jpg'},
-  {id:'1122334455667788990011223344556a',title:'Авто обзор: Лучшие новинки 2024',channel:'АвтоВести',thumb:'https://rutube.ru/media/video/11/22/1122334455667788990011223344556a/thumbnail.jpg'},
-];
-
-const RT_CATEGORIES = ['Тренды','Новости','Спорт','Музыка','Кино','Природа','Технологии','Кулинария'];
-
-function RutubeTab({me, dmConvs, peerUsers, rooms}){
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-  const [playing, setPlaying] = useState(null);
-  const [urlInput, setUrlInput] = useState('');
-  const [platform, setPlatform] = useState('rt'); 
-  const [ytRecs, setYtRecs] = useState([]);
-  const [ytBusy, setYtBusy] = useState(false);
-  const [mode, setMode] = useState('home');
-
-  useEffect(()=>{
-    if(platform!=='yt'||ytRecs.length>0) return;
-    setYtBusy(true);
-    const instances=['https://inv.nadeko.net','https://invidious.fdn.fr','https://iv.ggtyler.dev'];
-    const tryNext=(idx)=>{
-      if(idx>=instances.length){setYtBusy(false);return;}
-      fetch(instances[idx]+'/api/v1/trending?region=RU&type=default')
-        .then(r=>r.json())
-        .then(data=>{
-          if(!Array.isArray(data)||data.length===0) throw new Error('empty');
-          setYtRecs(data.slice(0,24).map(v=>({
-            id:v.videoId,title:v.title,channel:v.author,
-            thumb:v.videoThumbnails?.[4]?.url||v.videoThumbnails?.[0]?.url||'',
-            duration:v.lengthSeconds?fmtDur(v.lengthSeconds):'',
-            views:v.viewCount>1000000?(Math.round(v.viewCount/100000)/10)+'М':v.viewCount>1000?Math.round(v.viewCount/1000)+'К просм.':'',
-            src:'yt'
-          })));
-          setYtBusy(false);
-        })
-        .catch(()=>tryNext(idx+1));
-    };
-    tryNext(0);
-  },[platform]);
-
-  const search = async(q) => {
-    if(!q.trim()) return;
-    setMode('search'); setBusy(true); setErr(''); setResults([]);
-    if(platform==='yt'){
-      const pipedInstances=['https://pipedapi.kavin.rocks','https://pipedapi-libre.kavin.rocks','https://pipedapi.moomoo.me'];
-      let ok=false;
-      for(const inst of pipedInstances){
-        try{
-          const r=await fetch(inst+'/search?q='+encodeURIComponent(q)+'&filter=videos');
-          if(!r.ok) continue;
-          const data=await r.json();
-          if(data.items&&data.items.length>0){
-            setResults(data.items.slice(0,24).map(v=>({id:v.url.replace('/watch?v=',''),title:v.title,channel:v.uploaderName,thumb:v.thumbnail||'',duration:v.duration?fmtDur(v.duration):'',src:'yt'})));
-            ok=true;break;
-          }
-        }catch(e){
-          console.error('Piped API error:', e);
-        }
-      }
-      
-      if(!ok){
-        const invidiousInstances=['https://inv.nadeko.net','https://invidious.fdn.fr','https://iv.ggtyler.dev'];
-        for(const inst of invidiousInstances){
-          try{
-            const r=await fetch(inst+'/api/v1/search?q='+encodeURIComponent(q)+'&type=video&region=RU');
-            if(!r.ok) continue;
-            const data=await r.json();
-            if(Array.isArray(data)&&data.length>0){
-              setResults(data.slice(0,24).map(v=>({id:v.videoId,title:v.title,channel:v.author,thumb:v.videoThumbnails?.[0]?.url||'',duration:v.lengthSeconds?fmtDur(v.lengthSeconds):'',src:'yt'})));
-              ok=true;break;
-            }
-          }catch(e){
-            console.error('Invidious API error:', e);
-          }
-        }
-      }
-      
-      if(!ok){
-        try{
-          const corsProxy = 'https://corsproxy.io/?';
-          const r=await fetch(corsProxy + encodeURIComponent('https://www.youtube.com/results?search_query='+encodeURIComponent(q)+'&sp=EgIQAQ%253D%253D'));
-          if(r.ok){
-            const text=await r.text();
-            const videoIds = [...text.matchAll(/watch\?v=([a-zA-Z0-9_-]{11})/g)].map(m=>m[1]);
-            const uniqueIds = [...new Set(videoIds)].slice(0,12);
-            if(uniqueIds.length>0){
-              setResults(uniqueIds.map(id=>({id,title:'YouTube видео',channel:'YouTube',thumb:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`,duration:'',src:'yt'})));
-              ok=true;
-            }
-          }
-        }catch(e){
-          console.error('YouTube fallback error:', e);
-        }
-      }
-      
-      if(!ok)setErr('Не удалось найти на YouTube. Попробуйте позже.');
-    }else{
-      try{
-        const corsProxy = 'https://corsproxy.io/?';
-        const res = await fetch(corsProxy + encodeURIComponent('https://rutube.ru/api/search/video/?query='+encodeURIComponent(q)+'&format=json&fields=id,title,author,thumbnail_url,duration'),{
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        if(!res.ok)throw new Error('HTTP '+res.status);
-        const data=await res.json();
-        const items=(data.results||data||[]).slice(0,24);
-        if(!items.length)throw new Error('empty');
-        setResults(items.map(v=>({id:v.id||v.videoId||v.video_id||'',title:v.title||'Без названия',channel:v.author?.name||v.author||'',thumb:v.thumbnail_url||v.poster||'',duration:v.duration?fmtDur(v.duration):'',src:'rt'})).filter(v=>v.id));
-      }catch(e){
-        console.error('Rutube search error:', e);
-        setErr('Не удалось загрузить результаты Rutube. Попробуйте позже.');
-      }
-    }
-    setBusy(false);
-  };
-
-  const openByUrl=()=>{
-    const urlTrim=urlInput.trim();
-    const ytMatch=urlTrim.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if(ytMatch){setPlaying({id:ytMatch[1],title:'YouTube видео',channel:'YouTube',thumb:'',src:'yt'});setUrlInput('');return;}
-    const id=extractRTId(urlTrim);
-    if(!id){setErr('Неверная ссылка. Поддерживаются YouTube (youtube.com/watch?v=...) и Rutube (rutube.ru/video/...)');return;}
-    setPlaying({id,title:'Rutube видео',channel:'Rutube',thumb:'',src:'rt'});
-    setUrlInput('');
-  };
-
-  const VideoCard=(v)=>h('div',{key:v.id+(v.src||''),className:'rt-card',onClick:()=>setPlaying(v)},
-    h('div',{className:'rt-thumb'},
-      v.thumb?h('img',{src:v.thumb,loading:'lazy',alt:v.title,onError:e=>{e.target.style.display='none'}}):h('div',{style:{width:'100%',height:'100%',background:'#111',display:'flex',alignItems:'center',justifyContent:'center',fontSize:36,color:v.src==='yt'?'#ff0000':'#ff4444'}},'▶'),
-      v.duration&&h('div',{className:'duration'},v.duration),
-      v.src==='yt'&&h('div',{style:{position:'absolute',top:6,left:6,background:'#ff0000',color:'#fff',fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:4,letterSpacing:'.04em'}},'YT'),
-      h('div',{className:'play-icon'},h('div',{style:{width:44,height:44,borderRadius:'50%',background:v.src==='yt'?'rgba(255,0,0,.9)':'rgba(255,68,68,.9)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}},'▶'))
-    ),
-    h('div',{className:'rt-info'},
-      h('div',{className:'rt-title'},v.title),
-      h('div',{className:'rt-meta'},
-        v.channel+(v.views?' · '+v.views:''),
-        v.src==='yt'&&h('a',{href:'https://youtube.com/watch?v='+v.id,target:'_blank',rel:'noopener',onClick:e=>e.stopPropagation(),style:{marginLeft:6,fontSize:10,color:'var(--accent)',textDecoration:'none'}},'↗')
-      )
-    )
-  );
-
-  const homeList = platform==='yt' ? ytRecs : RT_TRENDING;
-  const isBusy = busy||(platform==='yt'&&ytBusy&&mode==='home');
-
-  return h('div',{style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}},
-    h('div',{style:{display:'flex',padding:'10px 16px 0',gap:0,flexShrink:0}},
-      h('button',{className:'btn',style:{borderRadius:'12px 0 0 12px',padding:'8px 20px',fontSize:13,justifyContent:'center',flex:1,background:platform==='rt'?'var(--accent)':'var(--panel)',color:platform==='rt'?'#fff':'var(--muted)',border:'1px solid var(--border)',transition:'all .2s'},onClick:()=>{setPlatform('rt');setResults([]);setMode('home');setErr('')}},'▶️ Rutube'),
-      h('button',{className:'btn',style:{borderRadius:'0 12px 12px 0',padding:'8px 20px',fontSize:13,justifyContent:'center',flex:1,background:platform==='yt'?'#ff0000':'var(--panel)',color:platform==='yt'?'#fff':'var(--muted)',border:'1px solid var(--border)',borderLeft:'none',transition:'all .2s'},onClick:()=>{setPlatform('yt');setResults([]);setMode('home');setErr('')}},'▶ YouTube')
-    ),
-    h('div',{className:'rt-search-bar',style:{paddingTop:10}},
-      h('div',{style:{display:'flex',flexDirection:'column',gap:8,flex:1}},
-        h('div',{style:{display:'flex',gap:8}},
-          h('input',{placeholder:platform==='yt'?'🔍 Поиск на YouTube...':'🔍 Поиск на Rutube...',value:query,onChange:e=>setQuery(e.target.value),onKeyDown:e=>e.key==='Enter'&&search(query),style:{flex:1}}),
-          query&&h('button',{className:'btn btn-ghost',style:{flexShrink:0,borderRadius:12,fontSize:18,padding:'8px 10px'},onClick:()=>{setQuery('');setMode('home');setResults([]);setErr('')}},'✕'),
-          h('button',{className:'btn btn-primary',style:{flexShrink:0,borderRadius:12},onClick:()=>search(query),disabled:busy},busy?'...':'Найти')
-        ),
-        h('div',{style:{display:'flex',gap:8}},
-          h('input',{placeholder:'🔗 Ссылка YouTube или Rutube...',value:urlInput,onChange:e=>setUrlInput(e.target.value),onKeyDown:e=>e.key==='Enter'&&openByUrl(),style:{flex:1}}),
-          h('button',{className:'btn btn-ghost',style:{flexShrink:0,borderRadius:12},onClick:openByUrl},'▶️')
-        )
-      )
-    ),
-    platform==='rt'&&mode==='home'&&h('div',{style:{display:'flex',gap:8,padding:'8px 16px',borderBottom:'1px solid var(--border)',overflowX:'auto',flexShrink:0,WebkitOverflowScrolling:'touch'}},
-      RT_CATEGORIES.map(cat=>h('button',{key:cat,className:'btn btn-ghost',style:{flexShrink:0,borderRadius:999,padding:'5px 14px',fontSize:12,fontWeight:600},onClick:()=>{setQuery(cat);search(cat)}},cat))
-    ),
-    err&&h('div',{style:{padding:'8px 16px',fontSize:12,color:'var(--danger)',background:'rgba(248,113,113,.08)',borderBottom:'1px solid var(--border)'}},err),
-    isBusy&&h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:12,color:'var(--muted)'}},
-      h('div',{style:{width:32,height:32,border:'3px solid rgba(255,0,0,.2)',borderTopColor:platform==='yt'?'#ff0000':'#ff4444',borderRadius:'50%',animation:'spin .7s linear infinite'}}),
-      h('div',{style:{fontSize:13}},platform==='yt'?'Загружаем YouTube...':'Ищем на Rutube...')
-    ),
-    !isBusy&&mode==='home'&&h('div',{style:{overflowY:'auto',flex:1,padding:'4px 0'}},
-      h('div',{style:{padding:'8px 16px 4px',fontSize:12,color:'var(--muted)',fontWeight:700,letterSpacing:'.06em',display:'flex',alignItems:'center',gap:6}},
-        h('span',{style:{color:platform==='yt'?'#ff0000':'#ff4444'}},platform==='yt'?'▶':'▶️'),' ',platform==='yt'?'ТРЕНДЫ YOUTUBE':'РЕКОМЕНДАЦИИ RUTUBE'
-      ),
-      h('div',{className:'rt-grid'},homeList.map(v=>VideoCard(v)))
-    ),
-    !isBusy&&mode==='search'&&results.length===0&&!err&&h('div',{style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'var(--muted)'}},
-      h('div',{style:{fontSize:13}},'Ничего не найдено')
-    ),
-    !isBusy&&mode==='search'&&results.length>0&&h('div',{className:'rt-grid',style:{flex:1,overflowY:'auto'}},
-      results.map(v=>VideoCard(v))
-    ),
-    playing&&h(RTPlayer,{video:playing,me,dmConvs,peerUsers,rooms,onClose:()=>setPlaying(null)})
   );
 }
 
