@@ -4,12 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Maxify</title>
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script defer src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -45,7 +47,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 input,textarea,select{background:var(--input-bg);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px 14px;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;transition:border .18s,box-shadow .18s;width:100%}
 input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
 input::placeholder,textarea::placeholder{color:var(--muted)}
-.btn{border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;border-radius:12px;padding:10px 18px;font-size:13px;transition:all .2s cubic-bezier(.25,1,.5,1);letter-spacing:.02em;display:inline-flex;align-items:center;gap:6px}
+.btn{border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;border-radius:12px;padding:10px 18px;font-size:13px;transition:all .2s cubic-bezier(.25,1,.5,1);letter-spacing:.02em;display:inline-flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--glow),0 0 0 1px var(--border) inset}
+.btn:disabled{pointer-events:none}
 .btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 16px var(--glow)}
 .btn-primary:hover{background:#6fa4ff;transform:translateY(-2px) translateX(0);box-shadow:0 8px 28px var(--glow)}
 .btn-primary:active{transform:translateY(0) translateX(0);box-shadow:0 2px 8px var(--glow)}
@@ -199,6 +203,9 @@ audio{width:180px;height:34px}
   .sidebar{width:220px!important}
   .app-layout{padding:8px!important;gap:8px!important}
 }
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .fade-in{animation:fadeIn .18s ease both}
@@ -263,6 +270,7 @@ audio{width:180px;height:34px}
 .post-action-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;padding:4px;transition:transform .15s,color .15s}
 .post-action-btn:hover{transform:scale(1.15);color:var(--text)}
 .post-action-btn.liked{color:#f87171}
+.post-action-btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--glow);border-radius:10px}
 .post-likes{font-size:13px;font-weight:700;padding:0 16px 4px}
 .post-caption{padding:2px 16px 10px;font-size:13px;line-height:1.6}
 .post-time{padding:0 16px 12px;font-size:11px;color:var(--muted)}
@@ -287,6 +295,7 @@ audio{width:180px;height:34px}
 <body>
 <div id="root" style="height:100vh"></div>
 <script>
+window.addEventListener('DOMContentLoaded', () => {
 // ── SECURITY: DevTools detection ─────────────────────────────────────────────
 (function(){
   'use strict';
@@ -340,6 +349,7 @@ audio{width:180px;height:34px}
   }
 
   setInterval(function(){
+    if(document.visibilityState === 'hidden') return;
     if(isDevToolsOpen()){
       if(!_dtOpen){
         _dtOpen = true;
@@ -350,7 +360,7 @@ audio{width:180px;height:34px}
         hideBlock();
       }
     }
-  }, 1200);
+  }, 3000);
 
   document.addEventListener('contextmenu', function(e){
     e.preventDefault();
@@ -391,6 +401,7 @@ const ts2t=ts=>{if(!ts)return'';const d=new Date(ts);return d.getHours().toStrin
 const ts2d=ts=>{if(!ts)return'';const d=new Date(ts);const t=new Date();if(d.toDateString()===t.toDateString())return'сегодня';const y=new Date(t);y.setDate(y.getDate()-1);if(d.toDateString()===y.toDateString())return'вчера';return d.toLocaleDateString('ru')};
 const fmtDur=s=>`${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
 const fmtLastSeen=ts=>{if(!ts)return'не в сети';const d=Date.now()-ts;if(d<60000)return'только что';if(d<3600000)return`${Math.floor(d/60000)} мин. назад`;if(d<86400000)return`${Math.floor(d/3600000)} ч. назад`;return new Date(ts).toLocaleDateString('ru')};
+const MSG_LIMIT=250;
 
 function beep(freq1,freq2,dur,vol){
   try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const g=ctx.createGain();g.connect(ctx.destination);g.gain.setValueAtTime(vol,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);[freq1,freq2].filter(Boolean).forEach(f=>{const o=ctx.createOscillator();o.frequency.value=f;o.connect(g);o.start();o.stop(ctx.currentTime+dur)})}catch(e){}
@@ -607,7 +618,7 @@ function Avatar({user,size=36,ring=false}){
 
   return h('div',{style:{position:'relative',flexShrink:0,width:size,height:size}},
     avatarUrl
-      ?h('img',{src:avatarUrl,className:'avatar-img',style:{width:size,height:size,boxShadow:ring?'0 0 0 2px #4f8cff,0 0 12px rgba(79,140,255,.3)':'none'}})
+      ?h('img',{src:avatarUrl,className:'avatar-img',style:{width:size,height:size,boxShadow:ring?'0 0 0 2px #4f8cff,0 0 12px rgba(79,140,255,.3)':'none'},width:size,height:size,loading:'lazy',decoding:'async'})
       :h('div',{style:{width:size,height:size,borderRadius:'50%',background:col,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Syne',fontWeight:700,fontSize:size*.4,color:'#fff',boxShadow:ring?'0 0 0 2px #4f8cff,0 0 12px rgba(79,140,255,.3)':'none',userSelect:'none'}},safeLogin[0].toUpperCase()),
     isOnline&&h('div',{className:'dot-on'}),
     isVerified&&h('div',{title:'Разработчик Maxify',style:{position:'absolute',bottom:-2,right:-2,width:badgeSize,height:badgeSize,borderRadius:'50%',background:'linear-gradient(135deg,#4f8cff,#9b8cff)',border:'2px solid var(--bg)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:badgeSize*.6,lineHeight:1,zIndex:2}},'✓')
@@ -1094,12 +1105,15 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
   const [uploading,setUploading]=useState(false);
   const [uploadPct,setUploadPct]=useState(0);
   const [uploadErr,setUploadErr]=useState('');
-  const fileRef=useRef(),voiceRef=useRef(),voiceStreamRef=useRef(),voiceTO=useRef(),vnoteRef=useRef(),vnoteRecRef=useRef(),vnoteStreamRef=useRef(),sendBtnRef=useRef();
+  const fileRef=useRef(),voiceRef=useRef(),voiceStreamRef=useRef(),voiceTO=useRef(),vnoteRef=useRef(),vnoteRecRef=useRef(),vnoteStreamRef=useRef(),sendBtnRef=useRef(),sendLockRef=useRef(false);
 
   useEffect(()=>{if(editMsg){setText(editMsg.text||'')}else{setText('')}},[editMsg]);
 
   const doSend=useCallback(payload=>{
     if(payload.type==='text'&&!payload.text?.trim())return;
+    if(sendLockRef.current) return;
+    sendLockRef.current = true;
+    setTimeout(()=>{sendLockRef.current=false},250);
     onSend(payload);setText('');playSend();
     if(sendBtnRef.current){sendBtnRef.current.classList.remove('send-pop');void sendBtnRef.current.offsetWidth;sendBtnRef.current.classList.add('send-pop');}
   },[onSend]);
@@ -1236,7 +1250,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst}){
   },[me,peer]);
 
   useEffect(()=>{
-    const ref=db.ref(`dm/${chatCid}/msgs`);
+    const ref=db.ref(`dm/${chatCid}/msgs`).limitToLast(MSG_LIMIT);
     ref.on('value',s=>{
       const v=s.val();const arr=v?Object.entries(v).map(([k,m])=>({k,...m})).sort((a,b)=>a.ts-b.ts):[];
       if(arr.length>lastCount.current&&lastCount.current>0&&arr[arr.length-1].uid!==me){
@@ -1421,7 +1435,7 @@ function RoomChat({room,me,onBack}){
   },[room.id]);
 
   useEffect(()=>{
-    const ref=db.ref(`room_msgs/${room.id}/messages`);
+    const ref=db.ref(`room_msgs/${room.id}/messages`).limitToLast(MSG_LIMIT);
     ref.on('value',s=>{
       const v=s.val();const arr=v?Object.entries(v).map(([k,m])=>({k,...m})).sort((a,b)=>a.ts-b.ts):[];
       if(arr.length>lastCount.current&&lastCount.current>0&&arr[arr.length-1].uid!==me){
@@ -1471,7 +1485,7 @@ function RoomChat({room,me,onBack}){
     h('div',{className:'glass',style:{padding:'10px 18px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}},
       h('div',{style:{display:'flex',alignItems:'center',gap:10}},
         h('button',{style:{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:18,padding:'4px 8px',borderRadius:8},onClick:onBack},'←'),
-        liveRoom.avatarUrl?h('img',{src:liveRoom.avatarUrl,className:'avatar-img',style:{width:34,height:34}}):h('div',{style:{width:34,height:34,borderRadius:'50%',background:liveRoom.type==='channel'?'rgba(155,140,255,.3)':'rgba(79,140,255,.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}},liveRoom.type==='channel'?'📢':'👥'),
+        liveRoom.avatarUrl?h('img',{src:liveRoom.avatarUrl,className:'avatar-img',style:{width:34,height:34},width:34,height:34,loading:'lazy',decoding:'async'}):h('div',{style:{width:34,height:34,borderRadius:'50%',background:liveRoom.type==='channel'?'rgba(155,140,255,.3)':'rgba(79,140,255,.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}},liveRoom.type==='channel'?'📢':'👥'),
         h('div',null,
           h('div',{style:{fontWeight:700,fontSize:14,fontFamily:'Syne',display:'flex',alignItems:'center',gap:4}},liveRoom.name,liveRoom.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14})),
           liveRoom.desc&&h('div',{style:{fontSize:11,color:'var(--muted)',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},liveRoom.desc)
@@ -1849,7 +1863,7 @@ function StoryViewer({stories, startIdx, onClose, me}){
       ),
       story.mediaType==='video'
         ?h('video',{src:story.mediaUrl,autoPlay:true,muted:false,playsInline:true,style:{width:'100%',height:'100%',objectFit:'cover',display:'block'}})
-        :h('img',{src:story.mediaUrl,alt:'',style:{width:'100%',height:'100%',objectFit:'cover',display:'block'}}),
+        :h('img',{src:story.mediaUrl,alt:'',style:{width:'100%',height:'100%',objectFit:'cover',display:'block'},loading:'lazy',decoding:'async'}),
       h('div',{className:'story-ui'},
         h('div',{className:'story-header'},
           h(Avatar,{user:{id:story.uid,login:story.login,avatarUrl:story.avatarUrl},size:34}),
@@ -1919,7 +1933,7 @@ function StoriesBar({me, meUser}){
       h('div',{className:'story-item',onClick:()=>fileRef.current.click()},
         h('div',{className:'story-ring',style:{background:myStories.length>0?'linear-gradient(135deg,#ff6b6b,#f9ca24,#6c5ce7,#4f8cff)':'var(--panel)',border:myStories.length===0?'2px dashed var(--border)':'none',padding:myStories.length>0?'2.5px':'0'}},
           h('div',{className:'story-ring-inner',style:{display:'flex',alignItems:'center',justifyContent:'center',background:myStories.length===0?'var(--panel)':''}},
-            meUser?.avatarUrl?h('img',{src:meUser.avatarUrl,alt:''}):h('div',{style:{width:'100%',height:'100%',borderRadius:'50%',background:'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}},'➕')
+            meUser?.avatarUrl?h('img',{src:meUser.avatarUrl,alt:'',loading:'lazy',decoding:'async'}):h('div',{style:{width:'100%',height:'100%',borderRadius:'50%',background:'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}},'➕')
           )
         ),
         h('div',{className:'story-label'},uploading?'...':(myStories.length>0?'Моя история':'Добавить'))
@@ -1929,7 +1943,7 @@ function StoriesBar({me, meUser}){
       otherUids.map(uid=>h('div',{key:uid,className:'story-item',onClick:()=>setViewing({uid,stories:allStories[uid]})},
         h('div',{className:'story-ring'},
           h('div',{className:'story-ring-inner'},
-            allStories[uid][0]?.avatarUrl?h('img',{src:allStories[uid][0].avatarUrl,alt:''}):h('div',{style:{width:'100%',height:'100%',borderRadius:'50%',background:'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}},'👤')
+            allStories[uid][0]?.avatarUrl?h('img',{src:allStories[uid][0].avatarUrl,alt:'',loading:'lazy',decoding:'async'}):h('div',{style:{width:'100%',height:'100%',borderRadius:'50%',background:'rgba(79,140,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}},'👤')
           )
         ),
         h('div',{className:'story-label'},allStories[uid][0]?.login||uid.slice(0,6))
@@ -1967,7 +1981,7 @@ function PostCard({post, me, userData, onOpenProfile, onOpenComments}){
     post.text&&h('div',{className:'post-caption'},post.text),
     post.mediaUrl&&(post.mediaType==='video'
       ?h('video',{src:post.mediaUrl,controls:true,className:'post-video',playsInline:true})
-      :h('img',{src:post.mediaUrl,className:'post-image',alt:'',onClick:()=>setLightbox(post.mediaUrl),loading:'lazy'})
+      :h('img',{src:post.mediaUrl,className:'post-image',alt:'',onClick:()=>setLightbox(post.mediaUrl),loading:'lazy',decoding:'async'})
     ),
     h('div',{className:'post-actions'},
       h('button',{className:'post-action-btn'+(liked?' liked':''),onClick:toggleLike},liked?'❤️':'🤍',h('span',{style:{fontSize:13,fontWeight:700,color:'var(--text)'}},likeCount||'')),
@@ -2347,6 +2361,7 @@ function App(){
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+});
 </script>
 </body>
 </html>
