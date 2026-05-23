@@ -14,16 +14,18 @@
 :root {
   /* DARK MODE - iOS 26 Liquid Glass */
   --bg-base: #000000;
-  --glass-blur: blur(35px) saturate(220%);
-  --panel: rgba(25, 25, 30, 0.55);
+  --glass-blur: blur(40px) saturate(250%);
+  --panel: rgba(30, 30, 35, 0.4);
+  --glass-shine: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 40%);
   --panel-solid: #1c1c1e;
-  --border: rgba(255, 255, 255, 0.12);
-  --border-light: rgba(255, 255, 255, 0.2);
-  --border-inset: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  --border: rgba(255, 255, 255, 0.15);
+  --border-light: rgba(255, 255, 255, 0.3);
+  --border-inset: inset 0 1px 1px rgba(255, 255, 255, 0.2), inset 0 -1px 1px rgba(0, 0, 0, 0.3);
+  --shadow-glass: 0 16px 40px rgba(0,0,0,0.25);
   
   --accent: #0A84FF;
   --accent-grad: linear-gradient(135deg, #32C5FF 0%, #0A84FF 100%);
-  --glow: rgba(10, 132, 255, 0.3);
+  --glow: rgba(10, 132, 255, 0.35);
   
   --text: #ffffff;
   --text-primary: rgba(255, 255, 255, 0.95);
@@ -33,10 +35,10 @@
   --danger-grad: linear-gradient(135deg, #FF6961 0%, #FF453A 100%);
   --ok: #32D74B;
   
-  --input-bg: rgba(255, 255, 255, 0.08);
+  --input-bg: rgba(255, 255, 255, 0.06);
   --bubble-mine: var(--accent-grad);
-  --bubble-mine-shadow: 0 4px 14px rgba(10, 132, 255, 0.25);
-  --bubble-their: rgba(40, 40, 45, 0.75);
+  --bubble-mine-shadow: 0 4px 14px rgba(10, 132, 255, 0.3);
+  --bubble-their: rgba(40, 40, 45, 0.6);
   --bubble-their-border: rgba(255, 255, 255, 0.1);
   
   --attach-bg: rgba(30, 30, 35, 0.85);
@@ -47,11 +49,123 @@
   --reaction-bg: rgba(255, 255, 255, 0.1);
   --reaction-mine: rgba(10, 132, 255, 0.25);
   --nav-h: 84px;
-  --panel-radius: 28px;
+  --panel-radius: 32px;
 
-  --mesh-1: rgba(10, 132, 255, 0.25);
-  --mesh-2: rgba(94, 92, 230, 0.25);
-  --mesh-3: rgba(191, 90, 242, 0.15);
+  --mesh-1: rgba(10, 132, 255, 0.35);
+  --mesh-2: rgba(191, 90, 242, 0.35);
+  --mesh-3: rgba(255, 55, 95, 0.25);
+}
+
+body.light {
+  /* LIGHT MODE */
+  --bg-base: #f2f2f7;
+  --panel: rgba(255, 255, 255, 0.5);
+  --glass-shine: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 50%);
+  --panel-solid: #ffffff;
+  --border: rgba(255, 255, 255, 0.6);
+  --border-light: rgba(255, 255, 255, 0.8);
+  --border-inset: inset 0 1px 1px rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(0,0,0,0.05);
+  --shadow-glass: 0 12px 40px rgba(0,0,0,0.08);
+  
+  --accent: #007AFF;
+  --accent-grad: linear-gradient(135deg, #32C5FF 0%, #007AFF 100%);
+  --glow: rgba(0, 122, 255, 0.25);
+  
+  --text: #000000;
+  --text-primary: rgba(0, 0, 0, 0.95);
+  --muted: rgba(60, 60, 67, 0.6);
+  
+  --danger: #FF3B30;
+  --danger-grad: linear-gradient(135deg, #FF6961 0%, #FF3B30 100%);
+  --ok: #34C759;
+  
+  --input-bg: rgba(0, 0, 0, 0.03);
+  --bubble-mine: var(--accent-grad);
+  --bubble-mine-shadow: 0 4px 14px rgba(0, 122, 255, 0.2);
+  --bubble-their: rgba(255, 255, 255, 0.7);
+  --bubble-their-border: rgba(0, 0, 0, 0.05);
+  
+  --attach-bg: rgba(245, 245, 250, 0.85);
+  --nav-bg: rgba(255, 255, 255, 0.75);
+  
+  --pinned-bg: rgba(0, 122, 255, 0.08);
+  --reply-bg: rgba(0, 0, 0, 0.03);
+  --reaction-bg: rgba(0, 0, 0, 0.05);
+  --reaction-mine: rgba(0, 122, 255, 0.15);
+
+  --mesh-1: rgba(50, 197, 255, 0.4);
+  --mesh-2: rgba(0, 122, 255, 0.3);
+  --mesh-3: rgba(175, 82, 222, 0.2);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  height: 100dvh;
+  overflow: hidden;
+  transition: background-color 0.4s ease, color 0.4s ease;
+  position: relative;
+}
+
+/* Liquid Glass Animated Background */
+body::before, body::after {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  background: 
+    radial-gradient(circle at 20% 30%, var(--mesh-1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, var(--mesh-2) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, var(--mesh-3) 0%, transparent 60%);
+  filter: blur(70px);
+  animation: liquidBg 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.85;
+  pointer-events: none;
+}
+body::after {
+  background: 
+    radial-gradient(circle at 80% 20%, var(--mesh-1) 0%, transparent 40%),
+    radial-gradient(circle at 20% 80%, var(--mesh-3) 0%, transparent 50%);
+  animation: liquidBg 20s infinite alternate-reverse cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes liquidBg {
+  0% { transform: scale(1) translate(0, 0) rotate(0deg); }
+  50% { transform: scale(1.15) translate(3%, 4%) rotate(5deg); }
+  100% { transform: scale(1.05) translate(-3%, -2%) rotate(-5deg); }
+}
+
+.syne { font-weight: 800; letter-spacing: -0.03em; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+
+.glass {
+  background: var(--glass-shine), var(--panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  box-shadow: var(--border-inset), var(--shadow-glass);
+  border-radius: var(--panel-radius, 28px);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+input, textarea, select {
+  background: var(--input-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 20px;
+  padding: 12px 16px;
+  outline: none;
+  font-family: inherit;
+  font-size: 16px !important;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  width: 100%;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.05);
 }
 
 body.light {
@@ -170,7 +284,9 @@ body.light input:focus, body.light textarea:focus { background: rgba(255,255,255
 input::placeholder, textarea::placeholder { color: var(--muted); }
 
 .btn {
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(25px) saturate(200%);
+  -webkit-backdrop-filter: blur(25px) saturate(200%);
   cursor: pointer;
   font-family: inherit;
   font-weight: 600;
@@ -187,37 +303,66 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   position: relative;
   overflow: hidden;
 }
+body.light .btn {
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
 .btn:active { transform: scale(0.95); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; border-color: transparent; }
 
 .btn-primary {
-  background: var(--accent-grad);
+  background: rgba(10, 132, 255, 0.25);
+  border-color: rgba(10, 132, 255, 0.5);
   color: #fff;
-  box-shadow: var(--bubble-mine-shadow), inset 0 1px 1px rgba(255,255,255,0.3);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 14px rgba(10, 132, 255, 0.2), inset 0 1px 1px rgba(255,255,255,0.3);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+body.light .btn-primary {
+  background: rgba(0, 122, 255, 0.15);
+  border-color: rgba(0, 122, 255, 0.3);
+  color: var(--accent);
+  box-shadow: 0 4px 14px rgba(0, 122, 255, 0.1), inset 0 1px 1px rgba(255,255,255,0.8);
+  text-shadow: none;
 }
 .btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(10, 132, 255, 0.4), inset 0 1px 1px rgba(255,255,255,0.4);
+  background: rgba(10, 132, 255, 0.35);
+  box-shadow: 0 6px 20px rgba(10, 132, 255, 0.3), inset 0 1px 1px rgba(255,255,255,0.4);
   transform: translateY(-1px);
+}
+body.light .btn-primary:hover {
+  background: rgba(0, 122, 255, 0.25);
 }
 
 .btn-ghost {
   background: var(--input-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  border-color: var(--border);
   color: var(--text-primary);
-  border: 1px solid var(--border);
   box-shadow: var(--border-inset);
 }
 .btn-ghost:hover {
-  background: rgba(120, 120, 120, 0.15);
+  background: rgba(120, 120, 120, 0.2);
   border-color: var(--border-light);
 }
 
 .btn-danger {
-  background: var(--danger-grad);
+  background: rgba(255, 69, 58, 0.25);
+  border-color: rgba(255, 69, 58, 0.5);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(255, 69, 58, 0.3), inset 0 1px 1px rgba(255,255,255,0.3);
+  box-shadow: 0 4px 14px rgba(255, 69, 58, 0.2), inset 0 1px 1px rgba(255,255,255,0.3);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+body.light .btn-danger {
+  background: rgba(255, 59, 48, 0.15);
+  border-color: rgba(255, 59, 48, 0.3);
+  color: var(--danger);
+  box-shadow: 0 4px 14px rgba(255, 59, 48, 0.1), inset 0 1px 1px rgba(255,255,255,0.8);
+  text-shadow: none;
+}
+.btn-danger:hover {
+  background: rgba(255, 69, 58, 0.35);
+  transform: translateY(-1px);
+}
+body.light .btn-danger:hover {
+  background: rgba(255, 59, 48, 0.25);
 }
 
 .btn-icon {
@@ -2352,12 +2497,14 @@ function App(){
     setShowFeed(false);
     setShowRT(false);
     setViewProfile(null);
+    setShowSettings(false);
   };
   const openRoom=r=>{
     setActiveChat({type:'room',id:r.id});
     setShowFeed(false);
     setShowRT(false);
     setViewProfile(null);
+    setShowSettings(false);
   };
   const openUserProfile=uid=>{
     setViewProfile(uid);
@@ -2367,6 +2514,7 @@ function App(){
     setShowMobileList(false);
     setShowSearch(false);
     setShowRoomSearch(false);
+    setShowSettings(false);
   };
   const signOut=async()=>{if(user)await db.ref('users/'+user.id).update({online:false,lastSeen:Date.now()});auth.signOut()};
 
