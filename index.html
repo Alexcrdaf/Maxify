@@ -1183,40 +1183,54 @@ function CallOverlay({peerUser,isVideo,isIncoming,onAccept,onEnd,localStream,rem
   );
 }
 
-function EmojiPicker({onSelect,onClose,style}){
-  useEffect(()=>{const h=()=>onClose();setTimeout(()=>document.addEventListener('click',h),0);return()=>document.removeEventListener('click',h);},[onClose]);
-  return h('div',{className:'msg-menu fade-in',style:{...style,display:'flex',flexWrap:'wrap',gap:6,width:210,padding:10},onClick:e=>e.stopPropagation()},
+const EmojiPicker=React.forwardRef(function EmojiPicker({onSelect,onClose,style},ref){
+  return h('div',{ref,className:'msg-menu fade-in',style:{...style,display:'flex',flexWrap:'wrap',gap:6,width:210,padding:10},onClick:e=>e.stopPropagation(),onContextMenu:e=>{e.preventDefault();e.stopPropagation();}},
     EMOJI_LIST.map(e=>h('button',{key:e,style:{fontSize:24,cursor:'pointer',padding:6,borderRadius:12,transition:'transform 0.15s, background 0.15s',border:'none',background:'transparent'},onMouseEnter:ev=>ev.currentTarget.style.background='rgba(120,120,120,0.15)',onMouseLeave:ev=>ev.currentTarget.style.background='transparent',onClick:()=>{onSelect(e);onClose()}},e))
   );
-}
+});
 
 function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin,onReact,onVote,replyMsg,showReactions=true,canPin=false}){
-  const [menuPos,setMenuPos]=useState(null);
+  const [menuAnchor,setMenuAnchor]=useState(null);
+  const [menuStyle,setMenuStyle]=useState(null);
   const [showEmoji,setShowEmoji]=useState(false);
   const menuRef=useRef();
+  const emojiRef=useRef();
   const {t} = useTranslation();
   const reactions=m.reactions||{};
   const reactionGroups={};
   Object.entries(reactions).forEach(([uid,emoji])=>{if(!reactionGroups[emoji])reactionGroups[emoji]=[];reactionGroups[emoji].push(uid)});
 
   useEffect(()=>{
-    if(!menuPos)return;
-    const handler=e=>{if(menuRef.current&&!menuRef.current.contains(e.target)){setMenuPos(null);setShowEmoji(false);}};
+    if(!menuAnchor)return;
+    const handler=e=>{
+      const inside=(menuRef.current&&menuRef.current.contains(e.target))||(emojiRef.current&&emojiRef.current.contains(e.target));
+      if(!inside){setMenuAnchor(null);setMenuStyle(null);setShowEmoji(false);}
+    };
     setTimeout(()=>document.addEventListener('click',handler),0);
     return()=>document.removeEventListener('click',handler);
-  },[menuPos]);
+  },[menuAnchor]);
+
+  useEffect(()=>{
+    if(!menuAnchor)return;
+    const rAF=requestAnimationFrame(()=>{
+      const el=showEmoji?emojiRef.current:menuRef.current;
+      if(!el)return;
+      const rect=el.getBoundingClientRect();
+      const pad=10, off=8;
+      const vw=window.innerWidth, vh=window.innerHeight;
+      let left=Math.min(Math.max(pad, menuAnchor.x), vw-rect.width-pad);
+      let top=menuAnchor.y+off;
+      if(top+rect.height+pad>vh) top=menuAnchor.y-off-rect.height;
+      top=Math.min(Math.max(pad, top), vh-rect.height-pad);
+      setMenuStyle({position:'fixed',zIndex:20000,top,left});
+    });
+    return()=>cancelAnimationFrame(rAF);
+  },[menuAnchor,showEmoji]);
 
   const openMenu = (e) => {
     e.preventDefault(); e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const isTopHalf = rect.top < window.innerHeight / 2;
-    setMenuPos({
-      position: 'fixed', zIndex: 10000,
-      top: isTopHalf ? rect.bottom + 8 : 'auto',
-      bottom: isTopHalf ? 'auto' : window.innerHeight - rect.top + 8,
-      left: mine ? 'auto' : Math.max(10, rect.left),
-      right: mine ? Math.max(10, window.innerWidth - rect.right) : 'auto'
-    });
+    setMenuAnchor({x:e.clientX,y:e.clientY});
+    setMenuStyle({position:'fixed',zIndex:20000,top:e.clientY,left:e.clientX});
     setShowEmoji(false);
   };
 
@@ -1267,15 +1281,15 @@ function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin
     m.forwardedFrom&&h('div',{className:'fwd-header'}, h('span', null, '➡️ Переслано от '), h('b', null, m.forwardedFrom.login)),
     h('div',{style:{position:'relative',display:'inline-block',maxWidth:'100%'},onContextMenu:openMenu,onDoubleClick:openMenu},
       content(),
-      menuPos&&!showEmoji&&h('div',{ref:menuRef,className:'msg-menu fade-in',style:{...menuPos, minWidth:180},onClick:e=>e.stopPropagation()},
+      menuAnchor&&!showEmoji&&h('div',{ref:menuRef,className:'msg-menu fade-in',style:{...(menuStyle||{}),minWidth:180},onClick:e=>e.stopPropagation(),onContextMenu:e=>{e.preventDefault();e.stopPropagation();}},
         h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();setShowEmoji(true);}},'😊  Реакция'),
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onReply){onReply(m);}setMenuPos(null);}},'↩️  '+t('reply')),
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onForward){onForward(m);}setMenuPos(null);}},'➡️  '+t('forward')),
-        canPin&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onPin){onPin(m);}setMenuPos(null);}},'📌  '+t('pin')),
-        mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onEdit){onEdit(m);}setMenuPos(null);}},'✏️  '+t('edit')),
-        (mine || canPin)&&h('div',{className:'msg-menu-item',style:{color:'var(--danger)'},onClick:e=>{e.stopPropagation();if(onDelete){onDelete(m);}setMenuPos(null);}},'🗑️  '+t('delete'))
+        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onReply){onReply(m);}setMenuAnchor(null);setMenuStyle(null);}},'↩️  '+t('reply')),
+        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onForward){onForward(m);}setMenuAnchor(null);setMenuStyle(null);}},'➡️  '+t('forward')),
+        canPin&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onPin){onPin(m);}setMenuAnchor(null);setMenuStyle(null);}},'📌  '+t('pin')),
+        mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onEdit){onEdit(m);}setMenuAnchor(null);setMenuStyle(null);}},'✏️  '+t('edit')),
+        (mine || canPin)&&h('div',{className:'msg-menu-item',style:{color:'var(--danger)'},onClick:e=>{e.stopPropagation();if(onDelete){onDelete(m);}setMenuAnchor(null);setMenuStyle(null);}},'🗑️  '+t('delete'))
       ),
-      showEmoji&&menuPos&&h(EmojiPicker,{style:{...menuPos},onSelect:emoji=>{if(onReact){onReact(m,emoji)}},onClose:()=>{setShowEmoji(false);setMenuPos(null);}})
+      showEmoji&&menuAnchor&&h(EmojiPicker,{ref:emojiRef,style:{...(menuStyle||{})},onSelect:emoji=>{if(onReact){onReact(m,emoji)}},onClose:()=>{setShowEmoji(false);setMenuAnchor(null);setMenuStyle(null);}})
     ),
     showReactions&&Object.keys(reactionGroups).length>0&&h('div',{style:{display:'flex',flexWrap:'wrap',gap:6,marginTop:6,justifyContent:mine?'flex-end':'flex-start'}},
       Object.entries(reactionGroups).map(([emoji,uids])=>h('div',{key:emoji,className:'reaction-chip'+(mine?' mine':''),onClick:()=>onReact&&onReact(m,emoji),title:uids.length+' чел.'},
