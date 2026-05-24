@@ -154,116 +154,6 @@ body::after {
 
 input, textarea, select {
   background: var(--input-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  border-radius: 20px;
-  padding: 12px 16px;
-  outline: none;
-  font-family: inherit;
-  font-size: 16px !important;
-  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-  width: 100%;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.05);
-}
-
-body.light {
-  /* LIGHT MODE */
-  --bg-base: #f2f2f7;
-  --panel: rgba(255, 255, 255, 0.65);
-  --panel-solid: #ffffff;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-light: rgba(255, 255, 255, 0.6);
-  --border-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  
-  --accent: #007AFF;
-  --accent-grad: linear-gradient(135deg, #32C5FF 0%, #007AFF 100%);
-  --glow: rgba(0, 122, 255, 0.25);
-  
-  --text: #000000;
-  --text-primary: rgba(0, 0, 0, 0.95);
-  --muted: rgba(60, 60, 67, 0.6);
-  
-  --danger: #FF3B30;
-  --danger-grad: linear-gradient(135deg, #FF6961 0%, #FF3B30 100%);
-  --ok: #34C759;
-  
-  --input-bg: rgba(0, 0, 0, 0.04);
-  --bubble-mine: var(--accent-grad);
-  --bubble-mine-shadow: 0 4px 14px rgba(0, 122, 255, 0.2);
-  --bubble-their: rgba(255, 255, 255, 0.85);
-  --bubble-their-border: rgba(0, 0, 0, 0.05);
-  
-  --attach-bg: rgba(245, 245, 250, 0.85);
-  --nav-bg: rgba(255, 255, 255, 0.75);
-  
-  --pinned-bg: rgba(0, 122, 255, 0.08);
-  --reply-bg: rgba(0, 0, 0, 0.03);
-  --reaction-bg: rgba(0, 0, 0, 0.05);
-  --reaction-mine: rgba(0, 122, 255, 0.15);
-
-  --mesh-1: rgba(50, 197, 255, 0.3);
-  --mesh-2: rgba(0, 122, 255, 0.2);
-  --mesh-3: rgba(175, 82, 222, 0.15);
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-body {
-  background-color: var(--bg-base);
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  height: 100dvh;
-  overflow: hidden;
-  transition: background-color 0.4s ease, color 0.4s ease;
-  position: relative;
-}
-
-/* Liquid Glass Animated Background */
-body::before, body::after {
-  content: "";
-  position: fixed;
-  inset: -20%;
-  z-index: -1;
-  background: 
-    radial-gradient(circle at 20% 30%, var(--mesh-1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, var(--mesh-2) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, var(--mesh-3) 0%, transparent 60%);
-  filter: blur(60px);
-  animation: liquidBg 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0.8;
-  pointer-events: none;
-}
-body::after {
-  background: 
-    radial-gradient(circle at 80% 20%, var(--mesh-1) 0%, transparent 40%),
-    radial-gradient(circle at 20% 80%, var(--mesh-3) 0%, transparent 50%);
-  animation: liquidBg 20s infinite alternate-reverse cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes liquidBg {
-  0% { transform: scale(1) translate(0, 0) rotate(0deg); }
-  50% { transform: scale(1.1) translate(2%, 3%) rotate(5deg); }
-  100% { transform: scale(1) translate(-2%, -2%) rotate(-5deg); }
-}
-
-.syne { font-weight: 800; letter-spacing: -0.03em; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-
-.glass {
-  background: var(--panel);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--border);
-  box-shadow: var(--border-inset), 0 10px 40px rgba(0,0,0,0.1);
-  border-radius: var(--panel-radius, 28px);
-}
-
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-
-input, textarea, select {
-  background: var(--input-bg);
   border: 1px solid var(--border);
   color: var(--text-primary);
   border-radius: 20px;
@@ -406,6 +296,7 @@ body.light .btn-danger:hover {
   cursor: pointer;
   transition: all 0.2s ease;
   min-height: 60px;
+  overflow: hidden; /* Исключает горизонтальный сдвиг */
 }
 .chat-row:hover { background: rgba(120, 120, 120, 0.1); }
 .chat-row.active { background: var(--input-bg); box-shadow: inset 3px 0 0 var(--accent); }
@@ -442,7 +333,7 @@ body.light .btn-danger:hover {
   max-height: 90vh;
 }
 
-.search-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px; cursor: pointer; transition: background 0.15s; min-height: 54px; }
+.search-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px; cursor: pointer; transition: background 0.15s; min-height: 54px; overflow: hidden; }
 .search-item:hover { background: rgba(120,120,120,0.1); }
 
 .unread {
@@ -871,11 +762,14 @@ function UserSearch({me,onSelect,onOpenProfile,onClose}){
       !busy&&results.map(u=>h('div',{key:u.id,className:'search-item',style:{justifyContent:'space-between'},onClick:()=>{onSelect(u);onClose()}},
         h('div',{style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
           h(Avatar,{user:u,size:42}),
-          h('div',{style:{flex:1,minWidth:0}},
-            h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},u.login,u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
-            h('div',{style:{fontSize:12,color:u.online?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:4}},
-              h('span',{className:'status-dot '+(u.online?'online':'offline')}),
-              u.online?'онлайн':fmtLastSeen(u.lastSeen)
+          h('div',{style:{flex:1,minWidth:0,display:'flex',flexDirection:'column',justifyContent:'center'}},
+            h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},
+              h('span',{style:{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}},u.login),
+              u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
+            ),
+            h('div',{style:{fontSize:12,color:u.online?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:2}},
+              h('span',{className:'status-dot '+(u.online?'online':'offline'),style:{flexShrink:0}}),
+              h('span',{style:{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},u.online?'онлайн':fmtLastSeen(u.lastSeen))
             )
           )
         ),
@@ -1002,9 +896,15 @@ function RoomSearchModal({me,onSelect,onClose}){
       busy&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},'Поиск...'),
       !busy&&q.trim()&&results.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},'Ничего не найдено'),
       results.map(r=>h('div',{key:r.id,className:'search-item',onClick:async()=>{await db.ref('rooms/'+r.id+'/members/'+me).set(true);onSelect(r);onClose()}},
-        r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:42,height:42}}):h('div',{style:{width:42,height:42,borderRadius:'50%',background:r.type==='channel'?'rgba(175, 82, 222, 0.2)':'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}},r.type==='channel'?'📢':'👥'),
-        h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14})),h('div',{style:{fontSize:12,color:'var(--muted)'}},r.desc||(r.type==='group'?'Группа':'Канал'))),
-        h('span',{style:{fontSize:13,color:'var(--accent)',fontWeight:600}},'Вступить')
+        r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:42,height:42,flexShrink:0}}):h('div',{style:{width:42,height:42,borderRadius:'50%',background:r.type==='channel'?'rgba(175, 82, 222, 0.2)':'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}},r.type==='channel'?'📢':'👥'),
+        h('div',{style:{flex:1,minWidth:0,display:'flex',flexDirection:'column',justifyContent:'center'}},
+          h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},
+            h('span',{style:{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}},r.name),
+            r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14})
+          ),
+          h('div',{style:{fontSize:12,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:2}},r.desc||(r.type==='group'?'Группа':'Канал'))
+        ),
+        h('span',{style:{fontSize:13,color:'var(--accent)',fontWeight:600,flexShrink:0}},'Вступить')
       ))
     )
   );
@@ -1127,7 +1027,7 @@ function RoomInfoModal({room,me,onClose,onOpenProfile}){
       h('input',{placeholder:'Поиск пользователя...',value:searchQ,onChange:e=>setSearchQ(e.target.value),autoFocus:true}),
       h('div',{style:{maxHeight:260,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
         searchRes.map(u=>h('div',{key:u.id,className:'search-item',onClick:()=>db.ref('rooms/'+room.id+'/members/'+u.id).set(true)},
-          h(Avatar,{user:u,size:38}),h('div',{style:{flex:1}},h('div',{style:{fontWeight:600,fontSize:14}},u.login)),h('span',{style:{fontSize:13,color:'var(--accent)',fontWeight:600}},'+ Добавить')
+          h(Avatar,{user:u,size:38}),h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},u.login)),h('span',{style:{fontSize:13,color:'var(--accent)',fontWeight:600,flexShrink:0}},'+ Добавить')
         ))
       )
     ),
@@ -1163,14 +1063,18 @@ function MemberRow({uid,isOwner,isAdmin,ownerId,admins,me,onOpenProfile,onRemove
   if(!u)return null;
   const canRemove=(isOwner||isAdmin)&&uid!==ownerId&&uid!==me;
   return h('div',{className:'search-item',style:{padding:'8px 12px',borderRadius:16}},
-    h('div',{style:{display:'flex',alignItems:'center',gap:12,flex:1,cursor:onOpenProfile?'pointer':'default'},onClick:()=>onOpenProfile&&onOpenProfile(uid)},
+    h('div',{style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0,cursor:onOpenProfile?'pointer':'default'},onClick:()=>onOpenProfile&&onOpenProfile(uid)},
       h(Avatar,{user:u,size:40}),
-      h('div',null,
-        h('div',{style:{fontWeight:600,fontSize:14,display:'flex',alignItems:'center',gap:6}},u.login,uid===ownerId&&h('span',null,'👑'),admins?.[uid]&&uid!==ownerId&&h('span',{style:{fontSize:10,background:'var(--accent-grad)',color:'#fff',padding:'2px 6px',borderRadius:999,fontWeight:700}},'ADMIN')),
-        h('div',{style:{fontSize:12,color:'var(--muted)'}},u.online?'онлайн':fmtLastSeen(u.lastSeen))
+      h('div',{style:{flex:1,minWidth:0}},
+        h('div',{style:{fontWeight:600,fontSize:14,display:'flex',alignItems:'center',gap:6}},
+          h('span',{style:{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}},u.login),
+          uid===ownerId&&h('span',null,'👑'),
+          admins?.[uid]&&uid!==ownerId&&h('span',{style:{fontSize:10,background:'var(--accent-grad)',color:'#fff',padding:'2px 6px',borderRadius:999,fontWeight:700,flexShrink:0}},'ADMIN')
+        ),
+        h('div',{style:{fontSize:12,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},u.online?'онлайн':fmtLastSeen(u.lastSeen))
       )
     ),
-    canRemove&&h('button',{className:'btn btn-ghost',style:{padding:'6px 12px',fontSize:12,color:'var(--danger)'},onClick:e=>{e.stopPropagation();onRemove()}},'Удалить')
+    canRemove&&h('button',{className:'btn btn-ghost',style:{padding:'6px 12px',fontSize:12,color:'var(--danger)',flexShrink:0},onClick:e=>{e.stopPropagation();onRemove()}},'Удалить')
   );
 }
 
@@ -1181,7 +1085,7 @@ function AdminRow({uid,ownerId,admins,onToggle}){
   const isAdmin=!!admins?.[uid];
   return h('div',{className:'search-item',style:{padding:'8px 12px',borderRadius:16}},
     h(Avatar,{user:u,size:40}),
-    h('div',{style:{flex:1}},h('div',{style:{fontWeight:600,fontSize:14}},u.login+(uid===ownerId?' 👑':''))),
+    h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},u.login+(uid===ownerId?' 👑':''))),
     uid!==ownerId&&h('div',{onClick:onToggle,style:{width:46,height:28,borderRadius:999,background:isAdmin?'var(--ok)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}},
       h('div',{style:{width:24,height:24,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:isAdmin?'20px':'2px',transition:'left .2s',boxShadow:'0 2px 4px rgba(0,0,0,.2)'}}))
   );
@@ -1357,14 +1261,20 @@ function ForwardModal({msg, me, dmConvs, peerUsers, rooms, onClose}) {
       dmConvs.map(c => {
         const pu = peerUsers[c.uid];
         return h('div', {key:c.uid, className:'search-item', style:{justifyContent:'space-between'}, onClick:()=>sendTo('dm',c.uid)},
-          h('div', {style:{display:'flex',alignItems:'center',gap:12}},h(Avatar, {user: pu||{id:c.uid}, size:40}),h('div', {style:{fontWeight:600,fontSize:14}}, pu?.login || c.uid.slice(0,8))),
-          sent[c.uid] ? h('span', {style:{fontSize:13,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено') : h('span', {style:{fontSize:13,color:'var(--accent)',fontWeight:600}}, 'Отправить')
+          h('div', {style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
+            h(Avatar, {user: pu||{id:c.uid}, size:40}),
+            h('div', {style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}}, pu?.login || c.uid.slice(0,8))
+          ),
+          sent[c.uid] ? h('span', {style:{fontSize:13,color:'var(--ok)',fontWeight:700,flexShrink:0}}, '✓ Отправлено') : h('span', {style:{fontSize:13,color:'var(--accent)',fontWeight:600,flexShrink:0}}, 'Отправить')
         );
       }),
       visibleRooms.map(r =>
         h('div', {key:r.id, className:'search-item', style:{justifyContent:'space-between'}, onClick:()=>sendTo('room',r.id)},
-          h('div', {style:{display:'flex',alignItems:'center',gap:12}},r.avatarUrl?h('img', {src:r.avatarUrl, className:'avatar-img', style:{width:40,height:40}}):h('div', {style:{width:40,height:40,borderRadius:'50%',background:'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}, r.type==='channel'?'📢':'👥'),h('div', {style:{fontWeight:600,fontSize:14}}, r.name)),
-          sent[r.id] ? h('span', {style:{fontSize:13,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено') : h('span', {style:{fontSize:13,color:'var(--accent)',fontWeight:600}}, 'Отправить')
+          h('div', {style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
+            r.avatarUrl?h('img', {src:r.avatarUrl, className:'avatar-img', style:{width:40,height:40}}):h('div', {style:{width:40,height:40,borderRadius:'50%',background:'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}, r.type==='channel'?'📢':'👥'),
+            h('div', {style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}}, r.name)
+          ),
+          sent[r.id] ? h('span', {style:{fontSize:13,color:'var(--ok)',fontWeight:700,flexShrink:0}}, '✓ Отправлено') : h('span', {style:{fontSize:13,color:'var(--accent)',fontWeight:600,flexShrink:0}}, 'Отправить')
         )
       )
     )
@@ -1463,7 +1373,7 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
               h('div',{className:'attach-item',onClick:startVnote},'⭕  Видеосообщение'),
               onOpenPoll&&h('div',{className:'attach-item',onClick:()=>{onOpenPoll();setShowAttach(false);}},'📊  Опрос')
             ),
-            h('button',{className:'btn btn-ghost btn-icon',style:{background:showAttach?'var(--input-bg)':''},onClick:()=>setShowAttach(v=>!v)},'+'),
+            h('button',{className:'btn btn-ghost',style:{width:40,height:40,borderRadius:'50%',background:showAttach?'var(--input-bg)':''},onClick:()=>setShowAttach(v=>!v)},'+'),
             h('input',{ref:fileRef,type:'file',style:{display:'none'},onChange:handleFile}),
             h('input',{value:text,onChange:e=>setText(e.target.value),onClick:()=>setShowAttach(false),onKeyDown:e=>e.key==='Enter'&&!e.shiftKey&&(e.preventDefault(),doSend({type:'text',text})),placeholder:'Сообщение...',style:{flex:1}}),
             (text.trim()||editMsg)
@@ -1827,7 +1737,7 @@ function RoomChat({room,me,onBack,onOpenProfile,dmConvs,peerUsers,rooms}){
       grouped.map((item,i)=>{
         if(item.type==='date')return h('div',{key:'d'+i,style:{textAlign:'center',margin:'10px 0'}},h('span',{style:{fontSize:12,fontWeight:600,color:'var(--text-primary)',background:'var(--panel)',backdropFilter:'blur(10px)',border:'1px solid var(--border)',padding:'6px 14px',borderRadius:999}},item.label));
         const{m}=item,mine=m.uid===me;const sender=userCache[m.uid];
-        return h('div',{key:m.k||m.ts,className:'msg-in',style:{display:'flex',flexDirection:'column',alignItems:mine?'flex-end':'flex-start',gap:4}},
+        return h('div',{key:m.k||m.ts,className:'msg-in',style:{display:'flex',flexDirection:'column',alignItems:'mine'?'flex-end':'flex-start',gap:4}},
           !mine&&h('div',{style:{fontSize:12,color:'var(--muted)',marginBottom:2,display:'flex',alignItems:'center',gap:6,paddingLeft:6}},h('div', {style:{cursor:'pointer',display:'flex'}, onClick: ()=>onOpenProfile(m.uid)}, h(Avatar,{user:sender,size:20})),sender?.login||'...',admins?.[m.uid]&&m.uid!==room.owner&&h('span',{style:{fontSize:9,background:'var(--accent-grad)',color:'#fff',padding:'2px 6px',borderRadius:999,fontWeight:700}},'ADMIN'),m.uid===room.owner&&h('span',{style:{fontSize:12}},'👑')),
           h(MsgBubble,{m,mine,me,onImgClick:url=>setLightbox(url),onEdit:mine?setEditMsg:null,onDelete:mine||isAdmin?deleteMsg:null,onReply:msg=>{setReplyMsg({...msg,senderName:mine?'Вы':sender?.login||'...'})},onForward:setForwardMsg,onPin:canPin?pinMsg:null,onReact:reactMsg,onVote:voteMsg,replyMsg:m.replyTo||null,canPin}),
           h('div',{style:{fontSize:11,color:'var(--muted)',padding:mine?'0 6px 0 0':'0 0 0 6px'}},ts2t(m.ts))
@@ -1867,14 +1777,20 @@ function ShareRTModal({video, me, dmConvs, peerUsers, rooms, onClose}){
       dmConvs.map(c => {
         const pu = peerUsers[c.uid];
         return h('div', {key:c.uid, className:'search-item', style:{justifyContent:'space-between'}, onClick:()=>sendTo('dm',c.uid)},
-          h('div', {style:{display:'flex',alignItems:'center',gap:12}},h(Avatar, {user: pu||{id:c.uid}, size:40}),h('div', {style:{fontWeight:600,fontSize:14}}, pu?.login || c.uid.slice(0,8))),
-          sent[c.uid] ? h('span', {style:{fontSize:13,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено') : h('span', {style:{fontSize:13,color:'var(--accent)',fontWeight:600}}, 'Отправить')
+          h('div', {style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
+            h(Avatar, {user: pu||{id:c.uid}, size:40}),
+            h('div', {style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}}, pu?.login || c.uid.slice(0,8))
+          ),
+          sent[c.uid] ? h('span', {style:{fontSize:13,color:'var(--ok)',fontWeight:700,flexShrink:0}}, '✓ Отправлено') : h('span', {style:{fontSize:13,color:'var(--accent)',fontWeight:600,flexShrink:0}}, 'Отправить')
         );
       }),
       visibleRooms.map(r =>
         h('div', {key:r.id, className:'search-item', style:{justifyContent:'space-between'}, onClick:()=>sendTo('room',r.id)},
-          h('div', {style:{display:'flex',alignItems:'center',gap:12}},r.avatarUrl?h('img', {src:r.avatarUrl, className:'avatar-img', style:{width:40,height:40}}):h('div', {style:{width:40,height:40,borderRadius:'50%',background:'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}, '👥'),h('div', {style:{fontWeight:600,fontSize:14}}, r.name)),
-          sent[r.id] ? h('span', {style:{fontSize:13,color:'var(--ok)',fontWeight:700}}, '✓ Отправлено') : h('span', {style:{fontSize:13,color:'var(--accent)',fontWeight:600}}, 'Отправить')
+          h('div', {style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
+            r.avatarUrl?h('img', {src:r.avatarUrl, className:'avatar-img', style:{width:40,height:40}}):h('div', {style:{width:40,height:40,borderRadius:'50%',background:'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}, '👥'),
+            h('div', {style:{fontWeight:600,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}}, r.name)
+          ),
+          sent[r.id] ? h('span', {style:{fontSize:13,color:'var(--ok)',fontWeight:700,flexShrink:0}}, '✓ Отправлено') : h('span', {style:{fontSize:13,color:'var(--accent)',fontWeight:600,flexShrink:0}}, 'Отправить')
         )
       )
     )
@@ -2229,7 +2145,7 @@ function CommentsModal({post, me, meUser, onClose}){
       h('div',{ref:bottomRef})
     ),
     h('div',{style:{display:'flex',gap:10,marginTop:8}},
-      h('input',{value:text,onChange:e=>setText(e.target.value),onKeyDown:e=>e.key==='Enter'&&send(),placeholder:'Ваш комментарий...',style:{flex:1}}),
+      h('input',{value:text,onChange:setText,placeholder:'Ваш комментарий...',style:{flex:1}}),
       h('button',{className:'btn btn-primary btn-icon',onClick:send,disabled:!text.trim()},'↑')
     )
   );
@@ -2402,8 +2318,8 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
           ),
     lightbox&&h('div',{className:'modal-bg',style:{zIndex:5000,backdropFilter:'blur(40px)',WebkitBackdropFilter:'blur(40px)'},onClick:()=>setLightbox(null)},
       lightbox.type==='video'
-        ?h('video',{src:lightbox.url,controls:true,autoPlay:true,playsInline:true,style:{maxWidth:'95vw',maxHeight:'90vh',borderRadius:24,boxShadow:'0 24px 60px rgba(0,0,0,0.5)'},onClick:e=>e.stopPropagation()})
-        :h('img',{src:lightbox.url,style:{maxWidth:'95vw',maxHeight:'90vh',borderRadius:24,boxShadow:'0 24px 60px rgba(0,0,0,0.5)'},onClick:e=>e.stopPropagation()})
+        ?h('video',{src:lightbox.url,controls:true,autoPlay:true,playsInline:true,style:{maxWidth:'95vw',maxHeight:'90vh',borderRadius:24,boxShadow:'0 24px 60px rgba(0,0,0,0.4)'},onClick:e=>e.stopPropagation()})
+        :h('img',{src:lightbox.url,style:{maxWidth:'95vw',maxHeight:'90vh',borderRadius:24,boxShadow:'0 24px 60px rgba(0,0,0,0.4)'},onClick:e=>e.stopPropagation()})
     )
   );
 }
@@ -2533,8 +2449,11 @@ function App(){
       dmConvs.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}} ,'Нет чатов. Начните общение!'),
       dmConvs.map(c=>{const pu=peerUsers[c.uid];return h('div',{key:c.uid,className:'chat-row'+(activeChat?.id===c.uid&&activeChat?.type==='dm'?' active':''),onClick:()=>{openDM({id:c.uid,...(pu||{})});setShowMobileList(false)}},
         h('div', {onClick: e => { e.stopPropagation(); openUserProfile(c.uid); }, style: {cursor: 'pointer', display: 'flex'}}, h(Avatar,{user:pu||{id:c.uid},size:48})),
-        h('div',{style:{flex:1,minWidth:0}},
-          h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},pu?.login||c.uid.slice(0,8),pu?.email&&VERIFIED_EMAILS.includes(pu.email)&&h('span',{style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')),
+        h('div',{style:{flex:1,minWidth:0,display:'flex',flexDirection:'column',justifyContent:'center'}},
+          h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},
+            h('span',{style:{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}},pu?.login||c.uid.slice(0,8)),
+            pu?.email&&VERIFIED_EMAILS.includes(pu.email)&&h('span',{style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
+          ),
           h('div',{style:{fontSize:13,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:2}},c.last?.preview||'...')
         ),
         c.unread>0&&h('div',{className:'unread'},c.unread)
@@ -2545,7 +2464,14 @@ function App(){
       groups.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}},'Нет групп'),
       groups.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
         r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:48,height:48,flexShrink:0}}):h('div',{style:{width:48,height:48,borderRadius:'50%',background:'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}},'👥'),
-        h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытая',style:{fontSize:13,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:2}},r.last?.preview||r.desc||'Группа'))
+        h('div',{style:{flex:1,minWidth:0,display:'flex',flexDirection:'column',justifyContent:'center'}},
+          h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},
+            h('span',{style:{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}},r.name),
+            r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),
+            r.isPrivate&&h('span',{title:'Закрытая',style:{fontSize:13,color:'var(--muted)',flexShrink:0}},'🔒')
+          ),
+          h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.last?.preview||r.desc||'Группа')
+        )
       ))
     );
     if(tab==='channels')return h(React.Fragment,null,
@@ -2553,7 +2479,14 @@ function App(){
       channels.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}},'Нет каналов'),
       channels.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
         r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:48,height:48,flexShrink:0}}):h('div',{style:{width:48,height:48,borderRadius:'50%',background:'rgba(175, 82, 222, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}},'📢'),
-        h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытый',style:{fontSize:13,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:2}},r.last?.preview||r.desc||'Канал'))
+        h('div',{style:{flex:1,minWidth:0,display:'flex',flexDirection:'column',justifyContent:'center'}},
+          h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},
+            h('span',{style:{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}},r.name),
+            r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),
+            r.isPrivate&&h('span',{title:'Закрытый',style:{fontSize:13,color:'var(--muted)',flexShrink:0}},'🔒')
+          ),
+          h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},r.last?.preview||r.desc||'Канал')
+        )
       ))
     );
   };
