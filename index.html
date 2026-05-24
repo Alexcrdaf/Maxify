@@ -2545,7 +2545,7 @@ function App(){
       groups.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}},'Нет групп'),
       groups.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
         r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:48,height:48,flexShrink:0}}):h('div',{style:{width:48,height:48,borderRadius:'50%',background:'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}},'👥'),
-        h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытая',style:{fontSize:13,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:2}},r.last?.preview||r.desc||'Группа'))
+        h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытая',style:{fontSize:13,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:13,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:2}},r.last?.preview||r.desc||'Группа'))
       ))
     );
     if(tab==='channels')return h(React.Fragment,null,
@@ -2553,7 +2553,7 @@ function App(){
       channels.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}},'Нет каналов'),
       channels.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
         r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:48,height:48,flexShrink:0}}):h('div',{style:{width:48,height:48,borderRadius:'50%',background:'rgba(175, 82, 222, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}},'📢'),
-        h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытый',style:{fontSize:13,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:2}},r.last?.preview||r.desc||'Канал'))
+        h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытый',style:{fontSize:13,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:13,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:2}},r.last?.preview||r.desc||'Канал'))
       ))
     );
   };
