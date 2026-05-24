@@ -2514,7 +2514,6 @@ function App(){
     setShowSettings(false);
   };
   const signOut=async()=>{if(user)await db.ref('users/'+user.id).update({online:false,lastSeen:Date.now()});auth.signOut()};
-
   if(loading)return h('div',{style:{height:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,color:'var(--text-primary)'}},h('div',{style:{width:48,height:48,border:'4px solid var(--border)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .8s cubic-bezier(0.4, 0, 0.2, 1) infinite'}}),h('div',{className:'syne',style:{letterSpacing:'.1em',fontSize:24}},'MAXIFY'));
   if(!user)return h(Auth);
 
