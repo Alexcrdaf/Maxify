@@ -849,7 +849,7 @@ function SettingsPage({user, onClose, onSignOut}){
   const tabs = [{id:'profile',i:'👤',l:t('settings.profile',lang)},{id:'theme',i:'🎨',l:t('settings.appearance',lang)},{id:'lang',i:'🌐',l:t('settings.language',lang)},{id:'pc',i:'💻',l:t('settings.pcSettings',lang)},{id:'account',i:'🛡️',l:t('settings.account',lang)}];
 
   const saveProfile=async()=>{if(!name.trim())return;setSaving(true);await db.ref('users/'+user.id).update({login:name.trim(),bio:bio.trim()});setSaving(false)};
-  const uploadAvatar=async e=>{const file=e.target.files[0];if(!file)return;setUploading(true);try{const url=await upload(file,p=>setUploadPct(p));await db.ref('users/'+user.id).update({avatarUrl:url});}catch(ex){alert('Ошибка: '+ex.message)}setUploading(false);setUploadPct=0);e.target.value='';};
+  const uploadAvatar=async e=>{const file=e.target.files[0];if(!file)return;setUploading(true);try{const url=await upload(file,p=>setUploadPct(p));await db.ref('users/'+user.id).update({avatarUrl:url});}catch(ex){alert('Ошибка: '+ex.message)}setUploading(false);setUploadPct(0);e.target.value='';};
   const toggleTheme=dark=>{if(dark){document.body.classList.remove('light');localStorage.setItem('theme','dark')}else{document.body.classList.add('light');localStorage.setItem('theme','light')}setDarkMode(dark);if(window.chrome&&window.chrome.webview){try{window.chrome.webview.postMessage(JSON.stringify({type:'theme',value:dark?'dark':'light'}))}catch(e){}}};
 
   return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}},
@@ -1158,7 +1158,8 @@ function EmojiPicker({onSelect,onClose,style}){
 }
 
 function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin,onReact,onVote,replyMsg,showReactions=true,canPin=false}){
-  const [showMenu,setShowMenu]=useState(false);
+  const [menuPos,setMenuPos]=useState(null);
+  const [emojiPos,setEmojiPos]=useState(null);
   const [showEmoji,setShowEmoji]=useState(false);
   const menuRef=useRef();
   const reactions=m.reactions||{};
@@ -1166,11 +1167,53 @@ function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin
   Object.entries(reactions).forEach(([uid,emoji])=>{if(!reactionGroups[emoji])reactionGroups[emoji]=[];reactionGroups[emoji].push(uid)});
 
   useEffect(()=>{
-    if(!showMenu)return;
-    const handler=e=>{if(menuRef.current&&!menuRef.current.contains(e.target))setShowMenu(false)};
+    if(!menuPos)return;
+    const handler=e=>{if(menuRef.current&&!menuRef.current.contains(e.target))setMenuPos(null)};
     setTimeout(()=>document.addEventListener('click',handler),0);
     return()=>document.removeEventListener('click',handler);
-  },[showMenu]);
+  },[menuPos]);
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const x = e.clientX;
+    const y = e.clientY;
+    const w = 190;  // Оценочная ширина меню с отступами
+    const h = 260;  // Оценочная высота меню с запасом
+    
+    let px = x;
+    let py = y;
+    
+    // Предотвращаем выход за пределы экрана справа и снизу
+    if (x + w > window.innerWidth) px = window.innerWidth - w - 12;
+    if (y + h > window.innerHeight) py = window.innerHeight - h - 12;
+    
+    // Предотвращаем выход за пределы экрана слева и сверху
+    if (px < 12) px = 12;
+    if (py < 12) py = 12;
+    
+    setMenuPos({ x: px, y: py });
+  };
+
+  const handleEmojiOpen = (e) => {
+    e.stopPropagation();
+    if (!menuPos) return;
+    
+    const w = 220; // Ширина панели эмодзи
+    const h = 130; // Высота панели эмодзи
+    let px = menuPos.x;
+    let py = menuPos.y;
+    
+    if (px + w > window.innerWidth) px = window.innerWidth - w - 12;
+    if (py + h > window.innerHeight) py = window.innerHeight - h - 12;
+    if (px < 12) px = 12;
+    if (py < 12) py = 12;
+    
+    setEmojiPos({ x: px, y: py });
+    setShowEmoji(true);
+    setMenuPos(null);
+  };
 
   const bubbleClass=mine?'bubble-mine':'bubble-their';
 
@@ -1217,17 +1260,17 @@ function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin
       h('div',{style:{fontSize:13,color:'var(--muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:240}},replyMsg.text||'📎 Вложение')
     ),
     m.forwardedFrom&&h('div',{className:'fwd-header'}, h('span', null, '➡️ Переслано от '), h('b', null, m.forwardedFrom.login)),
-    h('div',{style:{position:'relative',display:'inline-block',maxWidth:'100%'},onContextMenu:e=>{e.preventDefault();e.stopPropagation();setShowMenu(true)},onDoubleClick:e=>{e.preventDefault();e.stopPropagation();setShowMenu(true)}},
+    h('div',{style:{position:'relative',display:'inline-block',maxWidth:'100%'},onContextMenu:handleContextMenu,onDoubleClick:handleContextMenu},
       content(),
-      showMenu&&h('div',{ref:menuRef,className:'msg-menu fade-in',style:{position:'absolute',bottom:'calc(100% + 8px)',[mine?'right':'left']:0,minWidth:180},onClick:e=>e.stopPropagation()},
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();setShowEmoji(true);setShowMenu(false)}},'😊  Реакция'),
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onReply){onReply(m);}setShowMenu(false)}},'↩️  Ответить'),
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onForward){onForward(m);}setShowMenu(false)}},'➡️  Переслать'),
-        canPin&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onPin){onPin(m);}setShowMenu(false)}},'📌  Закрепить'),
-        mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onEdit){onEdit(m);}setShowMenu(false)}},'✏️  Изменить'),
-        (mine || canPin /* quick hack for admins */)&&h('div',{className:'msg-menu-item',style:{color:'var(--danger)'},onClick:e=>{e.stopPropagation();if(onDelete){onDelete(m);}setShowMenu(false)}},'🗑️  Удалить')
+      menuPos&&h('div',{ref:menuRef,className:'msg-menu fade-in',style:{position:'fixed',left:menuPos.x,top:menuPos.y,minWidth:180,zIndex:10000},onClick:e=>e.stopPropagation()},
+        h('div',{className:'msg-menu-item',onClick:handleEmojiOpen},'😊  Реакция'),
+        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onReply){onReply(m);}setMenuPos(null)}},'↩️  Ответить'),
+        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onForward){onForward(m);}setMenuPos(null)}},'➡️  Переслать'),
+        canPin&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onPin){onPin(m);}setMenuPos(null)}},'📌  Закрепить'),
+        mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onEdit){onEdit(m);}setMenuPos(null)}},'✏️  Изменить'),
+        (mine || canPin /* quick hack for admins */)&&h('div',{className:'msg-menu-item',style:{color:'var(--danger)'},onClick:e=>{e.stopPropagation();if(onDelete){onDelete(m);}setMenuPos(null)}},'🗑️  Удалить')
       ),
-      showEmoji&&h(EmojiPicker,{style:{position:'absolute',bottom:'calc(100% + 8px)',[mine?'right':'left']:0},onSelect:emoji=>{if(onReact){onReact(m,emoji)}},onClose:()=>setShowEmoji(false)})
+      showEmoji&&emojiPos&&h(EmojiPicker,{style:{position:'fixed',left:emojiPos.x,top:emojiPos.y,zIndex:10000},onSelect:emoji=>{if(onReact){onReact(m,emoji)}},onClose:()=>{setEmojiPos(null);setShowEmoji(false);}})
     ),
     showReactions&&Object.keys(reactionGroups).length>0&&h('div',{style:{display:'flex',flexWrap:'wrap',gap:6,marginTop:6,justifyContent:mine?'flex-end':'flex-start'}},
       Object.entries(reactionGroups).map(([emoji,uids])=>h('div',{key:emoji,className:'reaction-chip'+(mine?' mine':''),onClick:()=>onReact&&onReact(m,emoji),title:uids.length+' чел.'},
@@ -2617,3 +2660,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(h(App));
 </script>
 </body>
 </html>
+
+  
