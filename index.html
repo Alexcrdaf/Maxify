@@ -167,114 +167,6 @@ input, textarea, select {
   width: 100%;
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.05);
 }
-
-body.light {
-  /* LIGHT MODE */
-  --bg-base: #f2f2f7;
-  --panel: rgba(255, 255, 255, 0.65);
-  --panel-solid: #ffffff;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-light: rgba(255, 255, 255, 0.6);
-  --border-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  
-  --accent: #007AFF;
-  --accent-grad: linear-gradient(135deg, #32C5FF 0%, #007AFF 100%);
-  --glow: rgba(0, 122, 255, 0.25);
-  
-  --text: #000000;
-  --text-primary: rgba(0, 0, 0, 0.95);
-  --muted: rgba(60, 60, 67, 0.6);
-  
-  --danger: #FF3B30;
-  --danger-grad: linear-gradient(135deg, #FF6961 0%, #FF3B30 100%);
-  --ok: #34C759;
-  
-  --input-bg: rgba(0, 0, 0, 0.04);
-  --bubble-mine: var(--accent-grad);
-  --bubble-mine-shadow: 0 4px 14px rgba(0, 122, 255, 0.2);
-  --bubble-their: rgba(255, 255, 255, 0.85);
-  --bubble-their-border: rgba(0, 0, 0, 0.05);
-  
-  --attach-bg: rgba(245, 245, 250, 0.85);
-  --nav-bg: rgba(255, 255, 255, 0.75);
-  
-  --pinned-bg: rgba(0, 122, 255, 0.08);
-  --reply-bg: rgba(0, 0, 0, 0.03);
-  --reaction-bg: rgba(0, 0, 0, 0.05);
-  --reaction-mine: rgba(0, 122, 255, 0.15);
-
-  --mesh-1: rgba(50, 197, 255, 0.3);
-  --mesh-2: rgba(0, 122, 255, 0.2);
-  --mesh-3: rgba(175, 82, 222, 0.15);
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-body {
-  background-color: var(--bg-base);
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  height: 100dvh;
-  overflow: hidden;
-  transition: background-color 0.4s ease, color 0.4s ease;
-  position: relative;
-}
-
-/* Liquid Glass Animated Background */
-body::before, body::after {
-  content: "";
-  position: fixed;
-  inset: -20%;
-  z-index: -1;
-  background: 
-    radial-gradient(circle at 20% 30%, var(--mesh-1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, var(--mesh-2) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, var(--mesh-3) 0%, transparent 60%);
-  filter: blur(60px);
-  animation: liquidBg 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0.8;
-  pointer-events: none;
-}
-body::after {
-  background: 
-    radial-gradient(circle at 80% 20%, var(--mesh-1) 0%, transparent 40%),
-    radial-gradient(circle at 20% 80%, var(--mesh-3) 0%, transparent 50%);
-  animation: liquidBg 20s infinite alternate-reverse cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes liquidBg {
-  0% { transform: scale(1) translate(0, 0) rotate(0deg); }
-  50% { transform: scale(1.1) translate(2%, 3%) rotate(5deg); }
-  100% { transform: scale(1) translate(-2%, -2%) rotate(-5deg); }
-}
-
-.syne { font-weight: 800; letter-spacing: -0.03em; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-
-.glass {
-  background: var(--panel);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--border);
-  box-shadow: var(--border-inset), 0 10px 40px rgba(0,0,0,0.1);
-  border-radius: var(--panel-radius, 28px);
-}
-
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-
-input, textarea, select {
-  background: var(--input-bg);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  border-radius: 20px;
-  padding: 12px 16px;
-  outline: none;
-  font-family: inherit;
-  font-size: 16px !important;
-  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-  width: 100%;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-}
 input:focus, textarea:focus {
   border-color: var(--accent);
   background: rgba(255,255,255,0.15);
@@ -603,11 +495,85 @@ body.light .btn-danger:hover {
 <script>
 window.addEventListener('DOMContentLoaded', () => {
 
+const DICT = {
+  ru: {
+    chats: 'Чаты', groups: 'Группы', channels: 'Каналы', feed: 'Лента', media: 'Медиа', settings: 'Настройки',
+    search_people: '🔍 Поиск людей', no_chats: 'Нет чатов. Начните общение!',
+    create: 'Создать', search: 'Поиск', no_groups: 'Нет групп', no_channels: 'Нет каналов',
+    logout: 'Выйти', feed_empty: 'Лента пуста', feed_empty_desc: 'Сделайте первую публикацию, чтобы начать историю.',
+    whats_new: 'Что у вас нового, ',
+    profile: 'Профиль', appearance: 'Внешний вид', language: 'Язык', pc_settings: 'Настройки ПК', account: 'Аккаунт',
+    username: 'Имя пользователя', about: 'О себе', save_changes: 'Сохранить изменения', saving: 'Сохранение...',
+    change_photo: 'Изменить фото', theme: 'Тема оформления', dark: 'Тёмная', light: 'Светлая',
+    interface_lang: 'Язык интерфейса', manage_account: 'Управление аккаунтом', logout_acc: '🚪 Выйти из аккаунта',
+    delete_acc_forever: 'Удалить аккаунт навсегда', cancel: 'Отмена', delete: 'Удалить',
+    pc_warn: '⚠️ Настройки ПК работают только в приложении (Windows .exe)',
+    autostart: 'Автозапуск', autostart_desc: 'Открывать при старте ПК',
+    bg_mode: 'Фоновый режим', bg_mode_desc: 'Оставаться в трее при закрытии',
+    download_pc: '📥 Скачать ПК версию',
+    msg_placeholder: 'Сообщение...', send: 'Отправить', reply: 'Ответить', forward: 'Переслать', pin: 'Закрепить', edit: 'Изменить',
+    online: 'онлайн', offline: 'не в сети',
+    members: 'участников', info: 'Инфо', add: 'Добавить', admins: 'Админы', perms: 'Права', more: 'Ещё',
+    comments: 'Комментарии', no_comments: 'Нет комментариев. Будьте первым!', your_comment: 'Ваш комментарий...'
+  },
+  en: {
+    chats: 'Chats', groups: 'Groups', channels: 'Channels', feed: 'Feed', media: 'Media', settings: 'Settings',
+    search_people: '🔍 Search people', no_chats: 'No chats. Start chatting!',
+    create: 'Create', search: 'Search', no_groups: 'No groups', no_channels: 'No channels',
+    logout: 'Logout', feed_empty: 'Feed is empty', feed_empty_desc: 'Make your first post to start your story.',
+    whats_new: 'What\'s new, ',
+    profile: 'Profile', appearance: 'Appearance', language: 'Language', pc_settings: 'PC Settings', account: 'Account',
+    username: 'Username', about: 'About', save_changes: 'Save changes', saving: 'Saving...',
+    change_photo: 'Change photo', theme: 'Theme', dark: 'Dark', light: 'Light',
+    interface_lang: 'Interface language', manage_account: 'Manage account', logout_acc: '🚪 Logout',
+    delete_acc_forever: 'Delete account forever', cancel: 'Cancel', delete: 'Delete',
+    pc_warn: '⚠️ PC settings only work in the Windows .exe app',
+    autostart: 'Autostart', autostart_desc: 'Open on PC startup',
+    bg_mode: 'Background mode', bg_mode_desc: 'Stay in tray when closed',
+    download_pc: '📥 Download PC App',
+    msg_placeholder: 'Message...', send: 'Send', reply: 'Reply', forward: 'Forward', pin: 'Pin', edit: 'Edit',
+    online: 'online', offline: 'offline',
+    members: 'members', info: 'Info', add: 'Add', admins: 'Admins', perms: 'Perms', more: 'More',
+    comments: 'Comments', no_comments: 'No comments yet. Be the first!', your_comment: 'Your comment...'
+  },
+  es: {
+    chats: 'Chats', groups: 'Grupos', channels: 'Canales', feed: 'Feed', media: 'Media', settings: 'Ajustes',
+    search_people: '🔍 Buscar gente', no_chats: 'No hay chats. ¡Empieza a chatear!',
+    create: 'Crear', search: 'Buscar', no_groups: 'No hay grupos', no_channels: 'No hay canales',
+    logout: 'Cerrar sesión', feed_empty: 'El feed está vacío', feed_empty_desc: 'Haz tu primera publicación para empezar tu historia.',
+    whats_new: '¿Qué hay de nuevo, ',
+    profile: 'Perfil', appearance: 'Apariencia', language: 'Idioma', pc_settings: 'Ajustes de PC', account: 'Cuenta',
+    username: 'Nombre de usuario', about: 'Sobre mí', save_changes: 'Guardar cambios', saving: 'Guardando...',
+    change_photo: 'Cambiar foto', theme: 'Tema', dark: 'Oscuro', light: 'Claro',
+    interface_lang: 'Idioma de la interfaz', manage_account: 'Gestionar cuenta', logout_acc: '🚪 Cerrar sesión',
+    delete_acc_forever: 'Eliminar cuenta para siempre', cancel: 'Cancelar', delete: 'Eliminar',
+    pc_warn: '⚠️ Los ajustes de PC solo funcionan en la aplicación Windows .exe',
+    autostart: 'Autoarranque', autostart_desc: 'Abrir al iniciar el PC',
+    bg_mode: 'Modo en segundo plano', bg_mode_desc: 'Permanecer en la bandeja',
+    download_pc: '📥 Descargar app para PC',
+    msg_placeholder: 'Mensaje...', send: 'Enviar', reply: 'Responder', forward: 'Reenviar', pin: 'Fijar', edit: 'Editar',
+    online: 'en línea', offline: 'desconectado',
+    members: 'miembros', info: 'Info', add: 'Añadir', admins: 'Admins', perms: 'Permisos', more: 'Más',
+    comments: 'Comentarios', no_comments: 'Sin comentarios. ¡Sé el primero!', your_comment: 'Tu comentario...'
+  }
+};
+
 const FC={apiKey:"AIzaSyA6pHfRD-a50nZ5C-e_RDj5j8ijLBQPX8A",authDomain:"mymaxiscord.firebaseapp.com",databaseURL:"https://mymaxiscord-default-rtdb.firebaseio.com",projectId:"mymaxiscord",storageBucket:"mymaxiscord.firebasestorage.app",messagingSenderId:"110398248811",appId:"1:110398248811:web:1454c9bc4dc4f5e9931e2e"};
 if(!firebase.apps.length) firebase.initializeApp(FC);
 const auth=firebase.auth(), db=firebase.database();
 const h=React.createElement;
 const {useState,useEffect,useRef,useCallback,useMemo}=React;
+
+function useTranslation() {
+  const [lang, setLangState] = useState(localStorage.getItem('maxify_lang') || 'ru');
+  useEffect(() => {
+    const cb = () => setLangState(localStorage.getItem('maxify_lang') || 'ru');
+    window.addEventListener('lang-changed', cb);
+    return () => window.removeEventListener('lang-changed', cb);
+  }, []);
+  const t = (key) => DICT[lang]?.[key] || DICT['ru'][key] || key;
+  return { lang, t };
+}
 
 const dmId=(a,b)=>[a,b].sort().join('__');
 const ts2t=ts=>{if(!ts)return'';const d=new Date(ts);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')};
@@ -772,7 +738,6 @@ function Modal({onClose,children,width=440}){
   );
 }
 
-// Рендер текста с упоминаниями
 function renderMentions(text) {
   if(!text) return null;
   const parts = text.split(/(@\w+)/g);
@@ -850,22 +815,23 @@ function Auth(){
 
 function UserSearch({me,onSelect,onOpenProfile,onClose}){
   const [q,setQ]=useState('');const [results,setResults]=useState([]);const [busy,setBusy]=useState(false);const [err,setErr]=useState('');
+  const {t} = useTranslation();
   useEffect(()=>{
     if(!q.trim()){setResults([]);return}
     setBusy(true);setErr('');
-    const t=setTimeout(async()=>{
+    const to=setTimeout(async()=>{
       try{const snap=await db.ref('users').once('value');const all=snap.val()||{};const ql=q.trim().toLowerCase();
         setResults(Object.values(all).filter(u=>u&&u.id&&u.id!==me&&(u.login?.toLowerCase().includes(ql)||u.email?.toLowerCase().includes(ql))))}
       catch(e){setErr('Ошибка: '+e.message);}
       setBusy(false);
     },350);
-    return()=>clearTimeout(t);
+    return()=>clearTimeout(to);
   },[q,me]);
   return h(Modal,{onClose},
-    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontSize:18}},'Найти пользователя'),h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'✕')),
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontSize:18}},t('search_people')),h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'✕')),
     h('input',{placeholder:'Имя или email...',value:q,onChange:e=>setQ(e.target.value),autoFocus:true}),
     h('div',{style:{maxHeight:300,overflowY:'auto',display:'flex',flexDirection:'column',gap:4,minHeight:80}},
-      busy&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},'Поиск...'),
+      busy&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},t('search')+'...'),
       err&&h('div',{style:{color:'var(--danger)',fontSize:13,textAlign:'center',padding:12}},err),
       !busy&&q.trim()&&results.length===0&&!err&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},'Никого не найдено'),
       !busy&&results.map(u=>h('div',{key:u.id,className:'search-item',style:{justifyContent:'space-between'},onClick:()=>{onSelect(u);onClose()}},
@@ -875,7 +841,7 @@ function UserSearch({me,onSelect,onOpenProfile,onClose}){
             h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},u.login,u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
             h('div',{style:{fontSize:12,color:u.online?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:4}},
               h('span',{className:'status-dot '+(u.online?'online':'offline')}),
-              u.online?'онлайн':fmtLastSeen(u.lastSeen)
+              u.online?t('online'):fmtLastSeen(u.lastSeen)
             )
           )
         ),
@@ -889,18 +855,24 @@ function PCSettingsTab({me}){
   const isWV2=!!(window.chrome&&window.chrome.webview);
   const [autostart,setAutostart]=useState(()=>localStorage.getItem('maxify_autostart')==='1');
   const [bgMode,setBgMode]=useState(()=>localStorage.getItem('maxify_bgmode')!=='0');
+  const {t} = useTranslation();
+
   const toggleAutostart=v=>{setAutostart(v);localStorage.setItem('maxify_autostart',v?'1':'0');if(isWV2){try{window.chrome.webview.postMessage(JSON.stringify({type:'autostart',value:v}))}catch(_){}}};
   const toggleBgMode=v=>{setBgMode(v);localStorage.setItem('maxify_bgmode',v?'1':'0');if(isWV2){try{window.chrome.webview.postMessage(JSON.stringify({type:'bgmode',value:v}))}catch(_){}}};
   const Toggle=({checked,onChange})=>h('div',{onClick:()=>onChange(!checked),style:{width:52,height:32,borderRadius:999,background:checked?'var(--ok)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}},h('div',{style:{width:28,height:28,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:checked?'22px':'2px',transition:'left .2s',boxShadow:'0 2px 8px rgba(0,0,0,.2)'}}));
   const Row=({icon,title,desc,checked,onChange})=>h('label',{style:{display:'flex',alignItems:'center',gap:16,cursor:'pointer',padding:'16px 20px',borderRadius:20,background:'var(--input-bg)',border:'1px solid var(--border)',userSelect:'none'}},h('div',{style:{fontSize:28,flexShrink:0}},icon),h('div',{style:{flex:1}},h('div',{style:{fontWeight:600,fontSize:15}},title),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:4}},desc)),h(Toggle,{checked,onChange}));
   return h('div',{style:{display:'flex',flexDirection:'column',gap:12,maxWidth:400}},
-    !isWV2&&h('div',{style:{background:'rgba(255,159,10,0.1)',border:'1px solid rgba(255,159,10,0.3)',borderRadius:16,padding:'12px 16px',fontSize:14,color:'#FF9F0A'}},'⚠️ Настройки ПК работают только в приложении (Windows .exe)'),
-    h(Row,{icon:'🚀',title:'Автозапуск',desc:'Открывать при старте ПК',checked:autostart,onChange:toggleAutostart}),
-    h(Row,{icon:'🔄',title:'Фоновый режим',desc:'Оставаться в трее при закрытии',checked:bgMode,onChange:toggleBgMode})
+    !isWV2&&h('div',{style:{background:'rgba(255,159,10,0.1)',border:'1px solid rgba(255,159,10,0.3)',borderRadius:16,padding:'12px 16px',fontSize:14,color:'#FF9F0A'}},t('pc_warn')),
+    h(Row,{icon:'🚀',title:t('autostart'),desc:t('autostart_desc'),checked:autostart,onChange:toggleAutostart}),
+    h(Row,{icon:'🔄',title:t('bg_mode'),desc:t('bg_mode_desc'),checked:bgMode,onChange:toggleBgMode}),
+    h('a', {href:'https://drive.google.com/drive/folders/1PZMmCfQoKMAG5KSPaPqx8fXCGe9JwnCs?usp=drive_link', target:'_blank', style:{textDecoration:'none'}},
+      h('button', {className:'btn btn-primary', style:{width:'100%', justifyContent:'center', marginTop:12}}, t('download_pc'))
+    )
   );
 }
 
 function SettingsPage({user, onClose, onSignOut}){
+  const {t} = useTranslation();
   const [tab,setTab]=useState('profile');
   const [name,setName]=useState(user.login||'');
   const [bio,setBio]=useState(user.bio||'');
@@ -918,18 +890,18 @@ function SettingsPage({user, onClose, onSignOut}){
   const uploadAvatar=async e=>{const file=e.target.files[0];if(!file)return;setUploading(true);try{const url=await upload(file,p=>setUploadPct(p));await db.ref('users/'+user.id).update({avatarUrl:url});}catch(ex){alert('Ошибка: '+ex.message)}setUploading(false);setUploadPct(0);e.target.value='';};
   const toggleTheme=dark=>{if(dark){document.body.classList.remove('light');localStorage.setItem('theme','dark')}else{document.body.classList.add('light');localStorage.setItem('theme','light')}setDarkMode(dark);if(window.chrome&&window.chrome.webview){try{window.chrome.webview.postMessage(JSON.stringify({type:'theme',value:dark?'dark':'light'}))}catch(e){}}};
 
-  const tabs = [{id:'profile',i:'👤',l:'Профиль'},{id:'theme',i:'🎨',l:'Внешний вид'},{id:'lang',i:'🌐',l:'Язык'},{id:'pc',i:'💻',l:'Настройки ПК'},{id:'account',i:'🛡️',l:'Аккаунт'}];
+  const tabs = [{id:'profile',i:'👤',l:t('profile')},{id:'theme',i:'🎨',l:t('appearance')},{id:'lang',i:'🌐',l:t('language')},{id:'pc',i:'💻',l:t('pc_settings')},{id:'account',i:'🛡️',l:t('account')}];
 
   return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}},
     h('div',{className:'chat-header',style:{padding:'12px 20px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:12,flexShrink:0,backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)'}},
       h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'←'),
-      h('div',{className:'syne',style:{fontSize:18}},'Настройки'),
+      h('div',{className:'syne',style:{fontSize:18}},t('settings')),
       h('div',{style:{flex:1}})
     ),
     h('div',{style:{display:'flex', flex:1, overflow:'hidden', flexDirection: window.innerWidth<=640?'column':'row'}},
       h('div',{style:{width: window.innerWidth<=640?'100%':260, borderRight: window.innerWidth<=640?'none':'1px solid var(--border)', borderBottom: window.innerWidth<=640?'1px solid var(--border)':'none', display:'flex', flexDirection: window.innerWidth<=640?'row':'column', padding:16, gap:8, overflowX:'auto', flexShrink:0}},
-        tabs.map(t=>h('div',{key:t.id,className:'chat-row'+(tab===t.id?' active':''),onClick:()=>setTab(t.id),style:{minHeight:48, padding:'10px 16px', borderRadius:16, flexShrink:0, display:'flex', gap:12}},
-          h('span',{style:{fontSize:20}},t.i), h('span',{style:{fontWeight:600, fontSize:15}},t.l)
+        tabs.map(tOption=>h('div',{key:tOption.id,className:'chat-row'+(tab===tOption.id?' active':''),onClick:()=>setTab(tOption.id),style:{minHeight:48, padding:'10px 16px', borderRadius:16, flexShrink:0, display:'flex', gap:12}},
+          h('span',{style:{fontSize:20}},tOption.i), h('span',{style:{fontWeight:600, fontSize:15}},tOption.l)
         ))
       ),
       h('div',{style:{flex:1, padding:24, overflowY:'auto'}},
@@ -937,44 +909,44 @@ function SettingsPage({user, onClose, onSignOut}){
           h('div',{style:{display:'flex',alignItems:'center',gap:20}},
             h(Avatar,{user,size:80,ring:true}),
             h('div',{style:{flex:1}},
-              h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center'},onClick:()=>fileRef.current.click(),disabled:uploading},uploading?'Загрузка...':'Изменить фото'),
+              h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center'},onClick:()=>fileRef.current.click(),disabled:uploading},uploading?t('saving'):t('change_photo')),
               h('input',{ref:fileRef,type:'file',accept:'image/*',style:{display:'none'},onChange:uploadAvatar}),
               uploading&&h('div',{style:{height:4,background:'var(--border)',borderRadius:2,marginTop:8}},h('div',{style:{height:'100%',background:'var(--accent)',width:uploadPct+'%'}}))
             )
           ),
-          h('div',{style:{display:'flex',flexDirection:'column',gap:8}},h('label',{style:{fontSize:13,color:'var(--muted)',fontWeight:600}},'Имя пользователя'),h('input',{value:name,onChange:e=>setName(e.target.value),placeholder:'Имя'})),
-          h('div',{style:{display:'flex',flexDirection:'column',gap:8}},h('label',{style:{fontSize:13,color:'var(--muted)',fontWeight:600}},'О себе'),h('textarea',{value:bio,onChange:e=>setBio(e.target.value),rows:4,placeholder:'Немного о себе...',style:{resize:'none'}})),
-          h('button',{className:'btn btn-primary',style:{justifyContent:'center'},onClick:saveProfile,disabled:saving},saving?'Сохранение...':'Сохранить изменения')
+          h('div',{style:{display:'flex',flexDirection:'column',gap:8}},h('label',{style:{fontSize:13,color:'var(--muted)',fontWeight:600}},t('username')),h('input',{value:name,onChange:e=>setName(e.target.value),placeholder:t('username')})),
+          h('div',{style:{display:'flex',flexDirection:'column',gap:8}},h('label',{style:{fontSize:13,color:'var(--muted)',fontWeight:600}},t('about')),h('textarea',{value:bio,onChange:e=>setBio(e.target.value),rows:4,placeholder:'...',style:{resize:'none'}})),
+          h('button',{className:'btn btn-primary',style:{justifyContent:'center'},onClick:saveProfile,disabled:saving},saving?t('saving'):t('save_changes'))
         ),
         tab==='theme'&&h('div',{style:{display:'flex',flexDirection:'column',gap:20, maxWidth: 400}},
-          h('div',{style:{fontSize:18, fontWeight:700}}, 'Тема оформления'),
+          h('div',{style:{fontSize:18, fontWeight:700}}, t('theme')),
           h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
-            [{dark:true,icon:'🌙',label:'Тёмная'},{dark:false,icon:'☀️',label:'Светлая'}].map(t=>h('div',{key:t.label,onClick:()=>toggleTheme(t.dark),style:{padding:'20px 12px',borderRadius:20,cursor:'pointer',textAlign:'center',border:'2px solid '+(darkMode===t.dark?'var(--accent)':'var(--border)'),background:darkMode===t.dark?'rgba(10, 132, 255, 0.1)':'var(--input-bg)',transition:'all .2s'}},h('div',{style:{fontSize:32,marginBottom:8}},t.icon),h('div',{style:{fontWeight:600,fontSize:14}},t.label)))
+            [{dark:true,icon:'🌙',label:t('dark')},{dark:false,icon:'☀️',label:t('light')}].map(tOpt=>h('div',{key:tOpt.label,onClick:()=>toggleTheme(tOpt.dark),style:{padding:'20px 12px',borderRadius:20,cursor:'pointer',textAlign:'center',border:'2px solid '+(darkMode===tOpt.dark?'var(--accent)':'var(--border)'),background:darkMode===tOpt.dark?'rgba(10, 132, 255, 0.1)':'var(--input-bg)',transition:'all .2s'}},h('div',{style:{fontSize:32,marginBottom:8}},tOpt.icon),h('div',{style:{fontWeight:600,fontSize:14}},tOpt.label)))
           )
         ),
         tab==='lang'&&h('div',{style:{display:'flex',flexDirection:'column',gap:20, maxWidth: 400}},
-          h('div',{style:{fontSize:18, fontWeight:700}}, 'Язык интерфейса'),
+          h('div',{style:{fontSize:18, fontWeight:700}}, t('interface_lang')),
           ['ru-Русский', 'en-English', 'es-Español'].map(l=>{
             const [code,n] = l.split('-');
             return h('label', {key:code, style:{display:'flex',alignItems:'center',gap:12,padding:'16px',background:'var(--input-bg)',borderRadius:20,border:'1px solid var(--border)',cursor:'pointer'}},
-              h('input', {type:'radio', name:'lang', checked:lang===code, onChange:()=>{setLang(code); localStorage.setItem('maxify_lang',code);}}),
+              h('input', {type:'radio', name:'lang', checked:lang===code, onChange:()=>{setLang(code); localStorage.setItem('maxify_lang',code); window.dispatchEvent(new Event('lang-changed'));}}),
               h('div', {style:{fontSize:16, fontWeight:600}}, n)
             )
           })
         ),
         tab==='pc'&&h(PCSettingsTab,{me:user.id}),
         tab==='account'&&h('div',{style:{display:'flex',flexDirection:'column',gap:20, maxWidth: 400}},
-          h('div',{style:{fontSize:18, fontWeight:700}}, 'Управление аккаунтом'),
-          h('button',{className:'btn btn-ghost',style:{color:'var(--danger)', borderColor:'rgba(255,69,58,0.3)', padding:14, justifyContent:'center'},onClick:onSignOut},'🚪 Выйти из аккаунта'),
+          h('div',{style:{fontSize:18, fontWeight:700}}, t('manage_account')),
+          h('button',{className:'btn btn-ghost',style:{color:'var(--danger)', borderColor:'rgba(255,69,58,0.3)', padding:14, justifyContent:'center'},onClick:onSignOut},t('logout_acc')),
           h('div',{className:'hr'}),
-          !confirmDel?h('button',{className:'btn btn-danger',style:{padding:14, justifyContent:'center'},onClick:()=>setConfirmDel(true)},'Удалить аккаунт навсегда'):
+          !confirmDel?h('button',{className:'btn btn-danger',style:{padding:14, justifyContent:'center'},onClick:()=>setConfirmDel(true)},t('delete_acc_forever')):
           h('div',{style:{display:'flex',flexDirection:'column',gap:12, background:'rgba(255,69,58,0.1)', padding:16, borderRadius:20}},
-            h('div',{style:{color:'var(--danger)', fontWeight:600, fontSize:14}},'⚠️ Это действие необратимо. Введите пароль:'),
+            h('div',{style:{color:'var(--danger)', fontWeight:600, fontSize:14}},'⚠️ Введите пароль:'),
             h('input',{type:'password',placeholder:'Пароль...',value:delPass,onChange:e=>setDelPass(e.target.value)}),
             delErr&&h('div',{style:{fontSize:13,color:'var(--danger)',textAlign:'center'}},delErr),
             h('div',{style:{display:'flex',gap:10}},
-              h('button',{className:'btn btn-ghost',style:{flex:1, justifyContent:'center'},onClick:()=>{setConfirmDel(false);setDelErr('')}},'Отмена'),
-              h('button',{className:'btn btn-danger',style:{flex:1, justifyContent:'center'},onClick:async()=>{try{const c=firebase.auth.EmailAuthProvider.credential(user.email,delPass);await auth.currentUser.reauthenticateWithCredential(c);await db.ref('users/'+user.id).remove();await auth.currentUser.delete();}catch(e){setDelErr(e.code==='auth/wrong-password'?'Неверный пароль':e.message)}}},'Удалить')
+              h('button',{className:'btn btn-ghost',style:{flex:1, justifyContent:'center'},onClick:()=>{setConfirmDel(false);setDelErr('')}},t('cancel')),
+              h('button',{className:'btn btn-danger',style:{flex:1, justifyContent:'center'},onClick:async()=>{try{const c=firebase.auth.EmailAuthProvider.credential(user.email,delPass);await auth.currentUser.reauthenticateWithCredential(c);await db.ref('users/'+user.id).remove();await auth.currentUser.delete();}catch(e){setDelErr('Неверный пароль')}}},t('delete'))
             )
           )
         )
@@ -985,21 +957,22 @@ function SettingsPage({user, onClose, onSignOut}){
 
 function RoomSearchModal({me,onSelect,onClose}){
   const [q,setQ]=useState('');const [results,setResults]=useState([]);const [busy,setBusy]=useState(false);
+  const {t} = useTranslation();
   useEffect(()=>{
     if(!q.trim()){setResults([]);return}
     setBusy(true);
-    const t=setTimeout(async()=>{
+    const to=setTimeout(async()=>{
       const snap=await db.ref('rooms').once('value');const all=snap.val()||{};const ql=q.trim().toLowerCase();
       setResults(Object.values(all).filter(r=>r&&r.id&&!r.isPrivate&&(r.name?.toLowerCase().includes(ql)||r.desc?.toLowerCase().includes(ql))));
       setBusy(false);
     },350);
-    return()=>clearTimeout(t);
+    return()=>clearTimeout(to);
   },[q]);
   return h(Modal,{onClose},
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontSize:18}},'Поиск групп'),h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'✕')),
     h('input',{placeholder:'Название...',value:q,onChange:e=>setQ(e.target.value),autoFocus:true}),
     h('div',{style:{maxHeight:300,overflowY:'auto',display:'flex',flexDirection:'column',gap:4,minHeight:80}},
-      busy&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},'Поиск...'),
+      busy&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},t('search')+'...'),
       !busy&&q.trim()&&results.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},'Ничего не найдено'),
       results.map(r=>h('div',{key:r.id,className:'search-item',onClick:async()=>{await db.ref('rooms/'+r.id+'/members/'+me).set(true);onSelect(r);onClose()}},
         r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:42,height:42}}):h('div',{style:{width:42,height:42,borderRadius:'50%',background:r.type==='channel'?'rgba(175, 82, 222, 0.2)':'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}},r.type==='channel'?'📢':'👥'),
@@ -1059,6 +1032,7 @@ function RoomInfoModal({room,me,onClose,onOpenProfile}){
   const fileRef=useRef();
   const isOwner=me===room.owner;
   const isAdmin=admins[me]||isOwner;
+  const {t} = useTranslation();
 
   useEffect(()=>{
     db.ref('rooms/'+room.id+'/members').on('value',s=>setMembers(s.val()||{}));
@@ -1069,11 +1043,11 @@ function RoomInfoModal({room,me,onClose,onOpenProfile}){
 
   useEffect(()=>{
     if(!searchQ.trim()){setSearchRes([]);return}
-    const t=setTimeout(async()=>{
+    const to=setTimeout(async()=>{
       const snap=await db.ref('users').once('value');const all=snap.val()||{};const ql=searchQ.toLowerCase();
       setSearchRes(Object.values(all).filter(u=>u&&u.id&&!members[u.id]&&(u.login?.toLowerCase().includes(ql)||u.email?.toLowerCase().includes(ql))));
     },300);
-    return()=>clearTimeout(t);
+    return()=>clearTimeout(to);
   },[searchQ,members]);
 
   const saveChanges=async()=>{if(!editName.trim())return;setBusy(true);await db.ref('rooms/'+room.id).update({name:editName.trim(),desc:editDesc.trim(),isPrivate:isPrivate});setBusy(false)};
@@ -1089,13 +1063,13 @@ function RoomInfoModal({room,me,onClose,onOpenProfile}){
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
       h('div',null,
         h('div',{className:'syne',style:{fontSize:18,display:'flex',alignItems:'center',gap:6}},room.name,room.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:16})),
-        h('div',{style:{fontSize:13,color:'var(--muted)'}},`${Object.keys(members).length} участников`)
+        h('div',{style:{fontSize:13,color:'var(--muted)'}},`${Object.keys(members).length} ` + t('members'))
       ),
       h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'✕')
     ),
     h('div',{className:'tab-bar',style:{overflowX:'auto',flexWrap:'nowrap',marginTop:8}},
-      tabs.map(t=>h('div',{key:t,className:'tab'+(tab===t?' active':''),style:{flexShrink:0},onClick:()=>setTab(t)},
-        {edit:'✏️ Инфо',members:'👥 Участники',add:'➕ Добавить',admins:'⭐ Админы',permissions:'🛡 Права',settings:'⚙️ Ещё'}[t]
+      tabs.map(tb=>h('div',{key:tb,className:'tab'+(tab===tb?' active':''),style:{flexShrink:0},onClick:()=>setTab(tb)},
+        {edit:'✏️ '+t('info'),members:'👥 '+t('members'),add:'➕ '+t('add'),admins:'⭐ '+t('admins'),permissions:'🛡 '+t('perms'),settings:'⚙️ '+t('more')}[tb]
       ))
     ),
     h('div',{className:'hr', style:{margin: '8px 0'}}),
@@ -1118,16 +1092,16 @@ function RoomInfoModal({room,me,onClose,onOpenProfile}){
           h('div',{style:{width:24,height:24,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:isPrivate?'20px':'2px',transition:'left .2s',boxShadow:'0 2px 4px rgba(0,0,0,.2)'}})
         )
       ),
-      h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center',marginTop:4},onClick:saveChanges,disabled:busy||!editName.trim()},'Сохранить')
+      h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center',marginTop:4},onClick:saveChanges,disabled:busy||!editName.trim()},t('save_changes'))
     ),
     tab==='members'&&h('div',{style:{maxHeight:300,overflowY:'auto',display:'flex',flexDirection:'column',gap:6}},
       Object.keys(members).map(uid=>h(MemberRow,{key:uid,uid,isOwner,isAdmin,ownerId:room.owner,admins,me,onOpenProfile,onRemove:async()=>{if(uid===room.owner)return;await db.ref('rooms/'+room.id+'/members/'+uid).remove()}}))
     ),
     tab==='add'&&isAdmin&&h('div',{style:{display:'flex',flexDirection:'column',gap:10}},
-      h('input',{placeholder:'Поиск пользователя...',value:searchQ,onChange:e=>setSearchQ(e.target.value),autoFocus:true}),
+      h('input',{placeholder:t('search')+'...',value:searchQ,onChange:e=>setSearchQ(e.target.value),autoFocus:true}),
       h('div',{style:{maxHeight:260,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}},
         searchRes.map(u=>h('div',{key:u.id,className:'search-item',onClick:()=>db.ref('rooms/'+room.id+'/members/'+u.id).set(true)},
-          h(Avatar,{user:u,size:38}),h('div',{style:{flex:1}},h('div',{style:{fontWeight:600,fontSize:14}},u.login)),h('span',{style:{fontSize:13,color:'var(--accent)',fontWeight:600}},'+ Добавить')
+          h(Avatar,{user:u,size:38}),h('div',{style:{flex:1}},h('div',{style:{fontWeight:600,fontSize:14}},u.login)),h('span',{style:{fontSize:13,color:'var(--accent)',fontWeight:600}},'+ '+t('add'))
         ))
       )
     ),
@@ -1162,15 +1136,16 @@ function MemberRow({uid,isOwner,isAdmin,ownerId,admins,me,onOpenProfile,onRemove
   useEffect(()=>{db.ref('users/'+uid).once('value').then(s=>setU(s.val()))},[uid]);
   if(!u)return null;
   const canRemove=(isOwner||isAdmin)&&uid!==ownerId&&uid!==me;
+  const {t} = useTranslation();
   return h('div',{className:'search-item',style:{padding:'8px 12px',borderRadius:16}},
     h('div',{style:{display:'flex',alignItems:'center',gap:12,flex:1,cursor:onOpenProfile?'pointer':'default'},onClick:()=>onOpenProfile&&onOpenProfile(uid)},
       h(Avatar,{user:u,size:40}),
       h('div',null,
         h('div',{style:{fontWeight:600,fontSize:14,display:'flex',alignItems:'center',gap:6}},u.login,uid===ownerId&&h('span',null,'👑'),admins?.[uid]&&uid!==ownerId&&h('span',{style:{fontSize:10,background:'var(--accent-grad)',color:'#fff',padding:'2px 6px',borderRadius:999,fontWeight:700}},'ADMIN')),
-        h('div',{style:{fontSize:12,color:'var(--muted)'}},u.online?'онлайн':fmtLastSeen(u.lastSeen))
+        h('div',{style:{fontSize:12,color:'var(--muted)'}},u.online?t('online'):fmtLastSeen(u.lastSeen))
       )
     ),
-    canRemove&&h('button',{className:'btn btn-ghost',style:{padding:'6px 12px',fontSize:12,color:'var(--danger)'},onClick:e=>{e.stopPropagation();onRemove()}},'Удалить')
+    canRemove&&h('button',{className:'btn btn-ghost',style:{padding:'6px 12px',fontSize:12,color:'var(--danger)'},onClick:e=>{e.stopPropagation();onRemove()}},t('delete'))
   );
 }
 
@@ -1219,6 +1194,7 @@ function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin
   const [showMenu,setShowMenu]=useState(false);
   const [showEmoji,setShowEmoji]=useState(false);
   const menuRef=useRef();
+  const {t} = useTranslation();
   const reactions=m.reactions||{};
   const reactionGroups={};
   Object.entries(reactions).forEach(([uid,emoji])=>{if(!reactionGroups[emoji])reactionGroups[emoji]=[];reactionGroups[emoji].push(uid)});
@@ -1279,11 +1255,11 @@ function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin
       content(),
       showMenu&&h('div',{ref:menuRef,className:'msg-menu fade-in',style:{position:'absolute',bottom:'calc(100% + 8px)',[mine?'right':'left']:0,minWidth:180},onClick:e=>e.stopPropagation()},
         h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();setShowEmoji(true);setShowMenu(false)}},'😊  Реакция'),
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onReply){onReply(m);}setShowMenu(false)}},'↩️  Ответить'),
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onForward){onForward(m);}setShowMenu(false)}},'➡️  Переслать'),
-        canPin&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onPin){onPin(m);}setShowMenu(false)}},'📌  Закрепить'),
-        mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onEdit){onEdit(m);}setShowMenu(false)}},'✏️  Изменить'),
-        (mine || canPin /* quick hack for admins */)&&h('div',{className:'msg-menu-item',style:{color:'var(--danger)'},onClick:e=>{e.stopPropagation();if(onDelete){onDelete(m);}setShowMenu(false)}},'🗑️  Удалить')
+        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onReply){onReply(m);}setShowMenu(false)}},'↩️  '+t('reply')),
+        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onForward){onForward(m);}setShowMenu(false)}},'➡️  '+t('forward')),
+        canPin&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onPin){onPin(m);}setShowMenu(false)}},'📌  '+t('pin')),
+        mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onEdit){onEdit(m);}setShowMenu(false)}},'✏️  '+t('edit')),
+        (mine || canPin /* quick hack for admins */)&&h('div',{className:'msg-menu-item',style:{color:'var(--danger)'},onClick:e=>{e.stopPropagation();if(onDelete){onDelete(m);}setShowMenu(false)}},'🗑️  '+t('delete'))
       ),
       showEmoji&&h(EmojiPicker,{style:{position:'absolute',bottom:'calc(100% + 8px)',[mine?'right':'left']:0},onSelect:emoji=>{if(onReact){onReact(m,emoji)}},onClose:()=>setShowEmoji(false)})
     ),
@@ -1381,6 +1357,7 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
   const [uploadPct,setUploadPct]=useState(0);
   const [uploadErr,setUploadErr]=useState('');
   const fileRef=useRef(),voiceRef=useRef(),voiceStreamRef=useRef(),voiceTO=useRef(),vnoteRef=useRef(),vnoteRecRef=useRef(),vnoteStreamRef=useRef(),sendLockRef=useRef(false);
+  const {t} = useTranslation();
 
   useEffect(()=>{if(editMsg){setText(editMsg.text||'')}else{setText('')}},[editMsg]);
 
@@ -1465,7 +1442,7 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
             ),
             h('button',{className:'btn btn-ghost btn-icon',style:{background:showAttach?'var(--input-bg)':''},onClick:()=>setShowAttach(v=>!v)},'+'),
             h('input',{ref:fileRef,type:'file',style:{display:'none'},onChange:handleFile}),
-            h('input',{value:text,onChange:e=>setText(e.target.value),onClick:()=>setShowAttach(false),onKeyDown:e=>e.key==='Enter'&&!e.shiftKey&&(e.preventDefault(),doSend({type:'text',text})),placeholder:'Сообщение...',style:{flex:1}}),
+            h('input',{value:text,onChange:e=>setText(e.target.value),onClick:()=>setShowAttach(false),onKeyDown:e=>e.key==='Enter'&&!e.shiftKey&&(e.preventDefault(),doSend({type:'text',text})),placeholder:t('msg_placeholder'),style:{flex:1}}),
             (text.trim()||editMsg)
               ? h('button',{className:'btn btn-primary btn-icon slide-up',onClick:()=>doSend({type:'text',text})},editMsg?'✓':'↑')
               : h('button',{className:'btn btn-ghost btn-icon slide-up',onClick:startVoice},'🎙️')
@@ -2195,6 +2172,7 @@ function CommentsModal({post, me, meUser, onClose}){
   const [text,setText]=useState('');
   const [userCache,setUserCache]=useState({});
   const bottomRef=useRef();
+  const {t} = useTranslation();
 
   useEffect(()=>{
     const ref=db.ref('posts/'+post.k+'/comments');
@@ -2215,9 +2193,9 @@ function CommentsModal({post, me, meUser, onClose}){
   };
 
   return h(Modal,{onClose,width:480},
-    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontSize:18}},'Комментарии'),h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'✕')),
+    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontSize:18}},t('comments')),h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'✕')),
     h('div',{style:{maxHeight:360,overflowY:'auto',display:'flex',flexDirection:'column',gap:16,minHeight:120}},
-      comments.length===0&&h('div',{style:{color:'var(--muted)',fontSize:15,textAlign:'center',padding:30}},'Нет комментариев. Будьте первым!'),
+      comments.length===0&&h('div',{style:{color:'var(--muted)',fontSize:15,textAlign:'center',padding:30}},t('no_comments')),
       comments.map(c=>{const u=userCache[c.uid];return h('div',{key:c.k,style:{display:'flex',gap:12,alignItems:'flex-start'}},
         h(Avatar,{user:u||{id:c.uid,login:c.login,avatarUrl:c.avatarUrl},size:36}),
         h('div',{style:{flex:1,background:'var(--input-bg)',borderRadius:'20px 20px 20px 4px',padding:'12px 16px',border:'1px solid var(--border)'}},
@@ -2229,7 +2207,7 @@ function CommentsModal({post, me, meUser, onClose}){
       h('div',{ref:bottomRef})
     ),
     h('div',{style:{display:'flex',gap:10,marginTop:8}},
-      h('input',{value:text,onChange:e=>setText(e.target.value),onKeyDown:e=>e.key==='Enter'&&send(),placeholder:'Ваш комментарий...',style:{flex:1}}),
+      h('input',{value:text,onChange:e=>setText(e.target.value),onKeyDown:e=>e.key==='Enter'&&send(),placeholder:t('your_comment'),style:{flex:1}}),
       h('button',{className:'btn btn-primary btn-icon',onClick:send,disabled:!text.trim()},'↑')
     )
   );
@@ -2289,6 +2267,7 @@ function FeedTab({me, meUser, onOpenProfile}){
   const [showCreate,setShowCreate]=useState(false);
   const [commentPost,setCommentPost]=useState(null);
   const [userCache,setUserCache]=useState({});
+  const {t} = useTranslation();
 
   useEffect(()=>{
     const ref=db.ref('posts').orderByChild('ts').limitToLast(50);
@@ -2315,7 +2294,7 @@ function FeedTab({me, meUser, onOpenProfile}){
     h('div',{style:{padding:'16px 20px',borderBottom:'1px solid var(--border)',flexShrink:0}},
       h('div',{style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',background:'var(--input-bg)',borderRadius:999,cursor:'pointer',border:'1px solid var(--border)',transition:'all 0.2s'},onMouseEnter:e=>e.currentTarget.style.background='rgba(120,120,120,0.1)',onMouseLeave:e=>e.currentTarget.style.background='var(--input-bg)',onClick:()=>setShowCreate(true)},
         h(Avatar,{user:meUser,size:36}),
-        h('div',{style:{flex:1,color:'var(--muted)',fontSize:15,fontWeight:500}},'Что у вас нового, '+meUser?.login+'?')
+        h('div',{style:{flex:1,color:'var(--muted)',fontSize:15,fontWeight:500}},t('whats_new')+meUser?.login+'?')
       )
     ),
     loading?h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-primary)'}},
@@ -2323,8 +2302,8 @@ function FeedTab({me, meUser, onOpenProfile}){
     ):
     posts.length===0?h('div',{style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,color:'var(--muted)'}},
       h('div',{style:{fontSize:64,opacity:.3}},'📸'),
-      h('div',{className:'syne',style:{fontSize:24,color:'var(--text-primary)',opacity:0.6}},'Лента пуста'),
-      h('div',{style:{fontSize:15,maxWidth:260,textAlign:'center',opacity:0.8}},'Сделайте первую публикацию, чтобы начать историю.')
+      h('div',{className:'syne',style:{fontSize:24,color:'var(--text-primary)',opacity:0.6}},t('feed_empty')),
+      h('div',{style:{fontSize:15,maxWidth:260,textAlign:'center',opacity:0.8}},t('feed_empty_desc'))
     ):
     h('div',{style:{flex:1,overflowY:'auto',padding:'20px'}},
       posts.map(p=>h(PostCard,{key:p.k,post:p,me:me,userData:getUserData(p.uid),onOpenProfile,onOpenComments:setCommentPost}))
@@ -2339,6 +2318,7 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
   const [posts,setPosts]=useState([]);
   const [loading,setLoading]=useState(true);
   const [lightbox,setLightbox]=useState(null);
+  const {t} = useTranslation();
 
   useEffect(()=>{
     const ref=db.ref('users/'+uid);
@@ -2365,7 +2345,7 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
   return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflowY:'auto',borderRadius:window.innerWidth<=640?0:28}},
     h('div',{className:'chat-header',style:{padding:'12px 20px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:12,flexShrink:0,backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)',position:'sticky',top:0,zIndex:10}},
       h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'←'),
-      h('div',{className:'syne',style:{fontSize:18,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},u?.login||'Профиль'),
+      h('div',{className:'syne',style:{fontSize:18,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},u?.login||t('profile')),
       h('div',{style:{flex:1}}),
       uid!==me&&u&&h('button',{className:'btn btn-primary',style:{padding:'10px 16px',fontSize:14},onClick:()=>onStartDM&&onStartDM(u)},'Написать')
     ),
@@ -2379,7 +2359,7 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
         ),
         h('div',{style:{fontSize:14,color:'var(--muted)',marginTop:4,display:'flex',alignItems:'center',gap:6}},
           h('span',{className:'status-dot '+(u?.online?'online':'offline')}),
-          u?.online?'онлайн':fmtLastSeen(u?.lastSeen)
+          u?.online?t('online'):fmtLastSeen(u?.lastSeen)
         )
       )
     ),
@@ -2387,7 +2367,7 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
     h('div',{style:{display:'flex',gap:16,padding:'0 24px 24px',borderBottom:'1px solid var(--border)',flexShrink:0}},
       h('div',{style:{flex:1,textAlign:'center',background:'var(--input-bg)',padding:'16px',borderRadius:20,border:'1px solid var(--border)'}},h('div',{style:{fontSize:24,fontWeight:700,fontFamily:'-apple-system, sans-serif'}},posts.length),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:4}},'Публикаций')),
       h('div',{style:{flex:1,textAlign:'center',background:'var(--input-bg)',padding:'16px',borderRadius:20,border:'1px solid var(--border)'}},h('div',{style:{fontSize:24,fontWeight:700,fontFamily:'-apple-system, sans-serif'}},likeCount),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:4}},'Лайков')),
-      h('div',{style:{flex:1,textAlign:'center',background:'var(--input-bg)',padding:'16px',borderRadius:20,border:'1px solid var(--border)'}},h('div',{style:{fontSize:24,fontWeight:700,fontFamily:'-apple-system, sans-serif'}},commentCount),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:4}},'Комментариев'))
+      h('div',{style:{flex:1,textAlign:'center',background:'var(--input-bg)',padding:'16px',borderRadius:20,border:'1px solid var(--border)'}},h('div',{style:{fontSize:24,fontWeight:700,fontFamily:'-apple-system, sans-serif'}},commentCount),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:4}},t('comments')))
     ),
     loading
       ?h('div',{style:{padding:40,display:'flex',justifyContent:'center'}},h('div',{style:{width:40,height:40,border:'3px solid var(--border)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .8s linear infinite'}}))
@@ -2417,6 +2397,7 @@ function App(){
   const [showMobileList,setShowMobileList]=useState(window.innerWidth <= 640);const [peerInst,setPeerInst]=useState(null);const [showRT,setShowRT]=useState(false);const [rtPlaying,setRtPlaying]=useState(null);
   const [tab,setTab]=useState('dms');const [uid,setUid]=useState(null);const [showFeed,setShowFeed]=useState(false);const [viewProfile,setViewProfile]=useState(null);
   const userListenerRef=useRef(null);
+  const {t} = useTranslation();
 
   useEffect(()=>{const saved=localStorage.getItem('theme')||'dark';if(saved==='light')document.body.classList.add('light');if(window.chrome&&window.chrome.webview){try{window.chrome.webview.postMessage(JSON.stringify({type:'theme',value:saved}))}catch(e){}}},[]);
 
@@ -2529,8 +2510,8 @@ function App(){
 
   const listContent=()=>{
     if(tab==='dms')return h(React.Fragment,null,
-      h('div',{style:{padding:'0 12px 8px'}},h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'flex-start'},onClick:()=>setShowSearch(true)},'🔍 Поиск людей')),
-      dmConvs.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}} ,'Нет чатов. Начните общение!'),
+      h('div',{style:{padding:'0 12px 8px'}},h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'flex-start'},onClick:()=>setShowSearch(true)},t('search_people'))),
+      dmConvs.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}} ,t('no_chats')),
       dmConvs.map(c=>{const pu=peerUsers[c.uid];return h('div',{key:c.uid,className:'chat-row'+(activeChat?.id===c.uid&&activeChat?.type==='dm'?' active':''),onClick:()=>{openDM({id:c.uid,...(pu||{})});setShowMobileList(false)}},
         h('div', {onClick: e => { e.stopPropagation(); openUserProfile(c.uid); }, style: {cursor: 'pointer', display: 'flex'}}, h(Avatar,{user:pu||{id:c.uid},size:48})),
         h('div',{style:{flex:1,minWidth:0}},
@@ -2541,16 +2522,16 @@ function App(){
       )})
     );
     if(tab==='groups')return h(React.Fragment,null,
-      h('div',{style:{display:'flex',gap:8,padding:'0 12px 8px'}},h('button',{className:'btn btn-ghost',style:{flex:1},onClick:()=>setCreateRoom('group')},'Создать'),h('button',{className:'btn btn-ghost',style:{flex:1},onClick:()=>setShowRoomSearch(true)},'Поиск')),
-      groups.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}},'Нет групп'),
+      h('div',{style:{display:'flex',gap:8,padding:'0 12px 8px'}},h('button',{className:'btn btn-ghost',style:{flex:1},onClick:()=>setCreateRoom('group')},t('create')),h('button',{className:'btn btn-ghost',style:{flex:1},onClick:()=>setShowRoomSearch(true)},t('search'))),
+      groups.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}},t('no_groups')),
       groups.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
         r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:48,height:48,flexShrink:0}}):h('div',{style:{width:48,height:48,borderRadius:'50%',background:'rgba(10, 132, 255, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}},'👥'),
         h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытая',style:{fontSize:13,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:13,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:2}},r.last?.preview||r.desc||'Группа'))
       ))
     );
     if(tab==='channels')return h(React.Fragment,null,
-      h('div',{style:{display:'flex',gap:8,padding:'0 12px 8px'}},h('button',{className:'btn btn-ghost',style:{flex:1},onClick:()=>setCreateRoom('channel')},'Создать'),h('button',{className:'btn btn-ghost',style:{flex:1},onClick:()=>setShowRoomSearch(true)},'Поиск')),
-      channels.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}},'Нет каналов'),
+      h('div',{style:{display:'flex',gap:8,padding:'0 12px 8px'}},h('button',{className:'btn btn-ghost',style:{flex:1},onClick:()=>setCreateRoom('channel')},t('create')),h('button',{className:'btn btn-ghost',style:{flex:1},onClick:()=>setShowRoomSearch(true)},t('search'))),
+      channels.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}},t('no_channels')),
       channels.map(r=>h('div',{key:r.id,className:'chat-row'+(activeChat?.id===r.id?' active':''),onClick:()=>{openRoom(r);setShowMobileList(false)}},
         r.avatarUrl?h('img',{src:r.avatarUrl,className:'avatar-img',style:{width:48,height:48,flexShrink:0}}):h('div',{style:{width:48,height:48,borderRadius:'50%',background:'rgba(175, 82, 222, 0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}},'📢'),
         h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},r.name,r.name===OFFICIAL_ROOM_NAME&&h(OfficialBadge,{size:14}),r.isPrivate&&h('span',{title:'Закрытый',style:{fontSize:13,color:'var(--muted)'}},'🔒')),h('div',{style:{fontSize:13,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:2}},r.last?.preview||r.desc||'Канал'))
@@ -2558,33 +2539,33 @@ function App(){
     );
   };
 
-  const navTabs=[{id:'dms',icon:'💬',label:'Чаты',badge:totalUnread},{id:'groups',icon:'👥',label:'Группы'},{id:'channels',icon:'📢',label:'Каналы'},{id:'feed',icon:'📸',label:'Лента'},{id:'rt',icon:'▶️',label:'Медиа'},{id:'profile',icon:'👤',label:'Настройки'}];
+  const navTabs=[{id:'dms',icon:'💬',label:t('chats'),badge:totalUnread},{id:'groups',icon:'👥',label:t('groups')},{id:'channels',icon:'📢',label:t('channels')},{id:'feed',icon:'📸',label:t('feed')},{id:'rt',icon:'▶️',label:t('media')},{id:'profile',icon:'👤',label:t('settings')}];
 
   return h('div',{className:'app-layout',style:{height:'100dvh',display:'flex',padding:16,gap:16}},
     h('div',{className:'glass sidebar',style:{width:280,padding:'16px',display:'flex',flexDirection:'column',gap:12,flexShrink:0}},
       h('div',{style:{display:'flex',alignItems:'center',gap:12,padding:'12px',borderRadius:'20px',cursor:'pointer',background:'var(--input-bg)',border:'1px solid var(--border)',transition:'all 0.2s'},onMouseEnter:e=>e.currentTarget.style.transform='translateY(-2px)',onMouseLeave:e=>e.currentTarget.style.transform='',onClick:()=>setShowSettings(true)},
         h(Avatar,{user,size:46,ring:true}),
-        h('div',{style:{flex:1,minWidth:0}},h('div',{className:'syne',style:{fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},user.login),h('div',{style:{fontSize:12,color:peerInst?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:6,marginTop:2}},h('span',{className:'status-dot '+(peerInst?'online':'offline')}),peerInst?'онлайн':'подключение...'))
+        h('div',{style:{flex:1,minWidth:0}},h('div',{className:'syne',style:{fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},user.login),h('div',{style:{fontSize:12,color:peerInst?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:6,marginTop:2}},h('span',{className:'status-dot '+(peerInst?'online':'offline')}),peerInst?t('online'):'подключение...'))
       ),
       h('div',{className:'hr', style:{margin: '4px 0'}}),
       
       h('div',{className:'tab-bar'},
-        [{id:'dms',label:'Чаты'},{id:'groups',label:'Группы'},{id:'channels',label:'Каналы'}].map(t=>h('div',{key:t.id,className:'tab'+(tab===t.id?' active':''),style:{position:'relative'},onClick:()=>{setTab(t.id);setShowRT(false);setShowFeed(false);setViewProfile(null); setShowSettings(false);}},t.label,t.id==='dms'&&totalUnread>0&&h('span',{style:{position:'absolute',top:2,right:2,minWidth:16,height:16,borderRadius:999,background:'var(--danger)',color:'#fff',fontSize:10,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,boxShadow:'0 2px 4px rgba(255, 69, 58, 0.4)'}},totalUnread)))
+        [{id:'dms',label:t('chats')},{id:'groups',label:t('groups')},{id:'channels',label:t('channels')}].map(tb=>h('div',{key:tb.id,className:'tab'+(tab===tb.id?' active':''),style:{position:'relative'},onClick:()=>{setTab(tb.id);setShowRT(false);setShowFeed(false);setViewProfile(null); setShowSettings(false);}},tb.label,tb.id==='dms'&&totalUnread>0&&h('span',{style:{position:'absolute',top:2,right:2,minWidth:16,height:16,borderRadius:999,background:'var(--danger)',color:'#fff',fontSize:10,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,boxShadow:'0 2px 4px rgba(255, 69, 58, 0.4)'}},totalUnread)))
       ),
       
       h('div',{style:{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:4,marginTop:4}},listContent()),
       h('div',{className:'hr', style:{margin: '4px 0'}}),
       
-      h('button',{className:showFeed&&!showRT&&!showSettings?'btn btn-primary':'btn btn-ghost',style:{justifyContent:'center',width:'100%',marginBottom:8},onClick:()=>{setShowFeed(true);setShowRT(false);setShowSettings(false);setActiveChat(null);setShowMobileList(false);setViewProfile(null);}},'📸  Лента'),
-      h('button',{className:showRT&&!showSettings?'btn btn-primary':'btn btn-ghost',style:{justifyContent:'center',width:'100%',marginBottom:8},onClick:()=>{setShowRT(true);setShowFeed(false);setShowSettings(false);setActiveChat(null);setShowMobileList(false);setViewProfile(null);}},'▶️  Медиа'),
+      h('button',{className:showFeed&&!showRT&&!showSettings?'btn btn-primary':'btn btn-ghost',style:{justifyContent:'center',width:'100%',marginBottom:8},onClick:()=>{setShowFeed(true);setShowRT(false);setShowSettings(false);setActiveChat(null);setShowMobileList(false);setViewProfile(null);}},'📸  '+t('feed')),
+      h('button',{className:showRT&&!showSettings?'btn btn-primary':'btn btn-ghost',style:{justifyContent:'center',width:'100%',marginBottom:8},onClick:()=>{setShowRT(true);setShowFeed(false);setShowSettings(false);setActiveChat(null);setShowMobileList(false);setViewProfile(null);}},'▶️  '+t('media')),
       
       h('div',{className:'hr', style:{margin: '4px 0'}}),
-      h('button',{style:{background:'none',border:'none',color:'var(--muted)',fontSize:14,fontWeight:600,cursor:'pointer',padding:'10px',textAlign:'center',borderRadius:'16px',transition:'all 0.2s'},onMouseEnter:e=>{e.target.style.color='#fff';e.target.style.background='var(--danger-grad)'},onMouseLeave:e=>{e.target.style.color='var(--muted)';e.target.style.background='none'},onClick:signOut},'Выйти')
+      h('button',{style:{background:'none',border:'none',color:'var(--muted)',fontSize:14,fontWeight:600,cursor:'pointer',padding:'10px',textAlign:'center',borderRadius:'16px',transition:'all 0.2s'},onMouseEnter:e=>{e.target.style.color='#fff';e.target.style.background='var(--danger-grad)'},onMouseLeave:e=>{e.target.style.color='var(--muted)';e.target.style.background='none'},onClick:signOut},t('logout'))
     ),
 
     showMobileList&&!activeChat&&!showSettings&&!viewProfile&&!showRT&&!showFeed&&h('div',{className:'mobile-list-overlay'},
       h('div',{className:'mobile-list-header'},
-        h('div',{className:'syne',style:{fontSize:28}},tab==='dms'?'Чаты':tab==='groups'?'Группы':'Каналы'),
+        h('div',{className:'syne',style:{fontSize:28}},tab==='dms'?t('chats'):tab==='groups'?t('groups'):t('channels')),
         h('div',{style:{cursor:'pointer'},onClick:()=>setShowSettings(true)},h(Avatar,{user,size:36,ring:true}))
       ),
       h('div',{style:{padding:'12px',display:'flex',flexDirection:'column',gap:4}},listContent())
