@@ -102,6 +102,9 @@ body.light {
 
 body {
   background-color: var(--bg-base);
+  background-image:
+    linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   height: 100dvh;
@@ -265,12 +268,18 @@ body.light .btn-danger:hover {
   box-shadow: none;
 }
 
+@keyframes fadeInUpBubble {
+  from { opacity: 0; transform: translateY(15px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .bubble-mine {
   background: var(--bubble-mine);
   color: #fff;
   border: none;
   border-radius: 20px 20px 4px 20px;
   box-shadow: var(--bubble-mine-shadow);
+  animation: fadeInUpBubble 0.4s cubic-bezier(0.25, 1, 0.5, 1) both;
 }
 .bubble-their {
   background: var(--bubble-their);
@@ -279,6 +288,7 @@ body.light .btn-danger:hover {
   border: 1px solid var(--bubble-their-border);
   border-radius: 20px 20px 20px 4px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  animation: fadeInUpBubble 0.4s cubic-bezier(0.25, 1, 0.5, 1) both;
 }
 
 .msg-in { animation: msgPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
