@@ -1142,11 +1142,11 @@ function RoomInfoModal({room,me,onClose,onOpenProfile}){
 }
 
 function MemberRow({uid,isOwner,isAdmin,ownerId,admins,me,onOpenProfile,onRemove}){
+  const {t} = useTranslation();
   const [u,setU]=useState(null);
   useEffect(()=>{db.ref('users/'+uid).once('value').then(s=>setU(s.val()))},[uid]);
   if(!u)return null;
   const canRemove=(isOwner||isAdmin)&&uid!==ownerId&&uid!==me;
-  const {t} = useTranslation();
   return h('div',{className:'search-item',style:{padding:'8px 12px',borderRadius:16}},
     h('div',{style:{display:'flex',alignItems:'center',gap:12,flex:1,cursor:onOpenProfile?'pointer':'default'},onClick:()=>onOpenProfile&&onOpenProfile(uid)},
       h(Avatar,{user:u,size:40}),
