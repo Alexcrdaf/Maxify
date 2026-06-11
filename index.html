@@ -905,6 +905,7 @@ function SettingsPage({user, onClose, onSignOut}){
   const toggleTheme=dark=>{if(dark){document.body.classList.remove('light');localStorage.setItem('theme','dark')}else{document.body.classList.add('light');localStorage.setItem('theme','light')}setDarkMode(dark);if(window.chrome&&window.chrome.webview){try{window.chrome.webview.postMessage(JSON.stringify({type:'theme',value:dark?'dark':'light'}))}catch(e){}}};
 
   const tabs = [{id:'profile',i:'👤',l:t('profile')},{id:'theme',i:'🎨',l:t('appearance')},{id:'lang',i:'🌐',l:t('language')},{id:'pc',i:'💻',l:t('pc_settings')},{id:'account',i:'🛡️',l:t('account')}];
+const handlePasswordReset = async()=>{try{await auth.sendPasswordResetEmail(user.email);}catch(e){alert('Ошибка: '+e.message);}alert('Ссылка для сброса пароля отправлена');};
 
   return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}},
     h('div',{className:'chat-header',style:{padding:'12px 20px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:12,flexShrink:0,backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)'}},
@@ -952,6 +953,7 @@ function SettingsPage({user, onClose, onSignOut}){
         tab==='account'&&h('div',{style:{display:'flex',flexDirection:'column',gap:20, maxWidth: 400}},
           h('div',{style:{fontSize:18, fontWeight:700}}, t('manage_account')),
           h('button',{className:'btn btn-ghost',style:{color:'var(--danger)', borderColor:'rgba(255,69,58,0.3)', padding:14, justifyContent:'center'},onClick:onSignOut},t('logout_acc')),
+          h('button',{className:'btn btn-ghost',style:{marginTop:12,justifyContent:'center'},onClick:handlePasswordReset},'Сбросить пароль'),
           h('div',{className:'hr'}),
           !confirmDel?h('button',{className:'btn btn-danger',style:{padding:14, justifyContent:'center'},onClick:()=>setConfirmDel(true)},t('delete_acc_forever')):
           h('div',{style:{display:'flex',flexDirection:'column',gap:12, background:'rgba(255,69,58,0.1)', padding:16, borderRadius:20}},
@@ -2571,7 +2573,7 @@ function App(){
   useEffect(()=>{
     const handler=e=>{setRtPlaying(e.detail);setShowRT(true);setActiveChat(null)};
     window.addEventListener('rt-open',handler);
-    return()=>window.removeEventListener('rt-open',handler);
+    return()=>removeEventListener('rt-open',handler);
   },[]);
 
   const openDM=u=>{
@@ -2641,7 +2643,7 @@ function App(){
     );
   };
 
-  const navTabs=[{id:'dms',icon:'💬',label:t('chats'),badge:totalUnread},{id:'groups',icon:'👥',label:t('groups')},{id:'channels',icon:'📢',label:t('channels')},{id:'feed',icon:'📸',label:t('feed')},{id:'rt',icon:'▶️',label:t('media')},{id:'profile',icon:'👤',label:t('settings')}];
+  const navTabs=[{id:'dms',icon:'💬',label:t('chats'),badge:totalUnread},{id:'groups',icon:'👥',label:t('groups')},{id:'channels',icon:'📢',label:t('channels')},{id:'feed',icon:'📸',label:t('feed')},{id:'profile',icon:'👤',label:t('settings')}];
 
   return h('div',{className:'app-layout',style:{height:'100dvh',display:'flex',padding:16,gap:16}},
     h('div',{className:'glass sidebar',style:{width:280,padding:'16px',display:'flex',flexDirection:'column',gap:12,flexShrink:0}},
@@ -2659,7 +2661,7 @@ function App(){
       h('div',{className:'hr', style:{margin: '4px 0'}}),
       
       h('button',{className:showFeed&&!showRT&&!showSettings?'btn btn-primary':'btn btn-ghost',style:{justifyContent:'center',width:'100%',marginBottom:8},onClick:()=>{setShowFeed(true);setShowRT(false);setShowSettings(false);setActiveChat(null);setShowMobileList(false);setViewProfile(null);}},'📸  '+t('feed')),
-      h('button',{className:showRT&&!showSettings?'btn btn-primary':'btn btn-ghost',style:{justifyContent:'center',width:'100%',marginBottom:8},onClick:()=>{setShowRT(true);setShowFeed(false);setShowSettings(false);setActiveChat(null);setShowMobileList(false);setViewProfile(null);}},'▶️  '+t('media')),
+      
       
       h('div',{className:'hr', style:{margin: '4px 0'}}),
       h('button',{style:{background:'none',border:'none',color:'var(--muted)',fontSize:14,fontWeight:600,cursor:'pointer',padding:'10px',textAlign:'center',borderRadius:'16px',transition:'all 0.2s'},onMouseEnter:e=>{e.target.style.color='#fff';e.target.style.background='var(--danger-grad)'},onMouseLeave:e=>{e.target.style.color='var(--muted)';e.target.style.background='none'},onClick:signOut},t('logout'))
