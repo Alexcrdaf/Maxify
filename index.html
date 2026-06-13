@@ -1078,7 +1078,9 @@ function SettingsPage({user, onClose, onSignOut}){
   const tabs = [{id:'profile',i:'👤',l:t('profile')},{id:'theme',i:'🎨',l:t('appearance')},{id:'lang',i:'🌐',l:t('language')},{id:'pc',i:'💻',l:t('pc_settings')},{id:'account',i:'🛡️',l:t('account')}];
 const handlePasswordReset = async()=>{try{await auth.sendPasswordResetEmail(user.email);alert(t('pwd_reset_sent'));}catch(e){alert('Ошибка: '+e.message);}};
 
-  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}},
+  const swipeHandlers = useSwipeToBack(onClose);
+
+  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}, ...swipeHandlers},
     h('div',{className:'chat-header',style:{padding:'12px 20px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:12,flexShrink:0,backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)'}},
       h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'←'),
       h('div',{className:'syne',style:{fontSize:18}},t('settings')),
@@ -1745,6 +1747,38 @@ function PinnedBanner({pinnedMsgs, onUnpin, canPin}){
   );
 }
 
+function useSwipeToBack(onBack) {
+  const touchStart = useRef({ x: 0, y: 0 });
+  const touchMove = useRef({ x: 0, y: 0 });
+
+  const onTouchStart = useCallback((e) => {
+    touchStart.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    };
+    touchMove.current = touchStart.current;
+  }, []);
+
+  const onTouchMove = useCallback((e) => {
+    touchMove.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    };
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    const diffX = touchMove.current.x - touchStart.current.x;
+    const diffY = Math.abs(touchMove.current.y - touchStart.current.y);
+    
+    // Swipe right (horizontal swipe)
+    if (diffX > 80 && diffY < 50) {
+      if (onBack) onBack();
+    }
+  }, [onBack]);
+
+  return { onTouchStart, onTouchMove, onTouchEnd };
+}
+
 function DMChat({me,peer,peerUser,onBack,peerInst,onOpenProfile,dmConvs,peerUsers,rooms}){
   const [msgs,setMsgs]=useState([]);
   const [peerTyping,setPeerTyping]=useState(false);
@@ -2000,7 +2034,9 @@ function DMChat({me,peer,peerUser,onBack,peerInst,onOpenProfile,dmConvs,peerUser
   const isPeerOnline = livePeer?.online && livePeer?.lastSeen && (Date.now() - livePeer.lastSeen < 150000);
   const statusText=isPeerOnline?'онлайн':livePeer?.lastSeen?`был(а) ${fmtLastSeen(livePeer.lastSeen)}`:'не в сети';
 
-  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}},
+  const swipeHandlers = useSwipeToBack(onBack);
+
+  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}, ...swipeHandlers},
     h('div',{className:'chat-header',style:{padding:'12px 20px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)',zIndex:10}},
       h('div',{style:{display:'flex',alignItems:'center',gap:12}},
         h('button',{className:'btn btn-icon btn-ghost',onClick:onBack},'←'),
@@ -2165,7 +2201,9 @@ function RoomChat({room,me,onBack,onOpenProfile,dmConvs,peerUsers,rooms}){
 
   const grouped=useMemo(()=>{const g=[];let ld='';filteredMsgs.forEach(m=>{const d=ts2d(m.ts);if(d!==ld){g.push({type:'date',label:d});ld=d}g.push({type:'msg',m})});return g},[filteredMsgs]);
 
-  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}},
+  const swipeHandlers = useSwipeToBack(onBack);
+
+  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}, ...swipeHandlers},
     h('div',{className:'chat-header',style:{padding:'12px 20px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)',zIndex:10}},
       h('div',{style:{display:'flex',alignItems:'center',gap:12}},
         h('button',{className:'btn btn-icon btn-ghost',onClick:onBack},'←'),
@@ -2745,7 +2783,9 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
   const likeCount=useMemo(()=>posts.reduce((sum,p)=>sum+Object.keys(p.likes||{}).length,0),[posts]);
   const commentCount=useMemo(()=>posts.reduce((sum,p)=>sum+Object.keys(p.comments||{}).length,0),[posts]);
 
-  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflowY:'auto',borderRadius:window.innerWidth<=640?0:28}},
+  const swipeHandlers = useSwipeToBack(onClose);
+
+  return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflowY:'auto',borderRadius:window.innerWidth<=640?0:28}, ...swipeHandlers},
     h('div',{className:'chat-header',style:{padding:'12px 20px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:12,flexShrink:0,backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)',position:'sticky',top:0,zIndex:10}},
       h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'←'),
       h('div',{className:'syne',style:{fontSize:18,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},u?.login||t('profile')),
