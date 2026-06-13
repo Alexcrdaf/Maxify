@@ -760,10 +760,12 @@ async function upload(file, onPct){
 }
 
 const VERIFIED_EMAILS=['dima.julbarisov01@gmail.com'];
+const TESTER_EMAILS=['amievtimur@gmail.com'];
 const RESERVED_LOGINS=['LGlittleguy'];
 const OFFICIAL_ROOM_NAME='Maxify';
 const EMOJI_LIST=['👍','❤️','😂','😮','😢','🔥','👏','🎉','💯','😍','🤔','😎'];
 const isDeveloper=email=>VERIFIED_EMAILS.includes(email);
+const isTester=email=>TESTER_EMAILS.includes(email);
 
 function OfficialBadge({size=14}){
   return h('div',{title:'Официальная группа Maxify',style:{width:size,height:size,borderRadius:'50%',background:'var(--accent-grad)',display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:size*.6,fontWeight:700,flexShrink:0}},'✓');
@@ -788,6 +790,7 @@ function Avatar({user,size=36,ring=false}){
   const safeLogin=typeof login==='string'&&login.length>0?login:'?';
   const col=cols[(safeLogin.charCodeAt(0)||65)%cols.length];
   const isVerified=email&&VERIFIED_EMAILS.includes(email);
+  const isTesterUser=email&&TESTER_EMAILS.includes(email);
   const badgeSize=Math.max(12,Math.round(size*.35));
 
   return h('div',{style:{position:'relative',flexShrink:0,width:size,height:size}},
@@ -795,7 +798,8 @@ function Avatar({user,size=36,ring=false}){
       ?h('img',{src:avatarUrl,className:'avatar-img',style:{width:size,height:size,boxShadow:ring?'0 0 0 3px var(--panel), 0 0 0 5px var(--accent)':'none'},width:size,height:size,loading:'lazy',decoding:'async'})
       :h('div',{style:{width:size,height:size,borderRadius:'50%',background:col,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit',fontWeight:600,fontSize:size*.4,color:'#fff',boxShadow:ring?'0 0 0 3px var(--panel), 0 0 0 5px var(--accent)':'none',userSelect:'none'}},safeLogin[0].toUpperCase()),
     isOnline&&h('div',{className:'dot-on'}),
-    isVerified&&h('div',{title:'Разработчик Maxify',style:{position:'absolute',bottom:-2,right:-2,width:badgeSize,height:badgeSize,borderRadius:'50%',background:'var(--accent-grad)',border:'2px solid var(--panel-solid)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:badgeSize*.6,lineHeight:1,zIndex:2}},'✓')
+    isVerified&&h('div',{title:'Разработчик Maxify',style:{position:'absolute',bottom:-2,right:-2,width:badgeSize,height:badgeSize,borderRadius:'50%',background:'var(--accent-grad)',border:'2px solid var(--panel-solid)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:badgeSize*.6,lineHeight:1,zIndex:2}},'✓'),
+    isTesterUser&&h('div',{title:'Официальный тестер Maxify',style:{position:'absolute',bottom:-2,right:-2,width:badgeSize,height:badgeSize,borderRadius:'50%',background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',border:'2px solid var(--panel-solid)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:badgeSize*.6,lineHeight:1,zIndex:2}},'✓')
   );
 }
 
@@ -963,7 +967,11 @@ function UserSearch({me,onSelect,onOpenProfile,onClose}){
         h('div',{style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
           h(Avatar,{user:u,size:42}),
           h('div',{style:{flex:1,minWidth:0}},
-            h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},u.login,u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
+            h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},
+              u.login,
+              u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓'),
+              u.email&&TESTER_EMAILS.includes(u.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:11,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')
+            ),
             h('div',{style:{fontSize:12,color:u.online?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:4}},
               h('span',{className:'status-dot '+(u.online?'online':'offline')}),
               u.online?t('online'):fmtLastSeen(u.lastSeen)
@@ -1988,7 +1996,11 @@ function DMChat({me,peer,peerUser,onBack,peerInst,onOpenProfile,dmConvs,peerUser
         h('div',{style:{display:'flex',alignItems:'center',gap:12,cursor:'pointer'},onClick:()=>onOpenProfile&&onOpenProfile(peer)},
           h(Avatar,{user:livePeer,size:42}),
           h('div',null,
-            h('div',{style:{fontWeight:700,fontSize:16,display:'flex',alignItems:'center',gap:6}},livePeer?.login||'...',livePeer?.email&&VERIFIED_EMAILS.includes(livePeer.email)&&h('span',{style:{fontSize:12,background:'var(--accent-grad)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
+            h('div',{style:{fontWeight:700,fontSize:16,display:'flex',alignItems:'center',gap:6}},
+              livePeer?.login||'...',
+              livePeer?.email&&VERIFIED_EMAILS.includes(livePeer.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:12,background:'var(--accent-grad)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓'),
+              livePeer?.email&&TESTER_EMAILS.includes(livePeer.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:12,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')
+            ),
             h('div',{style:{fontSize:13,display:'flex',alignItems:'center',gap:6}},h('span',{className:'status-dot '+(livePeer?.online?'online':'offline')}),h('span',{style:{color:livePeer?.online?'var(--ok)':'var(--muted)'}},statusText))
           )
         )
@@ -2735,7 +2747,8 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
       h('div',{style:{flex:1,minWidth:0,paddingBottom:8}},
         h('div',{className:'syne',style:{fontSize:28,display:'flex',alignItems:'center',gap:8,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},
           u?.login||uid.slice(0,8),
-          u?.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:14,background:'var(--accent-grad)',borderRadius:'50%',width:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
+          u?.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:14,background:'var(--accent-grad)',borderRadius:'50%',width:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓'),
+          u?.email&&TESTER_EMAILS.includes(u.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:14,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
         ),
         h('div',{style:{fontSize:14,color:'var(--muted)',marginTop:4,display:'flex',alignItems:'center',gap:6}},
           h('span',{className:'status-dot '+(u?.online?'online':'offline')}),
@@ -2927,7 +2940,11 @@ function App(){
       dmConvs.map(c=>{const pu=peerUsers[c.uid];return h('div',{key:c.uid,className:'chat-row'+(activeChat?.id===c.uid&&activeChat?.type==='dm'?' active':''),onClick:()=>{openDM({id:c.uid,...(pu||{})});setShowMobileList(false)}},
         h('div', {onClick: e => { e.stopPropagation(); openUserProfile(c.uid); }, style: {cursor: 'pointer', display: 'flex'}}, h(Avatar,{user:pu||{id:c.uid},size:48})),
         h('div',{style:{flex:1,minWidth:0}},
-          h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},pu?.login||c.uid.slice(0,8),pu?.email&&VERIFIED_EMAILS.includes(pu.email)&&h('span',{style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')),
+          h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},
+            pu?.login||c.uid.slice(0,8),
+            pu?.email&&VERIFIED_EMAILS.includes(pu.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓'),
+            pu?.email&&TESTER_EMAILS.includes(pu.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:11,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
+          ),
           h('div',{style:{fontSize:13,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:2}},c.last?.preview||'...')
         ),
         c.unread>0&&h('div',{className:'unread'},c.unread)
