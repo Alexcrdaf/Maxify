@@ -455,9 +455,9 @@ body.light .btn-danger:hover {
   align-items: center;
 }
 .tab { 
-  width: 44px; 
-  height: 44px; 
-  border-radius: 14px; 
+  width: 72px; 
+  height: 50px; 
+  border-radius: 16px; 
   cursor: pointer; 
   transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1); 
   color: var(--muted); 
@@ -3231,9 +3231,8 @@ function App(){
       h('div',{className:'hr', style:{margin: '4px 0'}}),
       
       h('div',{className:'tab-bar'},
-        [{id:'dms',label:t('chats')},{id:'groups',label:t('groups')},{id:'channels',label:t('channels')}].map(tb=>h('div',{key:tb.id,className:'tab'+(tab===tb.id?' active':''),style:{position:'relative'},onClick:()=>{setTab(tb.id);setShowRT(false);setShowFeed(false);setViewProfile(null); setShowSettings(false);}},
-          h(SvgIcon, {name: tb.id, active: tab===tb.id, size: 16}),
-          tb.label,
+        [{id:'dms',label:t('chats')},{id:'groups',label:t('groups')},{id:'channels',label:t('channels')}].map(tb=>h('div',{key:tb.id,className:'tab'+(tab===tb.id?' active':''),title:tb.label,style:{position:'relative'},onClick:()=>{setTab(tb.id);setShowRT(false);setShowFeed(false);setViewProfile(null); setShowSettings(false);}},
+          h(SvgIcon, {name: tb.id, active: tab===tb.id, size: 22}),
           tb.id==='dms'&&totalUnread>0&&h('span',{style:{position:'absolute',top:2,right:2,minWidth:16,height:16,borderRadius:999,background:'var(--danger)',color:'#fff',fontSize:10,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,boxShadow:'0 2px 4px rgba(255, 69, 58, 0.4)'}},totalUnread)
         ))
       ),
@@ -3287,14 +3286,26 @@ function App(){
                 ?h(DMChat,{key:activeChat.id,me:user.id,peer:activeChat.id,peerUser:activeDMPeer,onBack:()=>{setActiveChat(null);setShowMobileList(true)},peerInst,onOpenProfile:openUserProfile,dmConvs,peerUsers,rooms})
                 :activeChat?.type==='room'&&activeRoom
                   ?h(RoomChat,{key:activeRoom.id,room:activeRoom,me:user.id,onBack:()=>{setActiveChat(null);setShowMobileList(true)},onOpenProfile:openUserProfile,dmConvs,peerUsers,rooms})
-                  :h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}},
-                      h('div',{style:{fontSize:80,opacity:.2,filter:'drop-shadow(0 10px 20px rgba(0,0,0,0.2))'}},'💬'),
+                  :h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,userSelect:'none',WebkitUserSelect:'none'}},
+                      h('svg', {
+                        viewBox: '0 0 24 24',
+                        width: 80,
+                        height: 80,
+                        fill: 'none',
+                        stroke: 'currentColor',
+                        strokeWidth: 1.5,
+                        style: { opacity: 0.2, color: 'var(--text-primary)', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.15))' }
+                      }, h('path', {
+                        strokeLinecap: 'round',
+                        strokeLinejoin: 'round',
+                        d: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
+                      })),
                       h('div',{className:'syne',style:{fontSize:32,opacity:.3,letterSpacing:'-.04em'}},'Maxify'),
                       h('div',{style:{fontSize:15,color:'var(--muted)',opacity:.6}},'Выберите чат для начала общения')
                     )
     ),
  
-    !(activeChat || viewProfile || rtPlaying || showSettings) && h('div',{className:'mobile-nav'},
+    !(activeChat || viewProfile || rtPlaying) && h('div',{className:'mobile-nav'},
       navTabs.map(t=>{
         const isActive=t.id==='profile'?showSettings:t.id==='rt'?showRT&&!showSettings&&!showFeed:t.id==='feed'?showFeed&&!showSettings:!activeChat&&!showRT&&!showFeed&&showMobileList&&tab===t.id;
         return h('div',{key:t.id,className:'mobile-nav-item'+(isActive?' active':''),onClick:()=>{if(t.id==='profile'){setShowSettings(true);setShowMobileList(false);setShowRT(false);setShowFeed(false);return}if(t.id==='rt'){setShowRT(true);setShowFeed(false);setShowSettings(false);setActiveChat(null);setShowMobileList(false);return}if(t.id==='feed'){setShowFeed(true);setShowRT(false);setShowSettings(false);setActiveChat(null);setShowMobileList(false);return}setShowSettings(false);setShowRT(false);setShowFeed(false);setTab(t.id);setActiveChat(null);setShowMobileList(true)}},
