@@ -785,7 +785,8 @@ function Avatar({user,size=36,ring=false}){
     return()=>ref.off();
   },[uid]);
 
-  const isOnline=(liveUser||user)?.online||false;
+  const uData = liveUser || user;
+  const isOnline = uData?.online && uData?.lastSeen && (Date.now() - uData.lastSeen < 150000);
   const cols=['#0A84FF','#30D158','#FF9F0A','#FF453A','#BF5AF2','#5E5CE6'];
   const safeLogin=typeof login==='string'&&login.length>0?login:'?';
   const col=cols[(safeLogin.charCodeAt(0)||65)%cols.length];
@@ -963,23 +964,26 @@ function UserSearch({me,onSelect,onOpenProfile,onClose}){
       busy&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},t('search')+'...'),
       err&&h('div',{style:{color:'var(--danger)',fontSize:13,textAlign:'center',padding:12}},err),
       !busy&&q.trim()&&results.length===0&&!err&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:20}},'Никого не найдено'),
-      !busy&&results.map(u=>h('div',{key:u.id,className:'search-item',style:{justifyContent:'space-between'},onClick:()=>{onSelect(u);onClose()}},
-        h('div',{style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
-          h(Avatar,{user:u,size:42}),
-          h('div',{style:{flex:1,minWidth:0}},
-            h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},
-              u.login,
-              u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓'),
-              u.email&&TESTER_EMAILS.includes(u.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:11,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')
-            ),
-            h('div',{style:{fontSize:12,color:u.online?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:4}},
-              h('span',{className:'status-dot '+(u.online?'online':'offline')}),
-              u.online?t('online'):fmtLastSeen(u.lastSeen)
+      !busy&&results.map(u=>{
+        const isSearchUserOnline = u.online && u.lastSeen && (Date.now() - u.lastSeen < 150000);
+        return h('div',{key:u.id,className:'search-item',style:{justifyContent:'space-between'},onClick:()=>{onSelect(u);onClose()}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
+            h(Avatar,{user:u,size:42}),
+            h('div',{style:{flex:1,minWidth:0}},
+              h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},
+                u.login,
+                u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓'),
+                u.email&&TESTER_EMAILS.includes(u.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:11,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')
+              ),
+              h('div',{style:{fontSize:12,color:isSearchUserOnline?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:4}},
+                h('span',{className:'status-dot '+(isSearchUserOnline?'online':'offline')}),
+                isSearchUserOnline?t('online'):fmtLastSeen(u.lastSeen)
+              )
             )
-          )
-        ),
-        onOpenProfile&&h('button',{className:'btn btn-ghost btn-icon',style:{width:36,height:36,minWidth:36,minHeight:36,flexShrink:0},onClick:e=>{e.stopPropagation();onOpenProfile(u.id);onClose()}},'👤')
-      ))
+          ),
+          onOpenProfile&&h('button',{className:'btn btn-ghost btn-icon',style:{width:36,height:36,minWidth:36,minHeight:36,flexShrink:0},onClick:e=>{e.stopPropagation();onOpenProfile(u.id);onClose()}},'👤')
+        );
+      })
     )
   );
 }
@@ -1454,15 +1458,21 @@ function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin
     m.forwardedFrom&&h('div',{className:'fwd-header'}, h('span', null, '➡️ Переслано от '), h('b', null, m.forwardedFrom.login)),
     h('div',{style:{position:'relative',display:'inline-block',maxWidth:'100%'},onContextMenu:openMenu,onDoubleClick:openMenu},
       content(),
-      menuPos&&!showEmoji&&h('div',{ref:menuRef,className:'msg-menu fade-in',style:{...menuPos, minWidth:180},onClick:e=>e.stopPropagation()},
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();setShowEmoji(true);}},'😊  Реакция'),
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onReply){onReply(m);}setMenuPos(null);}},'↩️  '+t('reply')),
-        h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onForward){onForward(m);}setMenuPos(null);}},'➡️  '+t('forward')),
-        canPin&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onPin){onPin(m);}setMenuPos(null);}},'📌  '+t('pin')),
-        mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onEdit){onEdit(m);}setMenuPos(null);}},'✏️  '+t('edit')),
-        (mine || canPin)&&h('div',{className:'msg-menu-item',style:{color:'var(--danger)'},onClick:e=>{e.stopPropagation();if(onDelete){onDelete(m);}setMenuPos(null);}},'🗑️  '+t('delete'))
+      menuPos&&!showEmoji&&ReactDOM.createPortal(
+        h('div',{ref:menuRef,className:'msg-menu fade-in',style:{...menuPos, minWidth:180},onClick:e=>e.stopPropagation()},
+          h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();setShowEmoji(true);}},'😊  Реакция'),
+          h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onReply){onReply(m);}setMenuPos(null);}},'↩️  '+t('reply')),
+          h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onForward){onForward(m);}setMenuPos(null);}},'➡️  '+t('forward')),
+          canPin&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onPin){onPin(m);}setMenuPos(null);}},'📌  '+t('pin')),
+          mine&&m.type==='text'&&h('div',{className:'msg-menu-item',onClick:e=>{e.stopPropagation();if(onEdit){onEdit(m);}setMenuPos(null);}},'✏️  '+t('edit')),
+          (mine || canPin)&&h('div',{className:'msg-menu-item',style:{color:'var(--danger)'},onClick:e=>{e.stopPropagation();if(onDelete){onDelete(m);}setMenuPos(null);}},'🗑️  '+t('delete'))
+        ),
+        document.body
       ),
-      showEmoji&&menuPos&&h(EmojiPicker,{style:{...menuPos},onSelect:emoji=>{if(onReact){onReact(m,emoji)}},onClose:()=>{setShowEmoji(false);setMenuPos(null);}})
+      showEmoji&&menuPos&&ReactDOM.createPortal(
+        h(EmojiPicker,{style:{...menuPos},onSelect:emoji=>{if(onReact){onReact(m,emoji)}},onClose:()=>{setShowEmoji(false);setMenuPos(null);}}),
+        document.body
+      )
     ),
     showReactions&&Object.keys(reactionGroups).length>0&&h('div',{style:{display:'flex',flexWrap:'wrap',gap:6,marginTop:6,justifyContent:mine?'flex-end':'flex-start'}},
       Object.entries(reactionGroups).map(([emoji,uids])=>h('div',{key:emoji,className:'reaction-chip'+(mine?' mine':''),onClick:()=>onReact&&onReact(m,emoji),title:uids.length+' чел.'},
@@ -1987,7 +1997,8 @@ function DMChat({me,peer,peerUser,onBack,peerInst,onOpenProfile,dmConvs,peerUser
   }) : msgs;
 
   const grouped=useMemo(()=>{const g=[];let ld='';filteredMsgs.forEach(m=>{const d=ts2d(m.ts);if(d!==ld){g.push({type:'date',label:d});ld=d}g.push({type:'msg',m})});return g},[filteredMsgs]);
-  const statusText=livePeer?.online?'онлайн':livePeer?.lastSeen?`был(а) ${fmtLastSeen(livePeer.lastSeen)}`:'не в сети';
+  const isPeerOnline = livePeer?.online && livePeer?.lastSeen && (Date.now() - livePeer.lastSeen < 150000);
+  const statusText=isPeerOnline?'онлайн':livePeer?.lastSeen?`был(а) ${fmtLastSeen(livePeer.lastSeen)}`:'не в сети';
 
   return h('div',{className:'glass',style:{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:window.innerWidth<=640?0:28}},
     h('div',{className:'chat-header',style:{padding:'12px 20px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)',zIndex:10}},
@@ -2001,7 +2012,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst,onOpenProfile,dmConvs,peerUser
               livePeer?.email&&VERIFIED_EMAILS.includes(livePeer.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:12,background:'var(--accent-grad)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓'),
               livePeer?.email&&TESTER_EMAILS.includes(livePeer.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:12,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')
             ),
-            h('div',{style:{fontSize:13,display:'flex',alignItems:'center',gap:6}},h('span',{className:'status-dot '+(livePeer?.online?'online':'offline')}),h('span',{style:{color:livePeer?.online?'var(--ok)':'var(--muted)'}},statusText))
+            h('div',{style:{fontSize:13,display:'flex',alignItems:'center',gap:6}},h('span',{className:'status-dot '+(isPeerOnline?'online':'offline')}),h('span',{style:{color:isPeerOnline?'var(--ok)':'var(--muted)'}},statusText))
           )
         )
       ),
@@ -2750,10 +2761,13 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
           u?.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:14,background:'var(--accent-grad)',borderRadius:'50%',width:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓'),
           u?.email&&TESTER_EMAILS.includes(u.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:14,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
         ),
-        h('div',{style:{fontSize:14,color:'var(--muted)',marginTop:4,display:'flex',alignItems:'center',gap:6}},
-          h('span',{className:'status-dot '+(u?.online?'online':'offline')}),
-          u?.online?t('online'):fmtLastSeen(u?.lastSeen)
-        )
+        (() => {
+          const isProfileOnline = u?.online && u?.lastSeen && (Date.now() - u.lastSeen < 150000);
+          return h('div',{style:{fontSize:14,color:'var(--muted)',marginTop:4,display:'flex',alignItems:'center',gap:6}},
+            h('span',{className:'status-dot '+(isProfileOnline?'online':'offline')}),
+            isProfileOnline?t('online'):fmtLastSeen(u?.lastSeen)
+          );
+        })()
       )
     ),
     u?.bio&&h('div',{style:{padding:'0 24px 20px',fontSize:15,lineHeight:1.6,color:'var(--text-primary)'}},u.bio),
@@ -2834,6 +2848,11 @@ function App(){
         if(!snap.val()){await ref.set({id:fu.uid,login:fu.displayName||fu.email.split('@')[0],email:fu.email,avatarUrl:fu.photoURL||null,online:true,lastSeen:Date.now(),createdAt:Date.now()});}
         else{await ref.update({online:true,lastSeen:Date.now()});}
         userListenerRef.current=ref;ref.on('value',s=>{const v=s.val();if(v){setUser(v);setUid(v.id);}setLoading(false)});
+        
+        // Setup Firebase server presence
+        ref.child('online').onDisconnect().set(false);
+        ref.child('lastSeen').onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
+        
         window.addEventListener('beforeunload',()=>ref.update({online:false,lastSeen:Date.now()}));
         const interval=setInterval(()=>ref.update({online:true,lastSeen:Date.now()}),60000);
         window.addEventListener('beforeunload',()=>clearInterval(interval));
