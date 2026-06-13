@@ -449,6 +449,14 @@ body.light .btn-danger:hover {
 .status-dot.online { background: var(--ok); box-shadow: 0 0 8px rgba(50, 215, 75, 0.4); }
 .status-dot.offline { background: var(--muted); }
 
+.msgs-area {
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.08) 0%, rgba(191, 90, 242, 0.08) 100%);
+  position: relative;
+}
+body.light .msgs-area {
+  background: linear-gradient(135deg, rgba(50, 197, 255, 0.05) 0%, rgba(175, 82, 222, 0.05) 100%);
+}
+
 /* --- MOBILE SPECIFIC (iOS 26 Feel) --- */
 @media(max-width: 640px) {
   :root {
