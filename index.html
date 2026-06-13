@@ -793,18 +793,23 @@ const SvgIcon = ({ name, active, size = 24 }) => {
     if (active) {
       return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
         h('path', { 
-          d: 'M12 3c-4.97 0-9 3.58-9 8 0 1.96.79 3.76 2.09 5.1L4.2 19.8a.5.5 0 00.7.7l3.7-1.1c1.07.38 2.22.6 3.4.6 4.97 0 9-3.58 9-8s-4.03-8-9-8zm-3.5 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z', 
+          d: 'M12 3c-4.97 0-9 3.58-9 8 0 1.96.79 3.76 2.09 5.1L4.2 19.8a.5.5 0 00.7.7l3.7-1.1c1.07.38 2.22.6 3.4.6 4.97 0 9-3.58 9-8s-4.03-8-9-8zm-3.5 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3.5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3.5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z', 
           fillRule: 'evenodd' 
         })
       );
     }
-    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
       h('path', { 
-        d: 'M12 3c-4.97 0-9 3.58-9 8 0 1.96.79 3.76 2.09 5.1L4.2 19.8a.5.5 0 00.7.7l3.7-1.1c1.07.38 2.22.6 3.4.6 4.97 0 9-3.58 9-8s-4.03-8-9-8zm0 14c-1.18 0-2.32-.19-3.32-.54a1 1 0 00-.73.08l-2.07.62.56-1.5a1 1 0 00-.23-.97A6.97 6.97 0 015 11c0-3.31 3.13-6 7-6s7 2.69 7 6-3.13 6-7 6z'
+        d: 'M12 3c-4.97 0-9 3.58-9 8 0 1.96.79 3.76 2.09 5.1L4.2 19.8a.5.5 0 00.7.7l3.7-1.1c1.07.38 2.22.6 3.4.6 4.97 0 9-3.58 9-8s-4.03-8-9-8z',
+        stroke: 'currentColor',
+        strokeWidth: strokeW,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        fill: 'none'
       }),
-      h('circle', { cx: 8.5, cy: 11, r: 1.1 }),
-      h('circle', { cx: 12, cy: 11, r: 1.1 }),
-      h('circle', { cx: 15.5, cy: 11, r: 1.1 })
+      h('circle', { cx: 8.5, cy: 11, r: 1.1, fill: 'currentColor' }),
+      h('circle', { cx: 12, cy: 11, r: 1.1, fill: 'currentColor' }),
+      h('circle', { cx: 15.5, cy: 11, r: 1.1, fill: 'currentColor' })
     );
   }
 
