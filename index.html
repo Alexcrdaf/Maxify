@@ -56,6 +56,7 @@
   --mesh-1: rgba(10, 132, 255, 0.35);
   --mesh-2: rgba(191, 90, 242, 0.35);
   --mesh-3: rgba(255, 55, 95, 0.25);
+  --nav-btn-active-bg: #ffffff;
 }
 
 body.light {
@@ -98,6 +99,7 @@ body.light {
   --mesh-1: rgba(50, 197, 255, 0.4);
   --mesh-2: rgba(0, 122, 255, 0.3);
   --mesh-3: rgba(175, 82, 222, 0.2);
+  --nav-btn-active-bg: #121212;
 }
 
 body.dark {
@@ -135,6 +137,7 @@ body.dark {
   --mesh-1: transparent;
   --mesh-2: transparent;
   --mesh-3: transparent;
+  --nav-btn-active-bg: #ffffff;
 }
 body.dark::before, body.dark::after {
   display: none !important;
@@ -792,24 +795,24 @@ const SvgIcon = ({ name, active, size = 24 }) => {
   if (name === 'dms') {
     if (active) {
       return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
-        h('path', { 
-          d: 'M12 3c-4.97 0-9 3.58-9 8 0 1.96.79 3.76 2.09 5.1L4.2 19.8a.5.5 0 00.7.7l3.7-1.1c1.07.38 2.22.6 3.4.6 4.97 0 9-3.58 9-8s-4.03-8-9-8zm-3.5 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3.5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3.5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z', 
-          fillRule: 'evenodd' 
-        })
+        h('path', { d: 'M7.9 20A9 9 0 1 0 4 16.1L2 22Z' }),
+        h('circle', { cx: 8, cy: 12, r: 1.2, fill: 'var(--nav-btn-active-bg, #ffffff)' }),
+        h('circle', { cx: 12, cy: 12, r: 1.2, fill: 'var(--nav-btn-active-bg, #ffffff)' }),
+        h('circle', { cx: 16, cy: 12, r: 1.2, fill: 'var(--nav-btn-active-bg, #ffffff)' })
       );
     }
     return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
       h('path', { 
-        d: 'M12 3c-4.97 0-9 3.58-9 8 0 1.96.79 3.76 2.09 5.1L4.2 19.8a.5.5 0 00.7.7l3.7-1.1c1.07.38 2.22.6 3.4.6 4.97 0 9-3.58 9-8s-4.03-8-9-8z',
+        d: 'M7.9 20A9 9 0 1 0 4 16.1L2 22Z',
         stroke: 'currentColor',
         strokeWidth: strokeW,
         strokeLinecap: 'round',
         strokeLinejoin: 'round',
         fill: 'none'
       }),
-      h('circle', { cx: 8.5, cy: 11, r: 1.1, fill: 'currentColor' }),
-      h('circle', { cx: 12, cy: 11, r: 1.1, fill: 'currentColor' }),
-      h('circle', { cx: 15.5, cy: 11, r: 1.1, fill: 'currentColor' })
+      h('circle', { cx: 8, cy: 12, r: 1.2, fill: 'currentColor' }),
+      h('circle', { cx: 12, cy: 12, r: 1.2, fill: 'currentColor' }),
+      h('circle', { cx: 16, cy: 12, r: 1.2, fill: 'currentColor' })
     );
   }
 
