@@ -558,7 +558,7 @@ const DICT = {
     create: 'Создать', search: 'Поиск', no_groups: 'Нет групп', no_channels: 'Нет каналов',
     logout: 'Выйти', feed_empty: 'Лента пуста', feed_empty_desc: 'Сделайте первую публикацию, чтобы начать историю.',
     whats_new: 'Что у вас нового, ',
-    profile: 'Профиль', appearance: 'Внешний вид', language: 'Язык', pc_settings: 'Настройки ПК', account: 'Аккаунт',
+    profile: 'Профиль', appearance: 'Внешний вид', language: 'Язык', pc_settings: 'Приложение', account: 'Аккаунт',
     username: 'Имя пользователя', about: 'О себе', save_changes: 'Сохранить изменения', saving: 'Сохранение...',
     change_photo: 'Изменить фото', theme: 'Тема оформления', dark: 'Тёмная', light: 'Светлая',
     theme_glass: 'Жидкое стекло', theme_light: 'Яркая', theme_dark: 'Темная',
@@ -580,7 +580,7 @@ const DICT = {
     create: 'Create', search: 'Search', no_groups: 'No groups', no_channels: 'No channels',
     logout: 'Logout', feed_empty: 'Feed is empty', feed_empty_desc: 'Make your first post to start your story.',
     whats_new: 'What\'s new, ',
-    profile: 'Profile', appearance: 'Appearance', language: 'Language', pc_settings: 'PC Settings', account: 'Account',
+    profile: 'Profile', appearance: 'Appearance', language: 'Language', pc_settings: 'App & Devices', account: 'Account',
     username: 'Username', about: 'About', save_changes: 'Save changes', saving: 'Saving...',
     change_photo: 'Change photo', theme: 'Theme', dark: 'Dark', light: 'Light',
     theme_glass: 'Liquid Glass', theme_light: 'Bright', theme_dark: 'Dark',
@@ -602,7 +602,7 @@ const DICT = {
     create: 'Crear', search: 'Buscar', no_groups: 'No hay grupos', no_channels: 'No hay canales',
     logout: 'Cerrar sesión', feed_empty: 'El feed está vacío', feed_empty_desc: 'Haz tu primera publicación para empezar tu historia.',
     whats_new: '¿Qué hay de nuevo, ',
-    profile: 'Perfil', appearance: 'Apariencia', language: 'Idioma', pc_settings: 'Ajustes de PC', account: 'Cuenta',
+    profile: 'Perfil', appearance: 'Apariencia', language: 'Idioma', pc_settings: 'Aplicación', account: 'Cuenta',
     username: 'Nombre de usuario', about: 'Sobre mí', save_changes: 'Guardar cambios', saving: 'Guardando...',
     change_photo: 'Cambiar foto', theme: 'Tema', dark: 'Oscuro', light: 'Claro',
     theme_glass: 'Cristal Líquido', theme_light: 'Brillante', theme_dark: 'Oscuro',
@@ -760,10 +760,12 @@ async function upload(file, onPct){
 }
 
 const VERIFIED_EMAILS=['dima.julbarisov01@gmail.com'];
+const TESTER_EMAILS=['amievtimur@gmail.com'];
 const RESERVED_LOGINS=['LGlittleguy'];
 const OFFICIAL_ROOM_NAME='Maxify';
 const EMOJI_LIST=['👍','❤️','😂','😮','😢','🔥','👏','🎉','💯','😍','🤔','😎'];
 const isDeveloper=email=>VERIFIED_EMAILS.includes(email);
+const isTester=email=>TESTER_EMAILS.includes(email);
 
 function OfficialBadge({size=14}){
   return h('div',{title:'Официальная группа Maxify',style:{width:size,height:size,borderRadius:'50%',background:'var(--accent-grad)',display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:size*.6,fontWeight:700,flexShrink:0}},'✓');
@@ -788,6 +790,7 @@ function Avatar({user,size=36,ring=false}){
   const safeLogin=typeof login==='string'&&login.length>0?login:'?';
   const col=cols[(safeLogin.charCodeAt(0)||65)%cols.length];
   const isVerified=email&&VERIFIED_EMAILS.includes(email);
+  const isTesterUser=email&&TESTER_EMAILS.includes(email);
   const badgeSize=Math.max(12,Math.round(size*.35));
 
   return h('div',{style:{position:'relative',flexShrink:0,width:size,height:size}},
@@ -795,7 +798,8 @@ function Avatar({user,size=36,ring=false}){
       ?h('img',{src:avatarUrl,className:'avatar-img',style:{width:size,height:size,boxShadow:ring?'0 0 0 3px var(--panel), 0 0 0 5px var(--accent)':'none'},width:size,height:size,loading:'lazy',decoding:'async'})
       :h('div',{style:{width:size,height:size,borderRadius:'50%',background:col,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'inherit',fontWeight:600,fontSize:size*.4,color:'#fff',boxShadow:ring?'0 0 0 3px var(--panel), 0 0 0 5px var(--accent)':'none',userSelect:'none'}},safeLogin[0].toUpperCase()),
     isOnline&&h('div',{className:'dot-on'}),
-    isVerified&&h('div',{title:'Разработчик Maxify',style:{position:'absolute',bottom:-2,right:-2,width:badgeSize,height:badgeSize,borderRadius:'50%',background:'var(--accent-grad)',border:'2px solid var(--panel-solid)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:badgeSize*.6,lineHeight:1,zIndex:2}},'✓')
+    isVerified&&h('div',{title:'Разработчик Maxify',style:{position:'absolute',bottom:-2,right:-2,width:badgeSize,height:badgeSize,borderRadius:'50%',background:'var(--accent-grad)',border:'2px solid var(--panel-solid)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:badgeSize*.6,lineHeight:1,zIndex:2}},'✓'),
+    isTesterUser&&h('div',{title:'Официальный тестер Maxify',style:{position:'absolute',bottom:-2,right:-2,width:badgeSize,height:badgeSize,borderRadius:'50%',background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',border:'2px solid var(--panel-solid)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:badgeSize*.6,lineHeight:1,zIndex:2}},'✓')
   );
 }
 
@@ -819,6 +823,7 @@ function Auth(){
   const [f,setF]=useState({email:'',pass:'',name:''});
   const [err,setErr]=useState('');
   const [busy,setBusy]=useState(false);
+  const [showDownloads, setShowDownloads] = useState(false);
   const upd=k=>e=>setF(p=>({...p,[k]:e.target.value}));
 
   const ensureProfile=async(u,displayName)=>{
@@ -854,7 +859,7 @@ function Auth(){
     setBusy(false);
   };
 
-  return h('div',{style:{height:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}},
+  return h('div',{style:{height:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',flexDirection:'column',gap:16}},
     h('div',{className:'glass',style:{padding:'40px 32px',width:'100%',maxWidth:420,display:'flex',flexDirection:'column',gap:16}},
       h('div',{style:{textAlign:'center',marginBottom:8}},
         h('div',{className:'syne',style:{fontSize:36,fontWeight:800,letterSpacing:'-.04em',marginBottom:8}},'Maxify'),
@@ -874,7 +879,65 @@ function Auth(){
         :(mode==='register'?'Создать аккаунт':'Войти')
       ),
       h('div',{style:{textAlign:'center',fontSize:14,color:'var(--accent)',cursor:'pointer',padding:'8px',fontWeight:500},onClick:()=>!busy&&(setMode(m=>m==='login'?'register':'login'),setErr(''))},
-        mode==='register'?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться')
+        mode==='register'?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться'),
+      h('div',{style:{height:1,background:'var(--border)',margin:'4px 0'}}),
+      h('div',{style:{textAlign:'center',fontSize:14,color:'var(--text-primary)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'4px',opacity:0.85},onMouseEnter:e=>e.currentTarget.style.opacity=1,onMouseLeave:e=>e.currentTarget.style.opacity=0.85,onClick:()=>setShowDownloads(true)},
+        '📥 Скачать приложение для телефона/ПК'
+      )
+    ),
+    showDownloads && h(Modal, {onClose: () => setShowDownloads(false)},
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}},
+        h('div',{className:'syne',style:{fontSize:18}},'Скачать Maxify'),
+        h('button',{className:'btn btn-icon btn-ghost',onClick:()=>setShowDownloads(false)},'✕')
+      ),
+      h('div', {style:{display:'flex', flexDirection:'column', gap:14, maxHeight:'70vh', overflowY:'auto', paddingRight:6}},
+        h('div', {style:{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px', borderRadius:20, background:'var(--input-bg)', border:'1px solid var(--border)'}},
+          h('div', {style:{display:'flex', alignItems:'center', gap:12}},
+            h('span', {style:{fontSize:24}}, '📱'),
+            h('div', {},
+              h('div', {style:{fontWeight:600, fontSize:15}}, 'iOS / iPhone'),
+              h('div', {style:{fontSize:12, color:'var(--ok)', marginTop:2}}, '✅ Готово')
+            )
+          ),
+          h('a', {href:'https://drive.google.com/file/d/1Bc2IdG1lIsNZAtJmLC-L9wGC0hwsrHeV/view?usp=drive_link', target:'_blank', style:{textDecoration:'none'}},
+            h('button', {className:'btn btn-primary', style:{padding:'8px 16px', fontSize:14}}, 'Скачать')
+          )
+        ),
+        h('div', {style:{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px', borderRadius:20, background:'var(--input-bg)', border:'1px solid var(--border)'}},
+          h('div', {style:{display:'flex', alignItems:'center', gap:12}},
+            h('span', {style:{fontSize:24}}, '🤖'),
+            h('div', {},
+              h('div', {style:{fontWeight:600, fontSize:15}}, 'Android'),
+              h('div', {style:{fontSize:12, color:'var(--muted)', marginTop:2}}, '⏳ В разработке')
+            )
+          )
+        ),
+        h('div', {style:{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px', borderRadius:20, background:'var(--input-bg)', border:'1px solid var(--border)'}},
+          h('div', {style:{display:'flex', alignItems:'center', gap:12}},
+            h('span', {style:{fontSize:24}}, '💻'),
+            h('div', {},
+              h('div', {style:{fontWeight:600, fontSize:15}}, 'Windows / macOS'),
+              h('div', {style:{fontSize:12, color:'var(--muted)', marginTop:2}}, '⏳ В разработке')
+            )
+          )
+        ),
+        h('div', {style:{background:'var(--input-bg)', border:'1px solid var(--border)', borderRadius:20, padding:18, fontSize:13, lineHeight:'1.5', color:'var(--text-primary)', marginTop:8}},
+          h('div', {style:{fontWeight:700, marginBottom:8, color:'var(--accent)'}}, 'Способ 1: С компьютера (Рекомендуется, бесплатно)'),
+          h('ol', {style:{margin:0, paddingLeft:20, marginBottom:12}},
+            h('li', {style:{marginBottom:6}}, 'Скачайте файл IPA на ПК по кнопке выше.'),
+            h('li', {style:{marginBottom:6}}, 'Установите программу ', h('a', {href:'https://sideloadly.io/', target:'_blank', style:{color:'var(--accent)', fontWeight:600}}, 'Sideloadly'), ' на ПК.'),
+            h('li', {style:{marginBottom:6}}, 'Подключите iPhone к компьютеру кабелем.'),
+            h('li', {style:{marginBottom:6}}, 'Перетащите скачанный IPA файл в окно Sideloadly, введите Apple ID и нажмите «Start».'),
+            h('li', {style:{marginBottom:6}}, 'После установки перейдите в Настройки -> Основные -> VPN и устройство -> выберите Apple ID и нажмите «Доверять».'),
+            h('li', {style:{marginBottom:6}}, 'Включите режим разработчика: Настройки -> Конфиденциальность и безопасность -> Режим разработчика.')
+          ),
+          h('div', {style:{fontWeight:700, marginBottom:8, color:'var(--accent)'}}, 'Способ 2: Напрямую с iPhone (Через Scarlet/Esign/AltStore)'),
+          h('ul', {style:{margin:0, paddingLeft:20}},
+            h('li', {style:{marginBottom:6}}, 'Скачайте IPA на iPhone.'),
+            h('li', {style:{marginBottom:6}}, 'Откройте его через сторонний установщик (Scarlet, Esign, TrollStore или AltStore) и установите.')
+          )
+        )
+      )
     )
   );
 }
@@ -904,7 +967,11 @@ function UserSearch({me,onSelect,onOpenProfile,onClose}){
         h('div',{style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
           h(Avatar,{user:u,size:42}),
           h('div',{style:{flex:1,minWidth:0}},
-            h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},u.login,u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
+            h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},
+              u.login,
+              u.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓'),
+              u.email&&TESTER_EMAILS.includes(u.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:11,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')
+            ),
             h('div',{style:{fontSize:12,color:u.online?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:4}},
               h('span',{className:'status-dot '+(u.online?'online':'offline')}),
               u.online?t('online'):fmtLastSeen(u.lastSeen)
@@ -921,18 +988,59 @@ function PCSettingsTab({me}){
   const isWV2=!!(window.chrome&&window.chrome.webview);
   const [autostart,setAutostart]=useState(()=>localStorage.getItem('maxify_autostart')==='1');
   const [bgMode,setBgMode]=useState(()=>localStorage.getItem('maxify_bgmode')!=='0');
+  const [showInstructions, setShowInstructions] = useState(false);
   const {t} = useTranslation();
 
   const toggleAutostart=v=>{setAutostart(v);localStorage.setItem('maxify_autostart',v?'1':'0');if(isWV2){try{window.chrome.webview.postMessage(JSON.stringify({type:'autostart',value:v}))}catch(_){}}};
   const toggleBgMode=v=>{setBgMode(v);localStorage.setItem('maxify_bgmode',v?'1':'0');if(isWV2){try{window.chrome.webview.postMessage(JSON.stringify({type:'bgmode',value:v}))}catch(_){}}};
   const Toggle=({checked,onChange})=>h('div',{onClick:()=>onChange(!checked),style:{width:52,height:32,borderRadius:999,background:checked?'var(--ok)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}},h('div',{style:{width:28,height:28,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:checked?'22px':'2px',transition:'left .2s',boxShadow:'0 2px 8px rgba(0,0,0,.2)'}}));
   const Row=({icon,title,desc,checked,onChange})=>h('label',{style:{display:'flex',alignItems:'center',gap:16,cursor:'pointer',padding:'16px 20px',borderRadius:20,background:'var(--input-bg)',border:'1px solid var(--border)',userSelect:'none'}},h('div',{style:{fontSize:28,flexShrink:0}},icon),h('div',{style:{flex:1}},h('div',{style:{fontWeight:600,fontSize:15}},title),h('div',{style:{fontSize:13,color:'var(--muted)',marginTop:4}},desc)),h(Toggle,{checked,onChange}));
-  return h('div',{style:{display:'flex',flexDirection:'column',gap:12,maxWidth:400}},
-    !isWV2&&h('div',{style:{background:'rgba(255,159,10,0.1)',border:'1px solid rgba(255,159,10,0.3)',borderRadius:16,padding:'12px 16px',fontSize:14,color:'#FF9F0A'}},t('pc_warn')),
-    h(Row,{icon:'🚀',title:t('autostart'),desc:t('autostart_desc'),checked:autostart,onChange:toggleAutostart}),
-    h(Row,{icon:'🔄',title:t('bg_mode'),desc:t('bg_mode_desc'),checked:bgMode,onChange:toggleBgMode}),
-    h('a', {href:'https://drive.google.com/drive/folders/1PZMmCfQoKMAG5KSPaPqx8fXCGe9JwnCs?usp=drive_link', target:'_blank', style:{textDecoration:'none'}},
-      h('button', {className:'btn btn-primary', style:{width:'100%', justifyContent:'center', marginTop:12}}, t('download_pc'))
+
+  const DeviceRow = ({icon, name, status, link, isReady}) => h('div', {style:{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px', borderRadius:20, background:'var(--input-bg)', border:'1px solid var(--border)'}},
+    h('div', {style:{display:'flex', alignItems:'center', gap:12}},
+      h('span', {style:{fontSize:24}}, icon),
+      h('div', {},
+        h('div', {style:{fontWeight:600, fontSize:15}}, name),
+        h('div', {style:{fontSize:12, color: isReady ? 'var(--ok)' : 'var(--muted)', marginTop:2}}, status)
+      )
+    ),
+    isReady && h('a', {href: link, target:'_blank', style:{textDecoration:'none'}},
+      h('button', {className:'btn btn-primary', style:{padding:'8px 16px', fontSize:14}}, 'Скачать')
+    )
+  );
+
+  return h('div',{style:{display:'flex',flexDirection:'column',gap:16,maxWidth:500}},
+    isWV2 && h('div', {style:{display:'flex', flexDirection:'column', gap:12}},
+      h('div', {style:{fontWeight:700, fontSize:16, color:'var(--text-primary)'}}, 'Настройки ПК'),
+      h(Row,{icon:'🚀',title:t('autostart'),desc:t('autostart_desc'),checked:autostart,onChange:toggleAutostart}),
+      h(Row,{icon:'🔄',title:t('bg_mode'),desc:t('bg_mode_desc'),checked:bgMode,onChange:toggleBgMode}),
+      h('div', {className:'hr', style:{margin: '8px 0'}})
+    ),
+    h('div', {style:{fontWeight:700, fontSize:16, color:'var(--text-primary)'}}, 'Доступные платформы'),
+    h(DeviceRow, {icon: '📱', name: 'iOS / iPhone', status: '✅ Готово', link: 'https://drive.google.com/file/d/1Bc2IdG1lIsNZAtJmLC-L9wGC0hwsrHeV/view?usp=drive_link', isReady: true}),
+    h(DeviceRow, {icon: '🤖', name: 'Android', status: '⏳ В разработке', isReady: false}),
+    h(DeviceRow, {icon: '💻', name: 'Windows / macOS', status: '⏳ В разработке', isReady: false}),
+    
+    h('button', {className:'btn btn-ghost', style:{justifyContent:'center', width:'100%', marginTop:8}, onClick: () => setShowInstructions(!showInstructions)}, 
+      showInstructions ? '▲ Скрыть инструкцию по установке' : '▼ Как установить на iPhone?'
+    ),
+    
+    showInstructions && h('div', {className: 'fade-in', style:{background:'var(--input-bg)', border:'1px solid var(--border)', borderRadius:20, padding:18, fontSize:14, lineHeight:'1.5', color:'var(--text-primary)'}},
+      h('div', {style:{fontWeight:700, marginBottom:8, color:'var(--accent)'}}, 'Способ 1: С компьютера (Рекомендуется, бесплатно)'),
+      h('ol', {style:{margin:0, paddingLeft:20}},
+        h('li', {style:{marginBottom:6}}, 'Скачайте файл IPA на ПК по кнопке выше.'),
+        h('li', {style:{marginBottom:6}}, 'Установите программу ', h('a', {href:'https://sideloadly.io/', target:'_blank', style:{color:'var(--accent)', fontWeight:600}}, 'Sideloadly'), ' на ПК.'),
+        h('li', {style:{marginBottom:6}}, 'Подключите iPhone к компьютеру кабелем.'),
+        h('li', {style:{marginBottom:6}}, 'Перетащите скачанный IPA файл в окно Sideloadly, введите Apple ID и нажмите «Start».'),
+        h('li', {style:{marginBottom:6}}, 'После установки на телефоне перейдите в: Настройки -> Основные -> VPN и управление устройством -> выберите ваш Apple ID и нажмите «Доверять».'),
+        h('li', {style:{marginBottom:6}}, 'Также включите режим разработчика: Настройки -> Конфиденциальность и безопасность -> Режим разработчика (понадобится перезагрузка телефона).')
+      ),
+      h('div', {style:{fontWeight:700, marginTop:16, marginBottom:8, color:'var(--accent)'}}, 'Способ 2: Напрямую с iPhone (Через Scarlet/Esign/AltStore)'),
+      h('ul', {style:{margin:0, paddingLeft:20}},
+        h('li', {style:{marginBottom:6}}, 'Скачайте IPA на iPhone.'),
+        h('li', {style:{marginBottom:6}}, 'Используйте любой установщик приложений на вашем устройстве (например, Scarlet, Esign, TrollStore или AltStore).'),
+        h('li', {style:{marginBottom:6}}, 'Подпишите и установите приложение через него.')
+      )
     )
   );
 }
@@ -1888,7 +1996,11 @@ function DMChat({me,peer,peerUser,onBack,peerInst,onOpenProfile,dmConvs,peerUser
         h('div',{style:{display:'flex',alignItems:'center',gap:12,cursor:'pointer'},onClick:()=>onOpenProfile&&onOpenProfile(peer)},
           h(Avatar,{user:livePeer,size:42}),
           h('div',null,
-            h('div',{style:{fontWeight:700,fontSize:16,display:'flex',alignItems:'center',gap:6}},livePeer?.login||'...',livePeer?.email&&VERIFIED_EMAILS.includes(livePeer.email)&&h('span',{style:{fontSize:12,background:'var(--accent-grad)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')),
+            h('div',{style:{fontWeight:700,fontSize:16,display:'flex',alignItems:'center',gap:6}},
+              livePeer?.login||'...',
+              livePeer?.email&&VERIFIED_EMAILS.includes(livePeer.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:12,background:'var(--accent-grad)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓'),
+              livePeer?.email&&TESTER_EMAILS.includes(livePeer.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:12,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:16,height:16,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}},'✓')
+            ),
             h('div',{style:{fontSize:13,display:'flex',alignItems:'center',gap:6}},h('span',{className:'status-dot '+(livePeer?.online?'online':'offline')}),h('span',{style:{color:livePeer?.online?'var(--ok)':'var(--muted)'}},statusText))
           )
         )
@@ -2635,7 +2747,8 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
       h('div',{style:{flex:1,minWidth:0,paddingBottom:8}},
         h('div',{className:'syne',style:{fontSize:28,display:'flex',alignItems:'center',gap:8,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},
           u?.login||uid.slice(0,8),
-          u?.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{style:{fontSize:14,background:'var(--accent-grad)',borderRadius:'50%',width:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
+          u?.email&&VERIFIED_EMAILS.includes(u.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:14,background:'var(--accent-grad)',borderRadius:'50%',width:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓'),
+          u?.email&&TESTER_EMAILS.includes(u.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:14,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
         ),
         h('div',{style:{fontSize:14,color:'var(--muted)',marginTop:4,display:'flex',alignItems:'center',gap:6}},
           h('span',{className:'status-dot '+(u?.online?'online':'offline')}),
@@ -2827,7 +2940,11 @@ function App(){
       dmConvs.map(c=>{const pu=peerUsers[c.uid];return h('div',{key:c.uid,className:'chat-row'+(activeChat?.id===c.uid&&activeChat?.type==='dm'?' active':''),onClick:()=>{openDM({id:c.uid,...(pu||{})});setShowMobileList(false)}},
         h('div', {onClick: e => { e.stopPropagation(); openUserProfile(c.uid); }, style: {cursor: 'pointer', display: 'flex'}}, h(Avatar,{user:pu||{id:c.uid},size:48})),
         h('div',{style:{flex:1,minWidth:0}},
-          h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},pu?.login||c.uid.slice(0,8),pu?.email&&VERIFIED_EMAILS.includes(pu.email)&&h('span',{style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')),
+          h('div',{style:{fontWeight:600,fontSize:15,display:'flex',alignItems:'center',gap:6}},
+            pu?.login||c.uid.slice(0,8),
+            pu?.email&&VERIFIED_EMAILS.includes(pu.email)&&h('span',{title:'Разработчик Maxify',style:{fontSize:11,background:'var(--accent-grad)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓'),
+            pu?.email&&TESTER_EMAILS.includes(pu.email)&&h('span',{title:'Официальный тестер Maxify',style:{fontSize:11,background:'linear-gradient(135deg, #BF5AF2 0%, #5E5CE6 100%)',borderRadius:'50%',width:14,height:14,display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,flexShrink:0}},'✓')
+          ),
           h('div',{style:{fontSize:13,color:'var(--muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginTop:2}},c.last?.preview||'...')
         ),
         c.unread>0&&h('div',{className:'unread'},c.unread)
