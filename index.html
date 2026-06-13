@@ -787,36 +787,90 @@ const h=React.createElement;
 const {useState,useEffect,useRef,useCallback,useMemo}=React;
 
 const SvgIcon = ({ name, active, size = 24 }) => {
-  const icons = {
-    dms: {
-      filled: 'M12 2C6.48 2 2 6.02 2 11c0 2.82 1.5 5.3 3.82 6.88L5 21l3.9-1.95C9.9 19.68 10.94 19.8 12 19.8c5.52 0 10-4.02 10-9s-4.48-8-10-8z',
-      outlined: 'M12 2c-5.52 0-10 4.12-10 9 0 2.82 1.5 5.3 3.82 6.88L5 21l3.9-1.95c.99.63 2.03.75 3.1.75 5.52 0 10-4.02 10-9s-4.48-9-10-9zm0 15.8c-.89 0-1.78-.12-2.6-.48l-.56-.25-2.28 1.14.48-2.43-.39-.34C4.82 14.18 3.8 12.18 3.8 11c0-3.96 3.69-7.2 8.2-7.2s8.2 3.24 8.2 7.2-3.69 7.2-8.2 7.2z'
-    },
-    groups: {
-      filled: 'M12 12a4 4 0 100-8 4 4 0 000 8zm-5.2 2c-1.34 0-2.32.32-3.1.9-.9.68-1.5 1.72-1.7 3.1h18c-.2-1.38-.8-2.42-1.7-3.1-.78-.58-1.76-.9-3.1-.9H6.8zm11.7-4a3.5 3.5 0 100-7 3.5 3.5 0 000 7zm4.3 6c-.14-.95-.56-1.68-1.2-2.16-.54-.4-1.23-.62-2.17-.67.4.74.57 1.63.57 2.83h2.8zm-16.1.67C6.63 15.93 6.8 15.04 7.2 14.3c-.94.05-1.63.27-2.17.67-.64.48-1.06 1.2-1.2 2.16H5z',
-      outlined: 'M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm0-8c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 10c2.7 0 5.8 1.13 6 1.6v.4H6v-.4c.2-.47 3.3-1.6 6-1.6zm4.5-5a3.5 3.5 0 100-7 3.5 3.5 0 000 7zm1.5 1.5c.94.05 1.63.27 2.17.67.64.48 1.06 1.2 1.2 2.16h-2.8c0-1.2-.17-2.09-.57-2.83zm-12 0c-.4.74-.57 1.63-.57 2.83H2.67c.14-.96.56-1.68 1.2-2.16.54-.4 1.23-.62 2.17-.67z'
-    },
-    channels: {
-      filled: 'M18 6.5A1.5 1.5 0 0016.5 5H10a4 4 0 00-4 4v3.5a1 1 0 01-1 1H4a2 2 0 00-2 2v1a2 2 0 002 2h2.5L7 20a1 1 0 001 1h2a1 1 0 001-1v-4h1.5a4 4 0 004 4h1a1.5 1.5 0 001.5-1.5v-13z',
-      outlined: 'M18 6.5V17.5a1.5 1.5 0 01-1.5 1.5h-1a4 4 0 01-4-4H10v4a1 1 0 01-1 1H7a1 1 0 01-1-1l-.5-3.5H4a2 2 0 01-2-2v-1a2 2 0 012-2h1a1 1 0 001-1V9a4 4 0 014-4h6.5A1.5 1.5 0 0118 6.5zm-2 2H10a2 2 0 00-2 2v3.5h8v-5.5zM16 12v2H12v-2h4z'
-    },
-    feed: {
-      filled: 'M12 15a3 3 0 100-6 3 3 0 000 6z M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z',
-      outlined: 'M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z'
-    },
-    profile: {
-      filled: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
-      outlined: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm0-8c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 10c2.7 0 5.8 1.13 6 1.6v.4H6v-.4c.2-.47 3.3-1.6 6-1.6z'
+  const strokeW = 1.8;
+  
+  if (name === 'dms') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('path', { 
+          d: 'M12 2C6.48 2 2 6.02 2 11c0 2.2 1 4.2 2.7 5.7L3 21l4.3-1.4c1.4.8 3 1.2 4.7 1.2 5.52 0 10-4.02 10-9s-4.48-9-10-9zm-4 10.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z', 
+          fillRule: 'evenodd' 
+        })
+      );
     }
-  };
-  const path = active ? icons[name]?.filled : icons[name]?.outlined;
-  return h('svg', {
-    viewBox: '0 0 24 24',
-    width: size,
-    height: size,
-    fill: 'currentColor',
-    style: { display: 'block', width: `${size}px`, height: `${size}px` }
-  }, h('path', { d: path || '' }));
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('path', { 
+        d: 'M12 2C6.48 2 2 6.02 2 11c0 2.2 1 4.2 2.7 5.7L3 21l4.3-1.4c1.4.8 3 1.2 4.7 1.2 5.52 0 10-4.02 10-9s-4.48-9-10-9zm0 16c-1.5 0-3-.4-4.2-1.1l-.3-.2-2.5.8.8-2.4-.2-.3C4.6 13.6 4 12.3 4 11c0-3.86 3.59-7 8-7s8 3.14 8 7-3.59 7-8 7z'
+      }),
+      h('circle', { cx: 8, cy: 11, r: 1.2 }),
+      h('circle', { cx: 12, cy: 11, r: 1.2 }),
+      h('circle', { cx: 16, cy: 11, r: 1.2 })
+    );
+  }
+
+  if (name === 'groups') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('circle', { cx: 9, cy: 8, r: 3.5 }),
+        h('path', { d: 'M2 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5H2z' }),
+        h('path', { d: 'M14.5 9.8a3 3 0 1 0-3-5.2 3 3 0 0 0 3 5.2z' }),
+        h('path', { d: 'M12.5 13.6c1.2-.4 2.5-.6 3.5-.6 3.5 0 6 1.8 6 4.5H12.5z' })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('circle', { cx: 9, cy: 8, r: 3.5, stroke: 'currentColor', strokeWidth: strokeW, fill: 'none' }),
+      h('path', { d: 'M2 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: 'none' }),
+      h('path', { d: 'M14.5 9.8a3 3 0 1 0-3-5.2', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: 'none' }),
+      h('path', { d: 'M12.5 13.6c1.2-.4 2.5-.6 3.5-.6c3.5 0 6 1.8 6 4.5', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: 'none' })
+    );
+  }
+
+  if (name === 'channels') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('path', { d: 'M6 9h4l5-4v14l-5-4H6c-.5 0-1-.5-1-1v-4c0-.5.5-1 1-1z', fill: 'currentColor' }),
+        h('path', { d: 'M9 14v3c0 .5-.5 1-1 1H7v-4h2z', fill: 'currentColor' }),
+        h('path', { d: 'M18 8a5 5 0 0 1 0 8M21 6a8 8 0 0 1 0 12', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: 'none' })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('path', { d: 'M6 9h4l5-4v14l-5-4H6c-.5 0-1-.5-1-1v-4c0-.5.5-1 1-1z', stroke: 'currentColor', strokeWidth: strokeW, strokeLinejoin: 'round', fill: 'none' }),
+      h('path', { d: 'M9 14v3c0 .5-.5 1-1 1H7', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: 'none' }),
+      h('path', { d: 'M18 8a5 5 0 0 1 0 8M21 6a8 8 0 0 1 0 12', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: 'none' })
+    );
+  }
+
+  if (name === 'feed') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('path', { 
+          d: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.5l1.5-2h8l1.5 2H21a2 2 0 0 1 2 2v11z M12 17.5a4 4 0 1 1 0-8 4 4 0 0 1 0 8z', 
+          fillRule: 'evenodd' 
+        }),
+        h('circle', { cx: 18.5, cy: 9.5, r: 1 })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('path', { d: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.5l1.5-2h8l1.5 2H21a2 2 0 0 1 2 2v11z', stroke: 'currentColor', strokeWidth: strokeW, strokeLinejoin: 'round', fill: 'none' }),
+      h('circle', { cx: 12, cy: 13.5, r: 4, stroke: 'currentColor', strokeWidth: strokeW, fill: 'none' }),
+      h('circle', { cx: 18.5, cy: 9.5, r: 1, fill: 'currentColor' })
+    );
+  }
+
+  if (name === 'profile') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('circle', { cx: 12, cy: 8, r: 4 }),
+        h('path', { d: 'M4 20c0-4 4-7 8-7s8 3 8 7H4z' })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('circle', { cx: 12, cy: 8, r: 4, stroke: 'currentColor', strokeWidth: strokeW, fill: 'none' }),
+      h('path', { d: 'M4 20c0-4 4-7 8-7s8 3 8 7', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: 'none' })
+    );
+  }
+
+  return null;
 };
 
 function useTranslation() {
