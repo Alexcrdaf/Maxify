@@ -666,6 +666,11 @@ function sendNotif(title, body, tag, onClick){
     try{window.chrome.webview.postMessage(JSON.stringify({type: 'notification',title: String(title || ''),body: String(body || '')}));}catch(e){}
     return;
   }
+  try {
+    if(window.chrome && window.chrome.webview) {
+      window.chrome.webview.postMessage(JSON.stringify({type: 'notification',title: String(title || ''),body: String(body || '')}));
+    }
+  } catch(e) {}
   if(!('Notification' in window)) return;
   if(Notification.permission !== 'granted') return;
   if(document.visibilityState === 'visible') return;
@@ -824,9 +829,8 @@ function Auth(){
 
   const signInGoogle=async()=>{
     setErr('');setBusy(true);
-    try{const r=await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());await ensureProfile(r.user);}
-    catch(e){if(e.code!=='auth/popup-closed-by-user')setErr('Ошибка: '+e.message);}
-    setBusy(false);
+    try{await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());}
+    catch(e){setErr('Ошибка: '+e.message);setBusy(false);}
   };
 
   const submit=async()=>{
@@ -2672,6 +2676,32 @@ function App(){
   const [tab,setTab]=useState('dms');const [uid,setUid]=useState(null);const [showFeed,setShowFeed]=useState(false);const [viewProfile,setViewProfile]=useState(null);
   const userListenerRef=useRef(null);
   const {t} = useTranslation();
+
+  useEffect(() => {
+    auth.getRedirectResult()
+      .then(async (result) => {
+        if (result && result.user) {
+          const ref = db.ref('users/' + result.user.uid);
+          const snap = await ref.once('value');
+          if (!snap.val()) {
+            await ref.set({
+              id: result.user.uid,
+              login: result.user.displayName || result.user.email.split('@')[0],
+              email: result.user.email,
+              avatarUrl: result.user.photoURL || null,
+              online: true,
+              lastSeen: Date.now(),
+              createdAt: Date.now()
+            });
+          } else {
+            await ref.update({ online: true, lastSeen: Date.now() });
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Google Redirect Auth Error:', error);
+      });
+  }, []);
 
   useEffect(()=>{
     const saved=localStorage.getItem('theme')||'glass';
