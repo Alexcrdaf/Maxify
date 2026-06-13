@@ -1638,6 +1638,40 @@ function EmojiPicker({onSelect,onClose,style}){
   );
 }
 
+function MessageStatus({read}) {
+  const color = read ? 'var(--accent)' : 'var(--muted)';
+  if (read) {
+    return h('svg', {
+      width: '15',
+      height: '15',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: color,
+      strokeWidth: '3.5',
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      style: { display: 'inline-block', flexShrink: 0, userSelect: 'none', WebkitUserSelect: 'none', transition: 'stroke 0.2s ease', verticalAlign: 'middle' }
+    },
+      h('path', { d: 'M2 12l5 5L17 7' }),
+      h('path', { d: 'M7 12l5 5L22 7' })
+    );
+  } else {
+    return h('svg', {
+      width: '15',
+      height: '15',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: color,
+      strokeWidth: '3.5',
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      style: { display: 'inline-block', flexShrink: 0, userSelect: 'none', WebkitUserSelect: 'none', transition: 'stroke 0.2s ease', verticalAlign: 'middle' }
+    },
+      h('path', { d: 'M5 12l5 5L20 7' })
+    );
+  }
+}
+
 function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin,onReact,onVote,replyMsg,showReactions=true,canPin=false}){
   const [menuPos,setMenuPos]=useState(null);
   const [showEmoji,setShowEmoji]=useState(false);
@@ -1777,7 +1811,7 @@ function ForwardModal({msg, me, dmConvs, peerUsers, rooms, onClose}) {
   
   const sendTo = async (type, id) => {
     const senderLogin = msg.senderName || peerUsers[msg.uid]?.login || msg.uid.slice(0,8);
-    const payload = { ...msg, k: null, uid: me, ts: Date.now(), forwardedFrom: {uid: msg.uid, login: senderLogin} };
+    const payload = { ...msg, k: null, uid: me, ts: Date.now(), read: false, forwardedFrom: {uid: msg.uid, login: senderLogin} };
     delete payload.reactions; delete payload.replyTo; delete payload.votes; // Очищаем старую мету
     
     if (type === 'dm') {
@@ -2120,6 +2154,17 @@ function DMChat({me,peer,peerUser,onBack,peerInst,onOpenProfile,dmConvs,peerUser
   },[msgs]);
   useEffect(()=>{db.ref(`dm/${chatCid}/unread/${me}`).set(0)},[chatCid,me]);
   useEffect(()=>{
+    if (!chatCid) return;
+    const unread = msgs.filter(m => m.uid === peer && !m.read);
+    if (unread.length > 0) {
+      const updates = {};
+      unread.forEach(m => {
+        updates[`dm/${chatCid}/msgs/${m.k}/read`] = true;
+      });
+      db.ref().update(updates);
+    }
+  }, [msgs, chatCid, peer]);
+  useEffect(()=>{
     const ref=db.ref(`dm/${chatCid}/typing/${peer}`);
     ref.on('value',s=>setPeerTyping(!!s.val()));
     return()=>ref.off();
@@ -2255,7 +2300,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst,onOpenProfile,dmConvs,peerUser
   const send=useCallback(payload=>{
     if(editMsg){db.ref(`dm/${chatCid}/msgs/${editMsg.k}`).update({text:payload.text,edited:true});setEditMsg(null);}
     else{
-      const msgData={uid:me,ts:Date.now(),...payload};
+      const msgData={uid:me,ts:Date.now(),read:false,...payload};
       if(replyMsg)msgData.replyTo={k:replyMsg.k,text:replyMsg.text,senderName:replyMsg.senderName,uid:replyMsg.uid};
       db.ref(`dm/${chatCid}/msgs`).push(msgData);
       db.ref(`dm/${chatCid}/last`).set({uid:me,ts:Date.now(),preview:previewText(payload)});
@@ -2333,7 +2378,7 @@ function DMChat({me,peer,peerUser,onBack,peerInst,onOpenProfile,dmConvs,peerUser
         const replyData=m.replyTo||null;
         return h('div',{key:m.k||m.ts,className:'msg-in',style:{display:'flex',flexDirection:'column',alignItems:mine?'flex-end':'flex-start',gap:4}},
           h(MsgBubble,{m,mine,me,onImgClick:url=>setLightbox(url),onEdit:setEditMsg,onDelete:deleteMsg,onReply:msg=>{setReplyMsg({...msg,senderName:mine?'Вы':livePeer?.login||'...'})},onForward:setForwardMsg,onPin:pinMsg,onReact:reactMsg,onVote:voteMsg,replyMsg:replyData,canPin:true}),
-          h('div',{style:{fontSize:11,color:'var(--muted)',padding:mine?'0 6px 0 0':'0 0 0 6px'}},ts2t(m.ts))
+          h('div',{style:{fontSize:11,color:'var(--muted)',padding:mine?'0 6px 0 0':'0 0 0 6px',display:'flex',alignItems:'center',gap:4,userSelect:'none',WebkitUserSelect:'none'}},ts2t(m.ts),mine&&h(MessageStatus,{read:!!m.read}))
         );
       }),
       peerTyping&&h('div',{style:{display:'flex',gap:8,alignItems:'center'}},h(Avatar,{user:livePeer,size:28}),h('div',{style:{background:'var(--bubble-their)',padding:'12px 16px',borderRadius:'20px 20px 20px 4px',display:'flex',gap:4,alignItems:'center',backdropFilter:'var(--glass-blur)'}},h('span',{style:{width:6,height:6,borderRadius:'50%',background:'var(--muted)',animation:'fadeIn 1s infinite alternate'}}),h('span',{style:{width:6,height:6,borderRadius:'50%',background:'var(--muted)',animation:'fadeIn 1s infinite alternate 0.2s'}}),h('span',{style:{width:6,height:6,borderRadius:'50%',background:'var(--muted)',animation:'fadeIn 1s infinite alternate 0.4s'}}))),
@@ -2505,7 +2550,7 @@ function ShareRTModal({video, me, dmConvs, peerUsers, rooms, onClose}){
     const payload = {type: 'rutube',rtId: video.id,rtTitle: video.title,rtChannel: video.channel,rtThumb: video.thumb,text: '▶️ ' + video.title};
     if(type === 'dm'){
       const cid = [me, id].sort().join('__');
-      db.ref('dm/' + cid + '/msgs').push({uid: me, ts: Date.now(), ...payload});
+      db.ref('dm/' + cid + '/msgs').push({uid: me, ts: Date.now(), read: false, ...payload});
       db.ref('dm/' + cid + '/last').set({uid: me, ts: Date.now(), preview: '▶️ ' + video.title});
       db.ref('dm/' + cid + '/unread/' + id).transaction(v => (v||0)+1);
     } else {
