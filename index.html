@@ -142,6 +142,35 @@ body.dark::before, body.dark::after {
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
+/* Prevent selection on buttons and system UI */
+.btn, 
+.tab, 
+.tab-bar, 
+.mobile-nav, 
+.mobile-nav-item, 
+.mobile-nav-btn, 
+.nav-label, 
+.sidebar, 
+.chat-header, 
+.mobile-list-header, 
+.syne, 
+.chat-row, 
+.avatar-img, 
+.status-dot, 
+.dot-on, 
+.unread, 
+.pinned-bar, 
+.reply-bubble,
+.modal,
+.attach-menu,
+.call-wrap,
+.reaction-chip {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
 body {
   background-color: var(--bg-base);
   background-image:
@@ -247,59 +276,64 @@ body.light .btn {
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; border-color: transparent; }
 
 .btn-primary {
-  background: rgba(10, 132, 255, 0.25);
-  border-color: rgba(10, 132, 255, 0.5);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(10, 132, 255, 0.2), inset 0 1px 1px rgba(255,255,255,0.3);
-  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: transparent !important;
+  color: #121212 !important;
+  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15), inset 0 1px 1px rgba(255,255,255,1) !important;
 }
 body.light .btn-primary {
-  background: rgba(0, 122, 255, 0.15);
-  border-color: rgba(0, 122, 255, 0.3);
-  color: var(--accent);
-  box-shadow: 0 4px 14px rgba(0, 122, 255, 0.1), inset 0 1px 1px rgba(255,255,255,0.8);
-  text-shadow: none;
+  background: #121212 !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255,255,255,0.1) !important;
 }
 .btn-primary:hover {
-  background: rgba(10, 132, 255, 0.35);
-  box-shadow: 0 6px 20px rgba(10, 132, 255, 0.3), inset 0 1px 1px rgba(255,255,255,0.4);
+  background: #ffffff !important;
   transform: translateY(-1px);
 }
 body.light .btn-primary:hover {
-  background: rgba(0, 122, 255, 0.25);
+  background: #000000 !important;
 }
 
 .btn-ghost {
-  background: var(--input-bg);
-  border-color: var(--border);
-  color: var(--text-primary);
-  box-shadow: var(--border-inset);
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: var(--text-primary) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 2px 6px rgba(0,0,0,0.05) !important;
+}
+body.light .btn-ghost {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: var(--text-primary) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(0,0,0,0.02) !important;
 }
 .btn-ghost:hover {
-  background: rgba(120, 120, 120, 0.2);
-  border-color: var(--border-light);
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+body.light .btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
 }
 
 .btn-danger {
-  background: rgba(255, 69, 58, 0.25);
-  border-color: rgba(255, 69, 58, 0.5);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(255, 69, 58, 0.2), inset 0 1px 1px rgba(255,255,255,0.3);
-  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  background: rgba(255, 69, 58, 0.25) !important;
+  border-color: rgba(255, 69, 58, 0.4) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(255, 69, 58, 0.15), inset 0 1px 1px rgba(255,255,255,0.2) !important;
 }
 body.light .btn-danger {
-  background: rgba(255, 59, 48, 0.15);
-  border-color: rgba(255, 59, 48, 0.3);
-  color: var(--danger);
-  box-shadow: 0 4px 14px rgba(255, 59, 48, 0.1), inset 0 1px 1px rgba(255,255,255,0.8);
-  text-shadow: none;
+  background: rgba(255, 59, 48, 0.12) !important;
+  border-color: rgba(255, 59, 48, 0.25) !important;
+  color: var(--danger) !important;
+  box-shadow: 0 4px 14px rgba(255, 59, 48, 0.08), inset 0 1px 1px rgba(255,255,255,0.8) !important;
 }
 .btn-danger:hover {
-  background: rgba(255, 69, 58, 0.35);
+  background: rgba(255, 69, 58, 0.35) !important;
   transform: translateY(-1px);
 }
 body.light .btn-danger:hover {
-  background: rgba(255, 59, 48, 0.25);
+  background: rgba(255, 59, 48, 0.22) !important;
 }
 
 .btn-icon {
@@ -415,51 +449,49 @@ body.light .btn-danger:hover {
 
 .tab-bar { 
   display: flex; 
-  gap: 6px; 
-  padding: 6px; 
-  background: rgba(255, 255, 255, 0.03); 
-  border-radius: 20px; 
-  border: 1px solid var(--border);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
-}
-body.light .tab-bar {
-  background: rgba(0, 0, 0, 0.02);
+  gap: 10px; 
+  padding: 4px; 
+  justify-content: center;
+  align-items: center;
 }
 .tab { 
-  padding: 10px 16px; 
+  width: 44px; 
+  height: 44px; 
   border-radius: 14px; 
-  font-size: 13px; 
-  font-weight: 600; 
   cursor: pointer; 
   transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1); 
   color: var(--muted); 
-  flex: 1; 
-  text-align: center;
-  border: 1px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 2px 6px rgba(0,0,0,0.05);
+}
+body.light .tab {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(0,0,0,0.02);
 }
 .tab:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
   color: var(--text-primary);
 }
 body.light .tab:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.15);
 }
 .tab.active { 
   background: rgba(255, 255, 255, 0.95); 
   color: #121212; 
-  border: 1px solid transparent;
-  box-shadow: 0 4px 12px rgba(255,255,255,0.15); 
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(255, 255, 255, 0.18), inset 0 1px 1px rgba(255, 255, 255, 1); 
 }
 body.light .tab.active {
   background: #121212;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
 .pinned-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--pinned-bg); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); }
