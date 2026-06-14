@@ -842,7 +842,13 @@ const DICT = {
     err_invalid_email: 'Неверный email', err_invalid_cred: 'Неверный email или пароль',
     err_too_many_req: 'Слишком много попыток', err_no_network: 'Нет сети',
     error_prefix: 'Ошибка: ', create_acc: 'Создать аккаунт', welcome_back: 'С возвращением',
-    sign_in_google: 'Войти через Google', login_via_site: 'Войти через сайт', or_divider: 'ИЛИ',
+    sign_in_google: 'Войти через Google', login_via_site: 'Войти через сайт',
+    copy_session_code: 'Копировать код для iPhone', login_by_code: 'Войти по коду',
+    enter_session_code: 'Вставьте код сессии:', login_success_reload: 'Успешный вход! Страница будет перезагружена.',
+    err_invalid_session_code: 'Неверный код сессии.', err_session_not_found: 'Сессия не найдена. Перезагрузите страницу.',
+    session_copied_alert: 'Код сессии скопирован! Вставьте его в приложении на iPhone.',
+    return_to_app: 'Вернуться в приложение',
+    or_divider: 'ИЛИ',
     name_placeholder: 'Имя', pass_placeholder: 'Пароль',
     creating_loader: 'Создаём...', logging_in_loader: 'Входим...', login_btn: 'Войти',
     already_have_acc: 'Уже есть аккаунт? Войти', no_acc_register: 'Нет аккаунта? Зарегистрироваться',
@@ -942,7 +948,13 @@ const DICT = {
     err_invalid_email: 'Invalid email', err_invalid_cred: 'Wrong email or password',
     err_too_many_req: 'Too many attempts', err_no_network: 'No network',
     error_prefix: 'Error: ', create_acc: 'Create Account', welcome_back: 'Welcome back',
-    sign_in_google: 'Sign in with Google', login_via_site: 'Login via website', or_divider: 'OR',
+    sign_in_google: 'Sign in with Google', login_via_site: 'Login via website',
+    copy_session_code: 'Copy code for iPhone', login_by_code: 'Login by code',
+    enter_session_code: 'Paste session code:', login_success_reload: 'Successful login! Page will reload.',
+    err_invalid_session_code: 'Invalid session code.', err_session_not_found: 'Session not found. Please reload page.',
+    session_copied_alert: 'Session code copied! Paste it in the iPhone app.',
+    return_to_app: 'Return to App',
+    or_divider: 'OR',
     name_placeholder: 'Username', pass_placeholder: 'Password',
     creating_loader: 'Creating...', logging_in_loader: 'Logging in...', login_btn: 'Log In',
     already_have_acc: 'Already have an account? Log In', no_acc_register: "Don't have an account? Register",
@@ -1042,7 +1054,13 @@ const DICT = {
     err_invalid_email: 'Email inválido', err_invalid_cred: 'Email o contraseña incorrecta',
     err_too_many_req: 'Demasiados intentos', err_no_network: 'Sin red',
     error_prefix: 'Error: ', create_acc: 'Crear cuenta', welcome_back: 'Bienvenido de nuevo',
-    sign_in_google: 'Iniciar sesión con Google', login_via_site: 'Iniciar sesión en la web', or_divider: 'O',
+    sign_in_google: 'Iniciar sesión con Google', login_via_site: 'Iniciar sesión en la web',
+    copy_session_code: 'Copiar código para iPhone', login_by_code: 'Entrar por código',
+    enter_session_code: 'Pegar código de sesión:', login_success_reload: '¡Inicio de sesión correcto! Se recargará la página.',
+    err_invalid_session_code: 'Código de sesión inválido.', err_session_not_found: 'Sesión no encontrada. Recarga la página.',
+    session_copied_alert: '¡Código de sesión copiado! Pégalo en la app de iPhone.',
+    return_to_app: 'Volver a la aplicación',
+    or_divider: 'O',
     name_placeholder: 'Nombre de usuario', pass_placeholder: 'Contraseña',
     creating_loader: 'Creando...', logging_in_loader: 'Iniciando sesión...', login_btn: 'Iniciar sesión',
     already_have_acc: '¿Ya tienes una cuenta? Iniciar sesión', no_acc_register: '¿No tienes una cuenta? Registrarse',
@@ -1523,6 +1541,50 @@ function Auth({ externalError, clearExternalError }){
   const upd=k=>e=>setF(p=>({...p,[k]:e.target.value}));
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [sessionCodeInput, setSessionCodeInput] = useState('');
+
+  const importSession = async (base64) => {
+    if (!base64.trim()) return;
+    setBusy(true); setErr('');
+    try {
+      const decoded = decodeURIComponent(escape(atob(base64.trim())));
+      const obj = JSON.parse(decoded);
+      const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
+      
+      localStorage.setItem(key, decoded);
+      
+      await new Promise((resolve, reject) => {
+        const req = indexedDB.open("firebaseLocalStorageDb");
+        req.onerror = () => reject(req.error);
+        req.onupgradeneeded = (e) => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains("firebaseLocalStorage")) {
+            db.createObjectStore("firebaseLocalStorage");
+          }
+        };
+        req.onsuccess = () => {
+          const db = req.result;
+          try {
+            const tx = db.transaction("firebaseLocalStorage", "readwrite");
+            const store = tx.objectStore("firebaseLocalStorage");
+            const putReq = store.put(obj, key);
+            putReq.onsuccess = () => resolve();
+            putReq.onerror = () => reject(putReq.error);
+          } catch (e) {
+            reject(e);
+          }
+        };
+      });
+      
+      alert(t('login_success_reload') || "Успешный вход! Страница будет перезагружена.");
+      window.location.reload();
+    } catch (e) {
+      setErr(t('err_invalid_session_code') || ("Неверный код сессии: " + e.message));
+    }
+    setBusy(false);
+  };
+
   const ensureProfile=async(u,displayName)=>{
     const ref=db.ref('users/'+u.uid);
     const snap=await ref.once('value');
@@ -1602,7 +1664,7 @@ function Auth({ externalError, clearExternalError }){
         t('sign_in_google')
       ),
       isIOS && h('a',{
-        href: busy ? '#' : 'https://maxify-pi.vercel.app/?open_external=true',
+        href: busy ? '#' : window.location.origin + '/?open_external=true&from_app=true',
         target: busy ? '_self' : '_blank',
         rel:'noopener noreferrer',
         className:'btn btn-ghost',
@@ -1611,6 +1673,23 @@ function Auth({ externalError, clearExternalError }){
       },
         h('span',{style:{fontSize:18}},'🌐'),
         t('login_via_site')
+      ),
+      isIOS && !showCodeInput && h('button',{
+        className:'btn btn-ghost',
+        style:{width:'100%',justifyContent:'center',padding:'14px',display:'inline-flex',alignItems:'center',gap:8},
+        onClick:()=>setShowCodeInput(true),
+        disabled:busy
+      },
+        h('span',{style:{fontSize:18}},'🔑'),
+        t('login_by_code')
+      ),
+      showCodeInput && h('div', {style:{display:'flex', flexDirection:'column', gap:10, width:'100%', marginTop:8, background:'var(--input-bg)', padding:16, borderRadius:20, border:'1px solid var(--border)'}},
+        h('div', {style:{fontSize:13, color:'var(--muted)', fontWeight:600}}, t('enter_session_code')),
+        h('input',{placeholder:'Code...', value:sessionCodeInput, onChange:e=>setSessionCodeInput(e.target.value), disabled:busy}),
+        h('div',{style:{display:'flex', gap:10}},
+          h('button',{className:'btn btn-ghost', style:{flex:1, justifyContent:'center'}, onClick:()=>setShowCodeInput(false), disabled:busy}, t('cancel')),
+          h('button',{className:'btn btn-primary', style:{flex:1, justifyContent:'center'}, onClick:()=>importSession(sessionCodeInput), disabled:busy || !sessionCodeInput.trim()}, t('login_btn'))
+        )
       ),
       h('div',{style:{display:'flex',alignItems:'center',gap:12}},h('div',{style:{flex:1,height:1,background:'var(--border)'}}),h('div',{style:{fontSize:12,color:'var(--muted)'}},t('or_divider')),h('div',{style:{flex:1,height:1,background:'var(--border)'}})),
       mode==='register'&&h('input',{placeholder:t('name_placeholder'),value:f.name,onChange:upd('name'),disabled:busy}),
@@ -1824,7 +1903,47 @@ function SettingsPage({user, onClose, onSignOut}){
   };
 
   const tabs = [{id:'profile',i:'👤',l:t('profile')},{id:'theme',i:'🎨',l:t('appearance')},{id:'lang',i:'🌐',l:t('language')},{id:'pc',i:'💻',l:t('pc_settings')},{id:'account',i:'🛡️',l:t('account')}];
-const handlePasswordReset = async()=>{try{await auth.sendPasswordResetEmail(user.email);alert(t('pwd_reset_sent'));}catch(e){alert(t('error_prefix')+e.message);}};
+  const handlePasswordReset = async()=>{try{await auth.sendPasswordResetEmail(user.email);alert(t('pwd_reset_sent'));}catch(e){alert(t('error_prefix')+e.message);}};
+
+  const exportSession = async () => {
+    try {
+      const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
+      let val = localStorage.getItem(key);
+      if (!val) {
+        val = await new Promise((resolve, reject) => {
+          const req = indexedDB.open("firebaseLocalStorageDb");
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains("firebaseLocalStorage")) {
+              resolve(null);
+              return;
+            }
+            try {
+              const tx = db.transaction("firebaseLocalStorage", "readonly");
+              const store = tx.objectStore("firebaseLocalStorage");
+              const getReq = store.get(key);
+              getReq.onsuccess = () => resolve(getReq.result ? JSON.stringify(getReq.result) : null);
+              getReq.onerror = () => reject(getReq.error);
+            } catch (e) {
+              reject(e);
+            }
+          };
+        });
+      }
+
+      if (!val) {
+        alert(t('err_session_not_found') || "Не удалось найти данные сессии. Попробуйте перезагрузить страницу.");
+        return;
+      }
+
+      const base64 = btoa(unescape(encodeURIComponent(val)));
+      await navigator.clipboard.writeText(base64);
+      alert(t('session_copied_alert') || "Код сессии успешно скопирован в буфер обмена! Перейдите в приложение на iPhone, нажмите 'Войти по коду' и вставьте скопированный код.");
+    } catch (e) {
+      alert(t('error_prefix') + e.message);
+    }
+  };
 
   const swipeHandlers = useSwipeToBack(onClose);
 
@@ -1879,6 +1998,10 @@ const handlePasswordReset = async()=>{try{await auth.sendPasswordResetEmail(user
           h('div',{style:{fontSize:18, fontWeight:700}}, t('manage_account')),
           h('button',{className:'btn btn-ghost',style:{color:'var(--danger)', borderColor:'rgba(255,69,58,0.3)', padding:14, justifyContent:'center'},onClick:onSignOut},t('logout_acc')),
           h('button',{className:'btn btn-ghost',style:{marginTop:12,justifyContent:'center'},onClick:handlePasswordReset},t('reset_password')),
+          h('button',{className:'btn btn-ghost',style:{marginTop:12,justifyContent:'center',display:'flex',alignItems:'center',gap:8},onClick:exportSession},
+            h('span',{style:{fontSize:18}},'🔑'),
+            t('copy_session_code')
+          ),
           h('div',{className:'hr'}),
           !confirmDel?h('button',{className:'btn btn-danger',style:{padding:14, justifyContent:'center'},onClick:()=>setConfirmDel(true)},t('delete_acc_forever')):
           h('div',{style:{display:'flex',flexDirection:'column',gap:12, background:'rgba(255,69,58,0.1)', padding:16, borderRadius:20}},
@@ -3694,6 +3817,84 @@ function App(){
   const userListenerRef=useRef(null);
   const {t} = useTranslation();
 
+  const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const fromApp = urlParams.get('from_app') === 'true';
+
+  useEffect(() => {
+    window.importSessionFromApp = async (base64) => {
+      if (!base64 || !base64.trim()) return;
+      try {
+        const decoded = decodeURIComponent(escape(atob(base64.trim())));
+        const obj = JSON.parse(decoded);
+        const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
+        
+        localStorage.setItem(key, decoded);
+        
+        await new Promise((resolve, reject) => {
+          const req = indexedDB.open("firebaseLocalStorageDb");
+          req.onerror = () => reject(req.error);
+          req.onupgradeneeded = (e) => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains("firebaseLocalStorage")) {
+              db.createObjectStore("firebaseLocalStorage");
+            }
+          };
+          req.onsuccess = () => {
+            const db = req.result;
+            try {
+              const tx = db.transaction("firebaseLocalStorage", "readwrite");
+              const store = tx.objectStore("firebaseLocalStorage");
+              const putReq = store.put(obj, key);
+              putReq.onsuccess = () => resolve();
+              putReq.onerror = () => reject(putReq.error);
+            } catch (e) {
+              reject(e);
+            }
+          };
+        });
+        
+        window.location.reload();
+      } catch (e) {
+        alert("Ошибка входа по коду: " + e.message);
+      }
+    };
+    return () => {
+      window.importSessionFromApp = null;
+    };
+  }, []);
+
+  const redirectBackToApp = useCallback(async () => {
+    try {
+      const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
+      let val = localStorage.getItem(key);
+      if (!val) {
+        val = await new Promise((resolve, reject) => {
+          const req = indexedDB.open("firebaseLocalStorageDb");
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains("firebaseLocalStorage")) { resolve(null); return; }
+            try {
+              const tx = db.transaction("firebaseLocalStorage", "readonly");
+              const store = tx.objectStore("firebaseLocalStorage");
+              const getReq = store.get(key);
+              getReq.onsuccess = () => resolve(getReq.result ? JSON.stringify(getReq.result) : null);
+              getReq.onerror = () => reject(getReq.error);
+            } catch (e) { reject(e); }
+          };
+        });
+      }
+      if (val) {
+        const base64 = btoa(unescape(encodeURIComponent(val)));
+        window.location.href = `maxify://login?token=${base64}`;
+      } else {
+        alert(t('err_session_not_found') || "Сессия не найдена. Попробуйте перезагрузить страницу.");
+      }
+    } catch (e) {
+      alert(t('error_prefix') + e.message);
+    }
+  }, [t]);
+
   useEffect(() => {
     auth.getRedirectResult()
       .then(async (result) => {
@@ -3903,8 +4104,36 @@ function App(){
 
   const navTabs=[{id:'dms',label:t('chats'),badge:totalUnread},{id:'groups',label:t('groups')},{id:'channels',label:t('channels')},{id:'feed',label:t('feed')},{id:'profile',label:t('settings')}];
 
-  return h('div',{className:'app-layout',style:{height:'100dvh',display:'flex',padding:16,gap:16}},
-    h('div',{className:'glass sidebar',style:{width:280,padding:'16px',display:'flex',flexDirection:'column',gap:12,flexShrink:0}},
+  return h(React.Fragment, null,
+    fromApp && h('div', {
+      className: 'fade-in',
+      style: {
+        position: 'fixed',
+        top: 16,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 100000,
+        background: 'var(--accent-grad)',
+        color: '#fff',
+        padding: '12px 24px',
+        borderRadius: '24px',
+        boxShadow: '0 8px 32px var(--glow)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        cursor: 'pointer',
+        fontSize: '14px',
+        fontWeight: 600,
+        border: '1px solid rgba(255,255,255,0.2)',
+        backdropFilter: 'blur(20px)'
+      },
+      onClick: redirectBackToApp
+    },
+      h('span', {style:{fontSize:18}}, '📲'),
+      t('return_to_app')
+    ),
+    h('div',{className:'app-layout',style:{height:'100dvh',display:'flex',padding:16,gap:16}},
+      h('div',{className:'glass sidebar',style:{width:280,padding:'16px',display:'flex',flexDirection:'column',gap:12,flexShrink:0}},
       h('div',{style:{display:'flex',alignItems:'center',gap:12,padding:'12px',borderRadius:'20px',cursor:'pointer',background:'var(--input-bg)',border:'1px solid var(--border)',transition:'all 0.2s'},onMouseEnter:e=>e.currentTarget.style.transform='translateY(-2px)',onMouseLeave:e=>e.currentTarget.style.transform='',onClick:()=>setShowSettings(true)},
         h(Avatar,{user,size:46,ring:true}),
         h('div',{style:{flex:1,minWidth:0}},h('div',{className:'syne',style:{fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},user.login),h('div',{style:{fontSize:12,color:peerInst?'var(--ok)':'var(--muted)',display:'flex',alignItems:'center',gap:6,marginTop:2}},h('span',{className:'status-dot '+(peerInst?'online':'offline')}),peerInst?t('online'):t('connecting_dots')))
@@ -4002,6 +4231,7 @@ function App(){
     showSearch&&h(UserSearch,{me:user.id,onSelect:u=>{openDM(u);setShowMobileList(false)},onOpenProfile:openUserProfile,onClose:()=>setShowSearch(false)}),
     showRoomSearch&&h(RoomSearchModal,{me:user.id,onSelect:r=>{openRoom(r);setShowMobileList(false)},onClose:()=>setShowRoomSearch(false)}),
     createRoom&&h(CreateRoomModal,{me:user.id,type:createRoom,onClose:()=>setCreateRoom(null)})
+    )
   );
 }
 
