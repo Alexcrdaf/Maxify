@@ -391,6 +391,30 @@ body.light .btn-danger:hover {
 .chat-row:hover { background: rgba(120, 120, 120, 0.1); }
 .chat-row.active { background: var(--input-bg); box-shadow: inset 3px 0 0 var(--accent); }
 
+.search-placeholder-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.search-placeholder-bar:hover {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+body.light .search-placeholder-bar:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
 .dot-on {
   width: 12px; height: 12px; border-radius: 50%;
   background: var(--ok);
@@ -785,7 +809,7 @@ window.addEventListener('DOMContentLoaded', () => {
 const DICT = {
   ru: {
     chats: 'Чаты', groups: 'Группы', channels: 'Каналы', feed: 'Лента', media: 'Медиа', settings: 'Настройки',
-    search_people: '🔍 Поиск людей', no_chats: 'Нет чатов. Начните общение!',
+    search_people: 'Поиск людей', no_chats: 'Нет чатов. Начните общение!',
     create: 'Создать', search: 'Поиск', no_groups: 'Нет групп', no_channels: 'Нет каналов',
     logout: 'Выйти', feed_empty: 'Лента пуста', feed_empty_desc: 'Сделайте первую публикацию, чтобы начать историю.',
     whats_new: 'Что у вас нового, ',
@@ -885,7 +909,7 @@ const DICT = {
   },
   en: {
     chats: 'Chats', groups: 'Groups', channels: 'Channels', feed: 'Feed', media: 'Media', settings: 'Settings',
-    search_people: '🔍 Search people', no_chats: 'No chats. Start chatting!',
+    search_people: 'Search people', no_chats: 'No chats. Start chatting!',
     create: 'Create', search: 'Search', no_groups: 'No groups', no_channels: 'No channels',
     logout: 'Logout', feed_empty: 'Feed is empty', feed_empty_desc: 'Make your first post to start your story.',
     whats_new: "What's new, ",
@@ -985,7 +1009,7 @@ const DICT = {
   },
   es: {
     chats: 'Chats', groups: 'Grupos', channels: 'Canales', feed: 'Feed', media: 'Media', settings: 'Ajustes',
-    search_people: '🔍 Buscar gente', no_chats: 'No hay chats. ¡Empieza a chatear!',
+    search_people: 'Buscar gente', no_chats: 'No hay chats. ¡Empieza a chatear!',
     create: 'Crear', search: 'Buscar', no_groups: 'No hay grupos', no_channels: 'No hay canales',
     logout: 'Cerrar sesión', feed_empty: 'El feed está vacío', feed_empty_desc: 'Haz tu primera publicación para empezar tu historia.',
     whats_new: '¿Qué hay de nuevo, ',
@@ -1252,6 +1276,13 @@ const SvgIcon = ({ name, active, size = 24 }) => {
   if (name === 'pin') {
     return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
       h('path', { d: 'M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.89A.5.5 0 0 0 6.33 14h11.34a.5.5 0 0 0 .42-.56l-1.78-.89A2 2 0 0 1 15 10.76V6h-6v4.76zM15 6V3a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: active ? 'currentColor' : 'none' })
+    );
+  }
+
+  if (name === 'search_icon') {
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('circle', { cx: 11, cy: 11, r: 8, stroke: 'currentColor', strokeWidth: strokeW, fill: 'none' }),
+      h('line', { x1: 21, y1: 21, x2: 16.65, y2: 16.65, stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round' })
     );
   }
 
@@ -3713,7 +3744,12 @@ function App(){
 
   const listContent=()=>{
     if(tab==='dms')return h(React.Fragment,null,
-      h('div',{style:{padding:'0 12px 8px'}},h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'flex-start'},onClick:()=>setShowSearch(true)},t('search_people'))),
+      h('div',{style:{padding:'0 12px 8px'}},
+        h('div',{className:'search-placeholder-bar',onClick:()=>setShowSearch(true)},
+          h(SvgIcon,{name:'search_icon',size:16}),
+          t('search_people')
+        )
+      ),
       dmConvs.length===0&&h('div',{style:{color:'var(--muted)',fontSize:14,textAlign:'center',padding:'24px'}} ,t('no_chats')),
       dmConvs.map(c=>{const pu=peerUsers[c.uid];return h('div',{key:c.uid,className:'chat-row'+(activeChat?.id===c.uid&&activeChat?.type==='dm'?' active':''),onClick:()=>{openDM({id:c.uid,...(pu||{})});setShowMobileList(false)}},
         h('div', {onClick: e => { e.stopPropagation(); openUserProfile(c.uid); }, style: {cursor: 'pointer', display: 'flex'}}, h(Avatar,{user:pu||{id:c.uid},size:48})),
