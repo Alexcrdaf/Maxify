@@ -504,11 +504,22 @@ body.light .tab.active {
   overflow-x: auto;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
   justify-content: flex-start;
 }
 .modal-tab-bar::-webkit-scrollbar {
-  display: none;
+  height: 4px;
+}
+.modal-tab-bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-tab-bar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 99px;
+}
+body.light .modal-tab-bar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
 }
 .modal-tab {
   display: flex;
@@ -1922,7 +1933,7 @@ function RoomInfoModal({room,me,onClose,onOpenProfile}){
       ),
       h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'✕')
     ),
-    h('div',{className:'modal-tab-bar',style:{overflowX:'auto',flexWrap:'nowrap',marginTop:8}},
+    h('div',{className:'modal-tab-bar',onWheel:e=>{e.currentTarget.scrollLeft+=e.deltaY},style:{overflowX:'auto',flexWrap:'nowrap',marginTop:8}},
       tabs.map(tb=>h('div',{key:tb,className:'modal-tab'+(tab===tb?' active':''),onClick:()=>setTab(tb)},
         h(SvgIcon, {name: tb==='edit'?'edit':tb==='members'?'members':tb==='add'?'add':tb==='admins'?'admins':tb==='permissions'?'permissions':'settings', active: tab===tb, size: 14}),
         {edit:t('info'),members:t('members'),add:t('add'),admins:t('admins'),permissions:t('perms'),settings:t('more')}[tb]
