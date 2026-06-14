@@ -855,6 +855,7 @@ const DICT = {
     copy_code_hint: 'Скопируйте этот код, откройте приложение, нажмите "Войти по коду" и вставьте его.',
     go_to_web: 'Перейти в веб-версию чата',
     session_copied: 'Код сессии скопирован!',
+    copied: 'Скопировано! ✅',
     or_divider: 'ИЛИ',
     name_placeholder: 'Имя', pass_placeholder: 'Пароль',
     creating_loader: 'Создаём...', logging_in_loader: 'Входим...', login_btn: 'Войти',
@@ -968,6 +969,7 @@ const DICT = {
     copy_code_hint: 'Copy this code, open the app, tap "Login by code" and paste it.',
     go_to_web: 'Go to web chat version',
     session_copied: 'Session code copied!',
+    copied: 'Copied! ✅',
     or_divider: 'OR',
     name_placeholder: 'Username', pass_placeholder: 'Password',
     creating_loader: 'Creating...', logging_in_loader: 'Logging in...', login_btn: 'Log In',
@@ -1081,6 +1083,7 @@ const DICT = {
     copy_code_hint: 'Copie este código, abra la aplicación, toque "Entrar por código" y péguelo.',
     go_to_web: 'Ir a la versión de chat web',
     session_copied: '¡Código de sesión copiado!',
+    copied: '¡Copiado! ✅',
     or_divider: 'O',
     name_placeholder: 'Nombre de usuario', pass_placeholder: 'Contraseña',
     creating_loader: 'Creando...', logging_in_loader: 'Iniciando sesión...', login_btn: 'Iniciar sesión',
@@ -3827,7 +3830,7 @@ function UserProfilePage({uid,me,onClose,onStartDM}){
 }
 
 function App(){
-  const [user,setUser]=useState(null);const [loading,setLoading]=useState(true);
+  const [user,setUser]=useState(null);const [loading,setLoading]=useState(true);const [copied,setCopied]=useState(false);
   const [authError, setAuthError] = useState('');
   const [dmConvs,setDmConvs]=useState([]);const [rooms,setRooms]=useState([]);
   const [activeChat,setActiveChat]=useState(null);const [peerUsers,setPeerUsers]=useState({});
@@ -4165,13 +4168,14 @@ function App(){
                 if (val) {
                   const base64 = btoa(unescape(encodeURIComponent(val)));
                   await navigator.clipboard.writeText(base64);
-                  alert(t('session_copied') || 'Код сессии скопирован!');
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 3000);
                 }
               } catch (e) {
                 alert('Ошибка: ' + e.message);
               }
             }
-          }, t('copy_code_btn') || 'Нажмите, чтобы скопировать код'),
+          }, copied ? (t('copied') || 'Скопировано! ✅') : (t('copy_code_btn') || 'Нажмите, чтобы скопировать код')),
           h('div', {style: {fontSize: 12, color: 'var(--muted)', marginTop: 4}}, t('copy_code_hint') || 'Скопируйте этот код, откройте приложение, нажмите "Войти по коду" и вставьте его.')
         ),
         h('button', {
