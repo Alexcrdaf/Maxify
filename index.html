@@ -848,6 +848,13 @@ const DICT = {
     err_invalid_session_code: 'Неверный код сессии.', err_session_not_found: 'Сессия не найдена. Перезагрузите страницу.',
     session_copied_alert: 'Код сессии скопирован! Вставьте его в приложении на iPhone.',
     return_to_app: 'Вернуться в приложение',
+    session_ready: 'Сессия успешно создана. Выберите способ переноса:',
+    open_in_app: 'Открыть в приложении',
+    or_manually: 'ИЛИ ВРУЧНУЮ',
+    copy_code_btn: 'Нажмите, чтобы скопировать код',
+    copy_code_hint: 'Скопируйте этот код, откройте приложение, нажмите "Войти по коду" и вставьте его.',
+    go_to_web: 'Перейти в веб-версию чата',
+    session_copied: 'Код сессии скопирован!',
     or_divider: 'ИЛИ',
     name_placeholder: 'Имя', pass_placeholder: 'Пароль',
     creating_loader: 'Создаём...', logging_in_loader: 'Входим...', login_btn: 'Войти',
@@ -954,6 +961,13 @@ const DICT = {
     err_invalid_session_code: 'Invalid session code.', err_session_not_found: 'Session not found. Please reload page.',
     session_copied_alert: 'Session code copied! Paste it in the iPhone app.',
     return_to_app: 'Return to App',
+    session_ready: 'Session created successfully. Choose transfer method:',
+    open_in_app: 'Open in App',
+    or_manually: 'OR MANUALLY',
+    copy_code_btn: 'Click to copy code',
+    copy_code_hint: 'Copy this code, open the app, tap "Login by code" and paste it.',
+    go_to_web: 'Go to web chat version',
+    session_copied: 'Session code copied!',
     or_divider: 'OR',
     name_placeholder: 'Username', pass_placeholder: 'Password',
     creating_loader: 'Creating...', logging_in_loader: 'Logging in...', login_btn: 'Log In',
@@ -1060,6 +1074,13 @@ const DICT = {
     err_invalid_session_code: 'Código de sesión inválido.', err_session_not_found: 'Sesión no encontrada. Recarga la página.',
     session_copied_alert: '¡Código de sesión copiado! Pégalo en la app de iPhone.',
     return_to_app: 'Volver a la aplicación',
+    session_ready: 'Sesión creada con éxito. Elige el método de transferencia:',
+    open_in_app: 'Abrir en la aplicación',
+    or_manually: 'O MANUALMENTE',
+    copy_code_btn: 'Haga clic para copiar el código',
+    copy_code_hint: 'Copie este código, abra la aplicación, toque "Entrar por código" y péguelo.',
+    go_to_web: 'Ir a la versión de chat web',
+    session_copied: '¡Código de sesión copiado!',
     or_divider: 'O',
     name_placeholder: 'Nombre de usuario', pass_placeholder: 'Contraseña',
     creating_loader: 'Creando...', logging_in_loader: 'Iniciando sesión...', login_btn: 'Iniciar sesión',
@@ -4056,6 +4077,118 @@ function App(){
 
   if(loading)return h('div',{style:{height:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,color:'var(--text-primary)'}},h('div',{style:{width:48,height:48,border:'4px solid var(--border)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .8s cubic-bezier(0.4, 0, 0.2, 1) infinite'}}),h('div',{className:'syne',style:{letterSpacing:'.1em',fontSize:24}},'MAXIFY'));
   if(!user)return h(Auth, {externalError: authError, clearExternalError: () => setAuthError('')});
+
+  if (fromApp && user) {
+    return h('div', {
+      style: {
+        height: '100dvh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        background: 'var(--bg-base)',
+        color: 'var(--text-primary)'
+      }
+    },
+      h('div', {
+        className: 'glass fade-in',
+        style: {
+          width: '100%',
+          maxWidth: 400,
+          padding: 32,
+          borderRadius: 28,
+          border: '1px solid var(--border)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 24,
+          boxShadow: 'var(--shadow-glass)',
+          textAlign: 'center'
+        }
+      },
+        h('div', {
+          style: {
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            background: 'var(--accent-grad)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 32,
+            boxShadow: '0 8px 24px var(--glow)'
+          }
+        }, '📲'),
+        h('div', {style: {display: 'flex', flexDirection: 'column', gap: 8}},
+          h('h2', {className: 'syne', style: {fontSize: 24, margin: 0, fontWeight: 700}}, 'Maxify Link'),
+          h('p', {style: {fontSize: 14, color: 'var(--muted)', margin: 0}}, t('session_ready') || 'Сессия успешно создана. Выберите способ переноса:')
+        ),
+        h('button', {
+          className: 'btn btn-primary',
+          style: {width: '100%', padding: '14px', justifyContent: 'center', fontWeight: 600},
+          onClick: redirectBackToApp
+        }, t('open_in_app') || 'Открыть в приложении'),
+        h('div', {style: {display: 'flex', alignItems: 'center', gap: 12, width: '100%'}},
+          h('div', {style: {flex: 1, height: 1, background: 'var(--border)'}}),
+          h('span', {style: {fontSize: 12, color: 'var(--muted)'}}, t('or_manually') || 'ИЛИ ВРУЧНУЮ'),
+          h('div', {style: {flex: 1, height: 1, background: 'var(--border)'}})
+        ),
+        h('div', {style: {width: '100%', display: 'flex', flexDirection: 'column', gap: 8}},
+          h('button', {
+            className: 'btn btn-ghost',
+            style: {
+              width: '100%',
+              padding: '14px',
+              justifyContent: 'center',
+              background: 'var(--input-bg)',
+              fontFamily: 'inherit',
+              fontSize: 14,
+              border: '1px dashed var(--border)'
+            },
+            onClick: async () => {
+              try {
+                const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
+                let val = localStorage.getItem(key);
+                if (!val) {
+                  val = await new Promise((resolve, reject) => {
+                    const req = indexedDB.open("firebaseLocalStorageDb");
+                    req.onerror = () => reject(req.error);
+                    req.onsuccess = () => {
+                      const db = req.result;
+                      if (!db.objectStoreNames.contains("firebaseLocalStorage")) { resolve(null); return; }
+                      const tx = db.transaction("firebaseLocalStorage", "readonly");
+                      const getReq = tx.objectStore("firebaseLocalStorage").get(key);
+                      getReq.onsuccess = () => resolve(getReq.result ? JSON.stringify(getReq.result) : null);
+                      getReq.onerror = () => reject(getReq.error);
+                    };
+                  });
+                }
+                if (val) {
+                  const base64 = btoa(unescape(encodeURIComponent(val)));
+                  await navigator.clipboard.writeText(base64);
+                  alert(t('session_copied') || 'Код сессии скопирован!');
+                }
+              } catch (e) {
+                alert('Ошибка: ' + e.message);
+              }
+            }
+          }, t('copy_code_btn') || 'Нажмите, чтобы скопировать код'),
+          h('div', {style: {fontSize: 12, color: 'var(--muted)', marginTop: 4}}, t('copy_code_hint') || 'Скопируйте этот код, откройте приложение, нажмите "Войти по коду" и вставьте его.')
+        ),
+        h('button', {
+          className: 'btn btn-link',
+          style: {fontSize: 13, color: 'var(--muted)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0},
+          onClick: () => {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('from_app');
+            url.searchParams.delete('open_external');
+            window.history.replaceState({}, '', url.toString());
+            window.location.reload();
+          }
+        }, t('go_to_web') || 'Перейти в веб-версию чата')
+      )
+    );
+  }
 
   const activeDMPeer=activeChat?.type==='dm'?peerUsers[activeChat.id]:null;
   const activeRoom=activeChat?.type==='room'?rooms.find(r=>r.id===activeChat.id):null;
