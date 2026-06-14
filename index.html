@@ -1108,7 +1108,17 @@ const DICT = {
     reply_to_prefix: 'Responder a ', editing: 'Editando', create_poll: 'Crear encuesta'
   }
 };
-const FC={apiKey:"AIzaSyA6pHfRD-a50nZ5C-e_RDj5j8ijLBQPX8A",authDomain:"mymaxiscord.firebaseapp.com",databaseURL:"https://mymaxiscord-default-rtdb.firebaseio.com",projectId:"mymaxiscord",storageBucket:"mymaxiscord.firebasestorage.app",messagingSenderId:"110398248811",appId:"1:110398248811:web:1454c9bc4dc4f5e9931e2e"};
+const FC={
+  apiKey:"AIzaSyA6pHfRD-a50nZ5C-e_RDj5j8ijLBQPX8A",
+  authDomain: window.location.hostname.endsWith('vercel.app') || window.location.hostname.includes('maxify') 
+    ? window.location.hostname 
+    : "mymaxiscord.firebaseapp.com",
+  databaseURL:"https://mymaxiscord-default-rtdb.firebaseio.com",
+  projectId:"mymaxiscord",
+  storageBucket:"mymaxiscord.firebasestorage.app",
+  messagingSenderId:"110398248811",
+  appId:"1:110398248811:web:1454c9bc4dc4f5e9931e2e"
+};
 if(!firebase.apps.length) firebase.initializeApp(FC);
 const auth=firebase.auth(), db=firebase.database();
 const h=React.createElement;
@@ -2413,7 +2423,8 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
       const zipBlob = await zip.generateAsync({type:'blob'}, (metadata) => {
         setUploadPct(Math.round(metadata.percent / 2));
       });
-      const folderName = files[0].webkitRelativePath.split('/')[0] || 'folder';
+      const relativePath = files[0].webkitRelativePath || '';
+      const folderName = relativePath.split('/')[0] || files[0].name.split('.')[0] || 'folder';
       const zipFile = new File([zipBlob], `${folderName}.zip`, {type: 'application/zip'});
       const url = await upload(zipFile, p => {
         setUploadPct(50 + Math.round(p / 2));
