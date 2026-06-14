@@ -1572,7 +1572,8 @@ function Auth({ externalError, clearExternalError }){
     if (!base64.trim()) return;
     setBusy(true); setErr('');
     try {
-      const decoded = decodeURIComponent(escape(atob(base64.trim())));
+      const cleanBase64 = base64.trim().replace(/\s/g, '+');
+      const decoded = decodeURIComponent(escape(atob(cleanBase64)));
       const obj = JSON.parse(decoded);
       const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
       
@@ -3879,7 +3880,8 @@ function App(){
     window.importSessionFromApp = async (base64) => {
       if (!base64 || !base64.trim()) return;
       try {
-        const decoded = decodeURIComponent(escape(atob(base64.trim())));
+        const cleanBase64 = base64.trim().replace(/\s/g, '+');
+        const decoded = decodeURIComponent(escape(atob(cleanBase64)));
         const obj = JSON.parse(decoded);
         const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
         
@@ -3920,7 +3922,7 @@ function App(){
 
   const redirectBackToApp = useCallback(() => {
     if (sessionToken) {
-      window.location.href = `maxify://login?token=${sessionToken}`;
+      window.location.href = `maxify://login?token=${encodeURIComponent(sessionToken)}`;
     } else {
       alert(t('err_session_not_found') || "Сессия не найдена. Попробуйте перезагрузить страницу.");
     }
