@@ -842,7 +842,7 @@ const DICT = {
     err_invalid_email: 'Неверный email', err_invalid_cred: 'Неверный email или пароль',
     err_too_many_req: 'Слишком много попыток', err_no_network: 'Нет сети',
     error_prefix: 'Ошибка: ', create_acc: 'Создать аккаунт', welcome_back: 'С возвращением',
-    sign_in_google: 'Войти через Google', or_divider: 'ИЛИ',
+    sign_in_google: 'Войти через Google', login_via_site: 'Войти через сайт', or_divider: 'ИЛИ',
     name_placeholder: 'Имя', pass_placeholder: 'Пароль',
     creating_loader: 'Создаём...', logging_in_loader: 'Входим...', login_btn: 'Войти',
     already_have_acc: 'Уже есть аккаунт? Войти', no_acc_register: 'Нет аккаунта? Зарегистрироваться',
@@ -942,7 +942,7 @@ const DICT = {
     err_invalid_email: 'Invalid email', err_invalid_cred: 'Wrong email or password',
     err_too_many_req: 'Too many attempts', err_no_network: 'No network',
     error_prefix: 'Error: ', create_acc: 'Create Account', welcome_back: 'Welcome back',
-    sign_in_google: 'Sign in with Google', or_divider: 'OR',
+    sign_in_google: 'Sign in with Google', login_via_site: 'Login via website', or_divider: 'OR',
     name_placeholder: 'Username', pass_placeholder: 'Password',
     creating_loader: 'Creating...', logging_in_loader: 'Logging in...', login_btn: 'Log In',
     already_have_acc: 'Already have an account? Log In', no_acc_register: "Don't have an account? Register",
@@ -1042,7 +1042,7 @@ const DICT = {
     err_invalid_email: 'Email inválido', err_invalid_cred: 'Email o contraseña incorrecta',
     err_too_many_req: 'Demasiados intentos', err_no_network: 'Sin red',
     error_prefix: 'Error: ', create_acc: 'Crear cuenta', welcome_back: 'Bienvenido de nuevo',
-    sign_in_google: 'Iniciar sesión con Google', or_divider: 'O',
+    sign_in_google: 'Iniciar sesión con Google', login_via_site: 'Iniciar sesión en la web', or_divider: 'O',
     name_placeholder: 'Nombre de usuario', pass_placeholder: 'Contraseña',
     creating_loader: 'Creando...', logging_in_loader: 'Iniciando sesión...', login_btn: 'Iniciar sesión',
     already_have_acc: '¿Ya tienes una cuenta? Iniciar sesión', no_acc_register: '¿No tienes una cuenta? Registrarse',
@@ -1514,19 +1514,28 @@ function renderMentions(text) {
   });
 }
 
-function Auth(){
+function Auth({ externalError, clearExternalError }){
   const [mode,setMode]=useState('login');
   const [f,setF]=useState({email:'',pass:'',name:''});
   const [err,setErr]=useState('');
   const [busy,setBusy]=useState(false);
   const [showDownloads, setShowDownloads] = useState(false);
   const upd=k=>e=>setF(p=>({...p,[k]:e.target.value}));
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
   const ensureProfile=async(u,displayName)=>{
     const ref=db.ref('users/'+u.uid);
     const snap=await ref.once('value');
     if(!snap.val()){
-      await ref.set({id:u.uid,login:displayName||u.displayName||u.email.split('@')[0],email:u.email,avatarUrl:u.photoURL||null,online:true,lastSeen:Date.now(),createdAt:Date.now()});
+      await ref.set({
+        id:u.uid,
+        login:displayName||u.displayName||(u.email ? u.email.split('@')[0] : 'user_' + u.uid.slice(0, 5)),
+        email:u.email || '',
+        avatarUrl:u.photoURL||null,
+        online:true,
+        lastSeen:Date.now(),
+        createdAt:Date.now()
+      });
     }else{await ref.update({online:true,lastSeen:Date.now()});}
   };
 
@@ -1592,16 +1601,27 @@ function Auth(){
         h('svg',{width:20,height:20,viewBox:'0 0 48 48'},h('path',{fill:'#EA4335',d:'M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'}),h('path',{fill:'#4285F4',d:'M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'}),h('path',{fill:'#FBBC05',d:'M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'}),h('path',{fill:'#34A853',d:'M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'})),
         t('sign_in_google')
       ),
+      isIOS && h('a',{
+        href: busy ? '#' : 'https://maxify-pi.vercel.app/',
+        target: busy ? '_self' : '_blank',
+        rel:'noopener noreferrer',
+        className:'btn btn-ghost',
+        style:{width:'100%',justifyContent:'center',padding:'14px',display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',opacity:busy?0.5:1,pointerEvents:busy?'none':'auto'},
+        onClick:e=>{if(busy)e.preventDefault()}
+      },
+        h('span',{style:{fontSize:18}},'🌐'),
+        t('login_via_site')
+      ),
       h('div',{style:{display:'flex',alignItems:'center',gap:12}},h('div',{style:{flex:1,height:1,background:'var(--border)'}}),h('div',{style:{fontSize:12,color:'var(--muted)'}},t('or_divider')),h('div',{style:{flex:1,height:1,background:'var(--border)'}})),
       mode==='register'&&h('input',{placeholder:t('name_placeholder'),value:f.name,onChange:upd('name'),disabled:busy}),
       h('input',{placeholder:'Email',type:'email',value:f.email,onChange:upd('email'),disabled:busy}),
       h('input',{placeholder:t('pass_placeholder'),type:'password',value:f.pass,onChange:upd('pass'),disabled:busy,onKeyDown:e=>e.key==='Enter'&&!busy&&submit()}),
-      err&&h('div',{style:{color:'var(--danger)',fontSize:13,textAlign:'center',background:'rgba(255,59,48,.1)',padding:'10px',borderRadius:'12px'}},err),
+      (err || externalError) && h('div',{style:{color:'var(--danger)',fontSize:13,textAlign:'center',background:'rgba(255,59,48,.1)',padding:'10px',borderRadius:'12px'},onClick:clearExternalError},err || externalError),
       h('button',{className:'btn btn-primary',style:{width:'100%',justifyContent:'center',padding:'14px',fontSize:16},onClick:submit,disabled:busy},
         busy?h('span',{style:{display:'flex',alignItems:'center',gap:8}},h('span',{style:{width:16,height:16,border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin .7s linear infinite',display:'inline-block'}}),mode==='register'?t('creating_loader'):t('logging_in_loader'))
         :(mode==='register'?t('create_acc'):t('login_btn'))
       ),
-      h('div',{style:{textAlign:'center',fontSize:14,color:'var(--accent)',cursor:'pointer',padding:'8px',fontWeight:500},onClick:()=>!busy&&(setMode(m=>m==='login'?'register':'login'),setErr(''))},
+      h('div',{style:{textAlign:'center',fontSize:14,color:'var(--accent)',cursor:'pointer',padding:'8px',fontWeight:500},onClick:()=>!busy&&(setMode(m=>m==='login'?'register':'login'),setErr(''),clearExternalError&&clearExternalError())},
         mode==='register'?t('already_have_acc'):t('no_acc_register')),
       h('div',{style:{height:1,background:'var(--border)',margin:'4px 0'}}),
       h('div',{style:{textAlign:'center',fontSize:14,color:'var(--text-primary)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'4px',opacity:0.85},onMouseEnter:e=>e.currentTarget.style.opacity=1,onMouseLeave:e=>e.currentTarget.style.opacity=0.85,onClick:()=>setShowDownloads(true)},
@@ -3682,8 +3702,8 @@ function App(){
           if (!snap.val()) {
             await ref.set({
               id: result.user.uid,
-              login: result.user.displayName || result.user.email.split('@')[0],
-              email: result.user.email,
+              login: result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'user_' + result.user.uid.slice(0, 5)),
+              email: result.user.email || '',
               avatarUrl: result.user.photoURL || null,
               online: true,
               lastSeen: Date.now(),
@@ -3707,22 +3727,45 @@ function App(){
     if(window.chrome&&window.chrome.webview){try{window.chrome.webview.postMessage(JSON.stringify({type:'theme',value:saved}))}catch(e){}}
   },[]);
 
+  const [authError, setAuthError] = useState('');
+
   useEffect(()=>{
     const unsub=auth.onAuthStateChanged(async fu=>{
       if(userListenerRef.current){userListenerRef.current.off();userListenerRef.current=null;}
       if(fu){
-        const ref=db.ref('users/'+fu.uid);const snap=await ref.once('value');
-        if(!snap.val()){await ref.set({id:fu.uid,login:fu.displayName||fu.email.split('@')[0],email:fu.email,avatarUrl:fu.photoURL||null,online:true,lastSeen:Date.now(),createdAt:Date.now()});}
-        else{await ref.update({online:true,lastSeen:Date.now()});}
-        userListenerRef.current=ref;ref.on('value',s=>{const v=s.val();if(v){setUser(v);setUid(v.id);}setLoading(false)});
-        
-        // Setup Firebase server presence
-        ref.child('online').onDisconnect().set(false);
-        ref.child('lastSeen').onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
-        
-        window.addEventListener('beforeunload',()=>ref.update({online:false,lastSeen:Date.now()}));
-        const interval=setInterval(()=>ref.update({online:true,lastSeen:Date.now()}),60000);
-        window.addEventListener('beforeunload',()=>clearInterval(interval));
+        setLoading(true);
+        setAuthError('');
+        try {
+          const ref=db.ref('users/'+fu.uid);const snap=await ref.once('value');
+          if(!snap.val()){
+            await ref.set({
+              id:fu.uid,
+              login:fu.displayName||(fu.email ? fu.email.split('@')[0] : 'user_' + fu.uid.slice(0, 5)),
+              email:fu.email || '',
+              avatarUrl:fu.photoURL||null,
+              online:true,
+              lastSeen:Date.now(),
+              createdAt:Date.now()
+            });
+          }
+          else{await ref.update({online:true,lastSeen:Date.now()});}
+          userListenerRef.current=ref;ref.on('value',s=>{const v=s.val();if(v){setUser(v);setUid(v.id);}setLoading(false)});
+          
+          // Setup Firebase server presence
+          ref.child('online').onDisconnect().set(false);
+          ref.child('lastSeen').onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
+          
+          window.addEventListener('beforeunload',()=>ref.update({online:false,lastSeen:Date.now()}));
+          const interval=setInterval(()=>ref.update({online:true,lastSeen:Date.now()}),60000);
+          window.addEventListener('beforeunload',()=>clearInterval(interval));
+        } catch (dbErr) {
+          console.error("Firebase Database Auth Error:", dbErr);
+          setAuthError(dbErr.message);
+          setUser(null);
+          setUid(null);
+          setLoading(false);
+          auth.signOut();
+        }
       }else{setUser(null);setUid(null);setLoading(false);}
     });
     return()=>unsub();
@@ -3811,7 +3854,7 @@ function App(){
   const signOut=async()=>{if(user)await db.ref('users/'+user.id).update({online:false,lastSeen:Date.now()});auth.signOut()};
 
   if(loading)return h('div',{style:{height:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,color:'var(--text-primary)'}},h('div',{style:{width:48,height:48,border:'4px solid var(--border)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .8s cubic-bezier(0.4, 0, 0.2, 1) infinite'}}),h('div',{className:'syne',style:{letterSpacing:'.1em',fontSize:24}},'MAXIFY'));
-  if(!user)return h(Auth);
+  if(!user)return h(Auth, {externalError: authError, clearExternalError: () => setAuthError('')});
 
   const activeDMPeer=activeChat?.type==='dm'?peerUsers[activeChat.id]:null;
   const activeRoom=activeChat?.type==='room'?rooms.find(r=>r.id===activeChat.id):null;
