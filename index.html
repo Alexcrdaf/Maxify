@@ -2389,7 +2389,12 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
     const file=e.target.files[0];if(!file)return;
     setUploading(true);setShowAttach(false);setUploadErr('');
     isFolderRef.current=false;
-    try{const url=await upload(file,p=>setUploadPct(p));
+    try{
+      let uploadFile = file;
+      if (file.name && file.name.toLowerCase().endsWith('.exe')) {
+        uploadFile = new File([file], file.name + '.dat', {type: 'application/octet-stream'});
+      }
+      const url=await upload(uploadFile,p=>setUploadPct(p));
       if(file.type.startsWith('image/'))doSend({type:'image',url,name:file.name});
       else if(file.type.startsWith('video/'))doSend({type:'file-video',url,name:file.name});
       else doSend({type:'file',url,name:file.name});
@@ -2498,7 +2503,12 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
       h('div',{style:{flex:1,minWidth:0}},h('div',{style:{fontSize:13,color:'var(--accent)',fontWeight:600,marginBottom:2}},t('editing')),h('div',{style:{fontSize:13,color:'var(--muted)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},editMsg.text)),
       h('button',{className:'btn btn-icon btn-ghost',style:{width:32,height:32,minWidth:32,minHeight:32,fontSize:16},onClick:onCancelEdit},'✕')
     ),
-    uploading&&h('div',{style:{height:3,background:'var(--border)',width:'100%'}},h('div',{style:{height:'100%',background:'var(--accent)',width:uploadPct+'%',transition:'width 0.2s'}})),
+    uploading&&h('div',{style:{display:'flex',flexDirection:'column',gap:4}},
+      h('div',{style:{fontSize:12,color:'var(--accent)',padding:'0 16px',fontWeight:600}},
+        (isFolderRef.current && uploadPct < 50) ? t('compressing_folder') : t('saving')
+      ),
+      h('div',{style:{height:3,background:'var(--border)',width:'100%'}},h('div',{style:{height:'100%',background:'var(--accent)',width:uploadPct+'%',transition:'width 0.2s'}}))
+    ),
     uploadErr&&h('div',{style:{padding:'8px 16px',fontSize:13,color:'var(--danger)',background:'rgba(255,59,48,0.1)'}},uploadErr),
     
     h('div',{className:'input-wrap',style:{padding:'12px 16px',borderTop:'1px solid var(--border)',display:'flex',gap:10,alignItems:'center',position:'relative'}},
@@ -2512,11 +2522,13 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
             showAttach&&h('div',{className:'attach-menu fade-in'},
               h('div',{className:'attach-item',onClick:()=>{fileRef.current.accept='image/*';fileRef.current.click()}},t('photo_or_video')),
               h('div',{className:'attach-item',onClick:()=>{fileRef.current.accept='*/*';fileRef.current.click()}},t('attach_file')),
+              h('div',{className:'attach-item',onClick:()=>folderRef.current.click()},t('attach_folder')),
               h('div',{className:'attach-item',onClick:startVnote},t('attach_vnote')),
               onOpenPoll&&h('div',{className:'attach-item',onClick:()=>{onOpenPoll();setShowAttach(false);}},t('attach_poll'))
             ),
             h('button',{className:'btn btn-ghost btn-icon',style:{background:showAttach?'var(--input-bg)':''},onClick:()=>setShowAttach(v=>!v)},'+'),
             h('input',{ref:fileRef,type:'file',style:{display:'none'},onChange:handleFile}),
+            h('input',{ref:folderRef,type:'file',webkitdirectory:'',directory:'',multiple:true,style:{display:'none'},onChange:handleFolder}),
             h('input',{value:text,onChange:e=>setText(e.target.value),onClick:()=>setShowAttach(false),onKeyDown:e=>e.key==='Enter'&&!e.shiftKey&&(e.preventDefault(),doSend({type:'text',text})),onPaste:handlePaste,placeholder:t('msg_placeholder'),style:{flex:1}}),
             (text.trim()||editMsg)
               ? h('button',{className:'btn btn-primary btn-icon slide-up',onClick:()=>doSend({type:'text',text})},editMsg?'✓':'↑')
