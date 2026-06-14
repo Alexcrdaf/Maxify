@@ -875,7 +875,7 @@ const DICT = {
     change_info_perm: 'Изменять название', pin_messages_perm: 'Закреплять сообщения', invite_users_perm: 'Добавлять людей',
     hide_from_list: 'Скрыть из списка', hidden_rooms_desc: 'Скрытые можно найти через поиск',
     leave_btn: 'Покинуть', delete_group_btn: 'Удалить группу',
-    photo_or_video: '📷  Фото или Видео', attach_file: '📎  Файл', attach_vnote: '⭕  Видеосообщение', attach_poll: '📊  Опрос',
+    photo_or_video: '📷  Фото или Видео', attach_file: '📎  Файл', attach_folder: '📁  Папка', attach_vnote: '⭕  Видеосообщение', attach_poll: '📊  Опрос', compressing_folder: 'Сжатие папки...',
     preview_voice: '🎙️ Голосовое', preview_vnote: '⭕ Видео', preview_photo: '📷 Фото', preview_video: '🎬 Видео', preview_file: '📎 Файл', preview_poll: '📊 Опрос', preview_attachment: '📎 Вложение',
     vnote_recording_title: 'ЗАПИСЬ ВИДЕОСООБЩЕНИЯ', vnote_cancel: 'Отмена', vnote_send: 'Отправить',
     pinned_message_title: 'ЗАКРЕПЛЁННОЕ СООБЩЕНИЕ',
@@ -975,7 +975,7 @@ const DICT = {
     change_info_perm: 'Change info', pin_messages_perm: 'Pin messages', invite_users_perm: 'Add people',
     hide_from_list: 'Hide from list', hidden_rooms_desc: 'Hidden ones can be found via search',
     leave_btn: 'Leave', delete_group_btn: 'Delete group',
-    photo_or_video: '📷  Photo or Video', attach_file: '📎  File', attach_vnote: '⭕  Video note', attach_poll: '📊  Poll',
+    photo_or_video: '📷  Photo or Video', attach_file: '📎  File', attach_folder: '📁  Folder', attach_vnote: '⭕  Video note', attach_poll: '📊  Poll', compressing_folder: 'Compressing folder...',
     preview_voice: '🎙️ Voice message', preview_vnote: '⭕ Video note', preview_photo: '📷 Photo', preview_video: '🎬 Video', preview_file: '📎 File', preview_poll: '📊 Poll', preview_attachment: '📎 Attachment',
     vnote_recording_title: 'RECORDING VIDEO NOTE', vnote_cancel: 'Cancel', vnote_send: 'Send',
     pinned_message_title: 'PINNED MESSAGE',
@@ -1075,7 +1075,7 @@ const DICT = {
     change_info_perm: 'Cambiar nombre', pin_messages_perm: 'Fijar mensajes', invite_users_perm: 'Añadir personas',
     hide_from_list: 'Ocultar de la lista', hidden_rooms_desc: 'Los ocultos se pueden encontrar mediante la búsqueda',
     leave_btn: 'Salir', delete_group_btn: 'Eliminar grupo',
-    photo_or_video: '📷  Foto o Video', attach_file: '📎  Archivo', attach_vnote: '⭕  Mensaje de video', attach_poll: '📊  Encuesta',
+    photo_or_video: '📷  Foto o Video', attach_file: '📎  Archivo', attach_folder: '📁  Carpeta', attach_vnote: '⭕  Mensaje de video', attach_poll: '📊  Encuesta', compressing_folder: 'Comprimiendo carpeta...',
     preview_voice: '🎙️ Mensaje de voz', preview_vnote: '⭕ Mensaje de video', preview_photo: '📷 Foto', preview_video: '🎬 Video', preview_file: '📎 Archivo', preview_poll: '📊 Encuesta', preview_attachment: '📎 Adjunto',
     vnote_recording_title: 'GRABANDO MENSAJE DE VIDEO', vnote_cancel: 'Cancelar', vnote_send: 'Enviar',
     pinned_message_title: 'MENSAJE FIJADO',
@@ -1530,24 +1530,28 @@ function Auth(){
     }else{await ref.update({online:true,lastSeen:Date.now()});}
   };
 
-  const signInGoogle=async()=>{
+  const signInGoogle=()=>{
     setErr('');setBusy(true);
-    try{
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try {
-        const result = await auth.signInWithPopup(provider);
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then(async (result) => {
         if (result && result.user) {
           await ensureProfile(result.user, result.user.displayName);
         }
-      } catch (e) {
+        setBusy(false);
+      })
+      .catch((e) => {
         if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
-          await auth.signInWithRedirect(provider);
+          auth.signInWithRedirect(provider)
+            .catch((err2) => {
+              setErr(t('error_prefix') + err2.message);
+              setBusy(false);
+            });
         } else {
-          throw e;
+          setErr(t('error_prefix') + e.message);
+          setBusy(false);
         }
-      }
-    }
-    catch(e){setErr(t('error_prefix')+e.message);setBusy(false);}
+      });
   };
 
   const submit=async()=>{
@@ -2203,7 +2207,10 @@ function MsgBubble({m,mine,me,onImgClick,onEdit,onDelete,onReply,onForward,onPin
         h('div', {style: {fontSize: 11, color: 'var(--muted)', marginTop: 8, textAlign: 'right'}}, totalVotes + ' ' + t('votes_suffix'))
       );
     }
-    if(m.type==='file')return h('div',{className:bubbleClass,style:{padding:'12px 16px',display:'flex',alignItems:'center',gap:12}},h('span',{style:{fontSize:24}},'📎'),h('div',null,h('div',{style:{fontSize:14,fontWeight:600,marginBottom:2}},m.name||t('preview_file')),h('a',{href:m.url,target:'_blank',download:m.name,style:{fontSize:12,color:mine?'rgba(255,255,255,0.8)':'var(--accent)',textDecoration:'none',fontWeight:600}},t('download_btn') + ' ↓')));
+    if(m.type==='file'){
+      const isZip = m.name && m.name.toLowerCase().endsWith('.zip');
+      return h('div',{className:bubbleClass,style:{padding:'12px 16px',display:'flex',alignItems:'center',gap:12}},h('span',{style:{fontSize:24}},isZip?'📦':'📎'),h('div',null,h('div',{style:{fontSize:14,fontWeight:600,marginBottom:2}},m.name||t('preview_file')),h('a',{href:m.url,target:'_blank',download:m.name,style:{fontSize:12,color:mine?'rgba(255,255,255,0.8)':'var(--accent)',textDecoration:'none',fontWeight:600}},t('download_btn') + ' ↓')));
+    }
     
     return h('div',{className:bubbleClass,style:{maxWidth:'min(75vw, 360px)',padding:'10px 16px',fontSize:15,lineHeight:1.5,wordBreak:'break-word'}},
       renderMentions(m.text),
@@ -2328,7 +2335,7 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
   const [uploading,setUploading]=useState(false);
   const [uploadPct,setUploadPct]=useState(0);
   const [uploadErr,setUploadErr]=useState('');
-  const fileRef=useRef(),voiceRef=useRef(),voiceStreamRef=useRef(),voiceTO=useRef(),vnoteRef=useRef(),vnoteRecRef=useRef(),vnoteStreamRef=useRef(),sendLockRef=useRef(false);
+  const fileRef=useRef(),folderRef=useRef(),voiceRef=useRef(),voiceStreamRef=useRef(),voiceTO=useRef(),vnoteRef=useRef(),vnoteRecRef=useRef(),vnoteStreamRef=useRef(),sendLockRef=useRef(false),isFolderRef=useRef(false);
   const {t} = useTranslation();
 
   useEffect(()=>{if(editMsg){setText(editMsg.text||'')}else{setText('')}},[editMsg]);
@@ -2371,10 +2378,47 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
   const handleFile=async e=>{
     const file=e.target.files[0];if(!file)return;
     setUploading(true);setShowAttach(false);setUploadErr('');
+    isFolderRef.current=false;
     try{const url=await upload(file,p=>setUploadPct(p));
       if(file.type.startsWith('image/'))doSend({type:'image',url,name:file.name});
       else if(file.type.startsWith('video/'))doSend({type:'file-video',url,name:file.name});
       else doSend({type:'file',url,name:file.name});
+    }catch(ex){setUploadErr(t('error_prefix')+ex.message)}
+    setUploading(false);setUploadPct(0);e.target.value='';
+  };
+
+  async function loadJSZip() {
+    if (window.JSZip) return window.JSZip;
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      script.onload = () => resolve(window.JSZip);
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  const handleFolder=async e=>{
+    const files=Array.from(e.target.files);
+    if(files.length===0)return;
+    setUploading(true);setShowAttach(false);setUploadErr('');
+    isFolderRef.current=true;
+    try{
+      const JSZip = await loadJSZip();
+      const zip = new JSZip();
+      for(const file of files) {
+        const path = file.webkitRelativePath || file.name;
+        zip.file(path, file);
+      }
+      const zipBlob = await zip.generateAsync({type:'blob'}, (metadata) => {
+        setUploadPct(Math.round(metadata.percent / 2));
+      });
+      const folderName = files[0].webkitRelativePath.split('/')[0] || 'folder';
+      const zipFile = new File([zipBlob], `${folderName}.zip`, {type: 'application/zip'});
+      const url = await upload(zipFile, p => {
+        setUploadPct(50 + Math.round(p / 2));
+      });
+      doSend({type:'file',url,name:zipFile.name});
     }catch(ex){setUploadErr(t('error_prefix')+ex.message)}
     setUploading(false);setUploadPct(0);e.target.value='';
   };
