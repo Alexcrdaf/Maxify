@@ -1732,8 +1732,8 @@ function PCSettingsTab({me}){
     ),
     h('div', {style:{fontWeight:700, fontSize:16, color:'var(--text-primary)'}}, t('available_platforms')),
     h(DeviceRow, {icon: '📱', name: 'iOS / iPhone', status: t('ready_status'), link: 'https://drive.google.com/file/d/1c4Djf-X0d0UGBkBcZQK25BiPRoxhQSbk/view?usp=sharing', isReady: true}),
-    h(DeviceRow, {icon: '🤖', name: 'Android', status: t('in_dev_status'), isReady: false}),
-    h(DeviceRow, {icon: '💻', name: 'Windows / macOS', status: t('in_dev_status'), isReady: false}),
+    h(DeviceRow, {icon: '🤖', name: 'Android', status: t('ready_status'), link: 'https://drive.google.com/file/d/1978IP_5lpfklDhsESfQcxiul7CFBVd13/view?usp=sharing', isReady: true}),
+    h(DeviceRow, {icon: '💻', name: 'Windows', status: t('ready_status'), link: 'https://drive.google.com/file/d/1BYeJQMiq_zm9V2zo4mw1I-yHh6cEFz5q/view?usp=sharing', isReady: true}),
     
     h('button', {className:'btn btn-ghost', style:{justifyContent:'center', width:'100%', marginTop:8}, onClick: () => setShowInstructions(!showInstructions)}, 
       showInstructions ? t('hide_instr') : t('show_instr')
