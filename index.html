@@ -1532,7 +1532,12 @@ function Auth(){
 
   const signInGoogle=async()=>{
     setErr('');setBusy(true);
-    try{await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());}
+    try{
+      const result = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      if (result && result.user) {
+        await ensureProfile(result.user, result.user.displayName);
+      }
+    }
     catch(e){setErr(t('error_prefix')+e.message);setBusy(false);}
   };
 
