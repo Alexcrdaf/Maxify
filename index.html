@@ -497,6 +497,63 @@ body.light .tab.active {
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
+.modal-tab-bar {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  justify-content: flex-start;
+}
+.modal-tab-bar::-webkit-scrollbar {
+  display: none;
+}
+.modal-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  height: 38px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body.light .modal-tab {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.modal-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+body.light .modal-tab:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+.modal-tab.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: #121212;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+body.light .modal-tab.active {
+  background: #121212;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .pinned-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--pinned-bg); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); }
 .pinned-line { width: 3px; height: 36px; border-radius: 3px; background: var(--accent); }
 .reply-bubble { background: var(--reply-bg); border-left: 3px solid var(--accent); border-radius: 6px 16px 16px 6px; padding: 6px 12px; margin-bottom: 8px; }
@@ -781,7 +838,7 @@ const DICT = {
     admin_perms_desc: 'Администраторы могут закреплять сообщения, добавлять участников и редактировать информацию.',
     regular_members_can: 'Что могут делать обычные участники:',
     change_info_perm: 'Изменять название', pin_messages_perm: 'Закреплять сообщения', invite_users_perm: 'Добавлять людей',
-    hide_from_list: '🙈 Скрыть из списка', hidden_rooms_desc: 'Скрытые можно найти через поиск',
+    hide_from_list: 'Скрыть из списка', hidden_rooms_desc: 'Скрытые можно найти через поиск',
     leave_btn: 'Покинуть', delete_group_btn: 'Удалить группу',
     photo_or_video: '📷  Фото или Видео', attach_file: '📎  Файл', attach_vnote: '⭕  Видеосообщение', attach_poll: '📊  Опрос',
     preview_voice: '🎙️ Голосовое', preview_vnote: '⭕ Видео', preview_photo: '📷 Фото', preview_video: '🎬 Видео', preview_file: '📎 Файл', preview_poll: '📊 Опрос', preview_attachment: '📎 Вложение',
@@ -789,7 +846,7 @@ const DICT = {
     pinned_message_title: 'ЗАКРЕПЛЁННОЕ СООБЩЕНИЕ',
     peer_unavailable: 'Собеседник сейчас недоступен.', mic_cam_no_access: 'Нет доступа к камере/микрофону',
     net_error: 'Ошибка сети. Пожалуйста, проверьте подключение.', delete_msg_confirm: 'Удалить сообщение?',
-    block_user: '🚫  Заблокировать', delete_chat: '🗑  Удалить переписку', delete_chat_confirm: 'Удалить переписку?',
+    block_user: 'Заблокировать', delete_chat: 'Удалить переписку', delete_chat_confirm: 'Удалить переписку?',
     search_chat_placeholder: 'Поиск чата...', start_chat_with: 'Начните общение с ', user_suffix: 'пользователем',
     user_blocked_banner: '🚫 Пользователь заблокирован', unblock_btn: 'Разблокировать',
     no_messages: 'Нет сообщений', share_title: 'Поделиться', no_contacts: 'Нет контактов',
@@ -881,7 +938,7 @@ const DICT = {
     admin_perms_desc: 'Administrators can pin messages, add members, and edit info.',
     regular_members_can: 'What regular members can do:',
     change_info_perm: 'Change info', pin_messages_perm: 'Pin messages', invite_users_perm: 'Add people',
-    hide_from_list: '🙈 Hide from list', hidden_rooms_desc: 'Hidden ones can be found via search',
+    hide_from_list: 'Hide from list', hidden_rooms_desc: 'Hidden ones can be found via search',
     leave_btn: 'Leave', delete_group_btn: 'Delete group',
     photo_or_video: '📷  Photo or Video', attach_file: '📎  File', attach_vnote: '⭕  Video note', attach_poll: '📊  Poll',
     preview_voice: '🎙️ Voice message', preview_vnote: '⭕ Video note', preview_photo: '📷 Photo', preview_video: '🎬 Video', preview_file: '📎 File', preview_poll: '📊 Poll', preview_attachment: '📎 Attachment',
@@ -889,7 +946,7 @@ const DICT = {
     pinned_message_title: 'PINNED MESSAGE',
     peer_unavailable: 'The peer is currently unavailable.', mic_cam_no_access: 'No camera/microphone access',
     net_error: 'Error. Please check your network.', delete_msg_confirm: 'Delete message?',
-    block_user: '🚫  Block', delete_chat: '🗑  Delete conversation', delete_chat_confirm: 'Delete conversation?',
+    block_user: 'Block', delete_chat: 'Delete conversation', delete_chat_confirm: 'Delete conversation?',
     search_chat_placeholder: 'Search chat...', start_chat_with: 'Start chatting with ', user_suffix: 'user',
     user_blocked_banner: '🚫 User is blocked', unblock_btn: 'Unblock',
     no_messages: 'No messages', share_title: 'Share', no_contacts: 'No contacts',
@@ -981,7 +1038,7 @@ const DICT = {
     admin_perms_desc: 'Los administradores pueden fijar mensajes, añadir miembros y editar información.',
     regular_members_can: 'Lo que pueden hacer los miembros normales:',
     change_info_perm: 'Cambiar nombre', pin_messages_perm: 'Fijar mensajes', invite_users_perm: 'Añadir personas',
-    hide_from_list: '🙈 Ocultar de la lista', hidden_rooms_desc: 'Los ocultos se pueden encontrar mediante la búsqueda',
+    hide_from_list: 'Ocultar de la lista', hidden_rooms_desc: 'Los ocultos se pueden encontrar mediante la búsqueda',
     leave_btn: 'Salir', delete_group_btn: 'Eliminar grupo',
     photo_or_video: '📷  Foto o Video', attach_file: '📎  Archivo', attach_vnote: '⭕  Mensaje de video', attach_poll: '📊  Encuesta',
     preview_voice: '🎙️ Mensaje de voz', preview_vnote: '⭕ Mensaje de video', preview_photo: '📷 Foto', preview_video: '🎬 Video', preview_file: '📎 Archivo', preview_poll: '📊 Encuesta', preview_attachment: '📎 Adjunto',
@@ -989,7 +1046,7 @@ const DICT = {
     pinned_message_title: 'MENSAJE FIJADO',
     peer_unavailable: 'El destinatario no está disponible actualmente.', mic_cam_no_access: 'Sin acceso a cámara/micrófono',
     net_error: 'Error. Por favor, comprueba tu red.', delete_msg_confirm: '¿Eliminar mensaje?',
-    block_user: '🚫  Bloquear', delete_chat: '🗑  Eliminar conversación', delete_chat_confirm: '¿Eliminar conversación?',
+    block_user: 'Bloquear', delete_chat: 'Eliminar conversación', delete_chat_confirm: '¿Eliminar conversación?',
     search_chat_placeholder: 'Buscar en el chat...', start_chat_with: 'Empieza a chatear con ', user_suffix: 'usuario',
     user_blocked_banner: '🚫 Usuario bloqueado', unblock_btn: 'Desbloquear',
     no_messages: 'No hay mensajes', share_title: 'Compartir', no_contacts: 'Sin contactos',
@@ -1108,6 +1165,82 @@ const SvgIcon = ({ name, active, size = 24 }) => {
     return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
       h('circle', { cx: 12, cy: 8, r: 4, stroke: 'currentColor', strokeWidth: strokeW, fill: 'none' }),
       h('path', { d: 'M4 20c0-4 4-7 8-7s8 3 8 7', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: 'none' })
+    );
+  }
+
+  if (name === 'edit') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('path', { d: 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z' })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('path', { d: 'M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' })
+    );
+  }
+
+  if (name === 'members') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('path', { d: 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 2 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z' })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('path', { d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' })
+    );
+  }
+
+  if (name === 'add') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'none', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('circle', { cx: 12, cy: 12, r: 10, fill: 'currentColor' }),
+        h('path', { d: 'M12 8v8M8 12h8', stroke: 'var(--panel-solid, #121212)', strokeWidth: 2, strokeLinecap: 'round' })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('circle', { cx: 12, cy: 12, r: 10, stroke: 'currentColor', strokeWidth: strokeW, fill: 'none' }),
+      h('path', { d: 'M12 8v8M8 12h8', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round' })
+    );
+  }
+
+  if (name === 'admins') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('polygon', { points: '12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2' })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('polygon', { points: '12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2', stroke: 'currentColor', strokeWidth: strokeW, strokeLinejoin: 'round', fill: 'none' })
+    );
+  }
+
+  if (name === 'permissions') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('path', { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('path', { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' })
+    );
+  }
+
+  if (name === 'settings') {
+    if (active) {
+      return h('svg', { viewBox: '0 0 24 24', width: size, height: size, fill: 'currentColor', style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+        h('circle', { cx: 12, cy: 12, r: 3 }),
+        h('path', { d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z' })
+      );
+    }
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('circle', { cx: 12, cy: 12, r: 3, stroke: 'currentColor', strokeWidth: strokeW }),
+      h('path', { d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' })
+    );
+  }
+
+  if (name === 'pin') {
+    return h('svg', { viewBox: '0 0 24 24', width: size, height: size, style: { display: 'block', width: `${size}px`, height: `${size}px` } },
+      h('path', { d: 'M12 17v5M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.89A.5.5 0 0 0 6.33 14h11.34a.5.5 0 0 0 .42-.56l-1.78-.89A2 2 0 0 1 15 10.76V6h-6v4.76zM15 6V3a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3', stroke: 'currentColor', strokeWidth: strokeW, strokeLinecap: 'round', fill: active ? 'currentColor' : 'none' })
     );
   }
 
@@ -1720,7 +1853,7 @@ function CreateRoomModal({me,type,onClose}){
     h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},h('div',{className:'syne',style:{fontSize:18}},type==='group'?t('create_group_title'):t('create_channel_title')),h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'✕')),
     h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:12,padding:'10px 0'}},
       h('div',{onClick:()=>fileRef.current.click(),style:{width:72,height:72,borderRadius:'50%',background:'var(--input-bg)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',overflow:'hidden'}},
-        avatarUrl?h('img',{src:avatarUrl,style:{width:'100%',height:'100%',objectFit:'cover'}}):h('span',{style:{fontSize:28}},'📷')
+        avatarUrl?h('img',{src:avatarUrl,style:{width:'100%',height:'100%',objectFit:'cover'}}):h(SvgIcon,{name:'feed',size:28})
       ),
       h('input',{ref:fileRef,type:'file',accept:'image/*',style:{display:'none'},onChange:handleFile})
     ),
@@ -1789,16 +1922,17 @@ function RoomInfoModal({room,me,onClose,onOpenProfile}){
       ),
       h('button',{className:'btn btn-icon btn-ghost',onClick:onClose},'✕')
     ),
-    h('div',{className:'tab-bar',style:{overflowX:'auto',flexWrap:'nowrap',marginTop:8}},
-      tabs.map(tb=>h('div',{key:tb,className:'tab'+(tab===tb?' active':''),style:{flexShrink:0},onClick:()=>setTab(tb)},
-        {edit:'✏️ '+t('info'),members:'👥 '+t('members'),add:'➕ '+t('add'),admins:'⭐ '+t('admins'),permissions:'🛡 '+t('perms'),settings:'⚙️ '+t('more')}[tb]
+    h('div',{className:'modal-tab-bar',style:{overflowX:'auto',flexWrap:'nowrap',marginTop:8}},
+      tabs.map(tb=>h('div',{key:tb,className:'modal-tab'+(tab===tb?' active':''),onClick:()=>setTab(tb)},
+        h(SvgIcon, {name: tb==='edit'?'edit':tb==='members'?'members':tb==='add'?'add':tb==='admins'?'admins':tb==='permissions'?'permissions':'settings', active: tab===tb, size: 14}),
+        {edit:t('info'),members:t('members'),add:t('add'),admins:t('admins'),permissions:t('perms'),settings:t('more')}[tb]
       ))
     ),
     h('div',{className:'hr', style:{margin: '8px 0'}}),
     tab==='edit'&&isAdmin&&h('div',{style:{display:'flex',flexDirection:'column',gap:12}},
       h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:8}},
         h('div',{onClick:()=>fileRef.current.click(),style:{width:80,height:80,borderRadius:'50%',background:'var(--input-bg)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',overflow:'hidden'}},
-          room.avatarUrl?h('img',{src:room.avatarUrl,style:{width:'100%',height:'100%',objectFit:'cover'}}):h('span',{style:{fontSize:32}},'📷')
+          room.avatarUrl?h('img',{src:room.avatarUrl,style:{width:'100%',height:'100%',objectFit:'cover'}}):h(SvgIcon,{name:'feed',size:32})
         ),
         h('input',{ref:fileRef,type:'file',accept:'image/*',style:{display:'none'},onChange:handleAvatar}),
         busy&&uploadPct>0&&h('div',{style:{height:4,background:'var(--border)',borderRadius:2,width:'100%',overflow:'hidden'}},h('div',{style:{height:'100%',background:'var(--accent)',width:uploadPct+'%'}}))
@@ -1835,8 +1969,8 @@ function RoomInfoModal({room,me,onClose,onOpenProfile}){
     ),
     tab==='permissions'&&isOwner&&h('div',{style:{display:'flex',flexDirection:'column',gap:12}},
       h('div',{style:{fontSize:13,color:'var(--muted)',marginBottom:4}},t('regular_members_can')),
-      [{key:'changeInfo',label:t('change_info_perm'),icon:'✏️'},{key:'pinMessages',label:t('pin_messages_perm'),icon:'📌'},{key:'inviteUsers',label:t('invite_users_perm'),icon:'👤'}].map(p=>h('label',{key:p.key,style:{display:'flex',alignItems:'center',gap:12,cursor:'pointer',padding:'12px 16px',borderRadius:20,background:'var(--input-bg)',border:'1px solid var(--border)'}},
-        h('div',{style:{flex:1}},h('div',{style:{fontSize:14,fontWeight:600,display:'flex',alignItems:'center',gap:8}},p.icon,' ',p.label)),
+      [{key:'changeInfo',label:t('change_info_perm'),iconName:'edit'},{key:'pinMessages',label:t('pin_messages_perm'),iconName:'pin'},{key:'inviteUsers',label:t('invite_users_perm'),iconName:'members'}].map(p=>h('label',{key:p.key,style:{display:'flex',alignItems:'center',gap:12,cursor:'pointer',padding:'12px 16px',borderRadius:20,background:'var(--input-bg)',border:'1px solid var(--border)'}},
+        h('div',{style:{flex:1}},h('div',{style:{fontSize:14,fontWeight:600,display:'flex',alignItems:'center',gap:8}},h(SvgIcon,{name:p.iconName,size:18,active:true}),' ',p.label)),
         h('div',{onClick:()=>togglePerm(p.key),style:{width:46,height:28,borderRadius:999,background:perms[p.key]?'var(--ok)':'var(--border)',position:'relative',transition:'background .2s',cursor:'pointer',flexShrink:0}},
           h('div',{style:{width:24,height:24,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left:perms[p.key]?'20px':'2px',transition:'left .2s',boxShadow:'0 2px 4px rgba(0,0,0,.2)'}}))
       ))
