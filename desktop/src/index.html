@@ -1108,17 +1108,7 @@ const DICT = {
     reply_to_prefix: 'Responder a ', editing: 'Editando', create_poll: 'Crear encuesta'
   }
 };
-const FC={
-  apiKey:"AIzaSyA6pHfRD-a50nZ5C-e_RDj5j8ijLBQPX8A",
-  authDomain: window.location.hostname.endsWith('vercel.app') || window.location.hostname.includes('maxify') 
-    ? window.location.hostname 
-    : "mymaxiscord.firebaseapp.com",
-  databaseURL:"https://mymaxiscord-default-rtdb.firebaseio.com",
-  projectId:"mymaxiscord",
-  storageBucket:"mymaxiscord.firebasestorage.app",
-  messagingSenderId:"110398248811",
-  appId:"1:110398248811:web:1454c9bc4dc4f5e9931e2e"
-};
+const FC={apiKey:"AIzaSyA6pHfRD-a50nZ5C-e_RDj5j8ijLBQPX8A",authDomain:"mymaxiscord.firebaseapp.com",databaseURL:"https://mymaxiscord-default-rtdb.firebaseio.com",projectId:"mymaxiscord",storageBucket:"mymaxiscord.firebasestorage.app",messagingSenderId:"110398248811",appId:"1:110398248811:web:1454c9bc4dc4f5e9931e2e"};
 if(!firebase.apps.length) firebase.initializeApp(FC);
 const auth=firebase.auth(), db=firebase.database();
 const h=React.createElement;
