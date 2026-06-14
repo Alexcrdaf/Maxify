@@ -1602,7 +1602,7 @@ function Auth({ externalError, clearExternalError }){
         t('sign_in_google')
       ),
       isIOS && h('a',{
-        href: busy ? '#' : 'https://maxify-pi.vercel.app/',
+        href: busy ? '#' : 'https://maxify-pi.vercel.app/?open_external=true',
         target: busy ? '_self' : '_blank',
         rel:'noopener noreferrer',
         className:'btn btn-ghost',
