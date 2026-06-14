@@ -1533,9 +1533,18 @@ function Auth(){
   const signInGoogle=async()=>{
     setErr('');setBusy(true);
     try{
-      const result = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-      if (result && result.user) {
-        await ensureProfile(result.user, result.user.displayName);
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const result = await auth.signInWithPopup(provider);
+        if (result && result.user) {
+          await ensureProfile(result.user, result.user.displayName);
+        }
+      } catch (e) {
+        if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
+          await auth.signInWithRedirect(provider);
+        } else {
+          throw e;
+        }
       }
     }
     catch(e){setErr(t('error_prefix')+e.message);setBusy(false);}
