@@ -1607,7 +1607,8 @@ function Auth({ fromApp, externalError, clearExternalError }){
       alert(t('login_success_reload') || "Успешный вход! Страница будет перезагружена.");
       window.location.reload();
     } catch (e) {
-      setErr(t('err_invalid_session_code') || ("Неверный код сессии: " + e.message));
+      console.error("Session import error:", e);
+      setErr((t('err_invalid_session_code') || "Неверный код сессии.") + " (" + e.message + ")");
     }
     setBusy(false);
   };
