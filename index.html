@@ -1636,7 +1636,7 @@ function Auth({ externalError, clearExternalError }){
       setBusy(false);
       return;
     }
-    auth.signInWithRedirect(provider)
+    auth.signInWithPopup(provider)
       .then(async (result) => {
         if (result && result.user) {
           await ensureProfile(result.user, result.user.displayName);
@@ -1644,8 +1644,16 @@ function Auth({ externalError, clearExternalError }){
         setBusy(false);
       })
       .catch((e) => {
-        setErr(t('error_prefix') + e.message);
-        setBusy(false);
+        if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
+          auth.signInWithRedirect(provider)
+            .catch((err2) => {
+              setErr(t('error_prefix') + err2.message);
+              setBusy(false);
+            });
+        } else {
+          setErr(t('error_prefix') + e.message);
+          setBusy(false);
+        }
       });
   };
 
