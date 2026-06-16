@@ -1595,7 +1595,10 @@ function Auth({ fromApp, externalError, clearExternalError }){
           try {
             const tx = db.transaction("firebaseLocalStorage", "readwrite");
             const store = tx.objectStore("firebaseLocalStorage");
-            const putReq = store.put(obj, key);
+            if (store.keyPath) {
+              obj[store.keyPath] = key;
+            }
+            const putReq = store.keyPath ? store.put(obj) : store.put(obj, key);
             putReq.onsuccess = () => resolve();
             putReq.onerror = () => reject(putReq.error);
           } catch (e) {
