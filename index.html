@@ -1629,7 +1629,14 @@ function Auth({ externalError, clearExternalError }){
   const signInGoogle=()=>{
     setErr('');setBusy(true);
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
+    const isWebView = /wv|WebView|Android.*Version\/[\d.]+.*Chrome\/[\d.]+ Mobile/i.test(navigator.userAgent) || 
+                      (window.chrome && window.chrome.webview);
+    if(isWebView){
+      setErr('Для входа через Google откройте сайт в браузере (Chrome/Safari), затем войдите и используйте кнопку "Копировать код для iPhone" в настройках');
+      setBusy(false);
+      return;
+    }
+    auth.signInWithRedirect(provider)
       .then(async (result) => {
         if (result && result.user) {
           await ensureProfile(result.user, result.user.displayName);
@@ -1637,16 +1644,8 @@ function Auth({ externalError, clearExternalError }){
         setBusy(false);
       })
       .catch((e) => {
-        if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
-          auth.signInWithRedirect(provider)
-            .catch((err2) => {
-              setErr(t('error_prefix') + err2.message);
-              setBusy(false);
-            });
-        } else {
-          setErr(t('error_prefix') + e.message);
-          setBusy(false);
-        }
+        setErr(t('error_prefix') + e.message);
+        setBusy(false);
       });
   };
 
@@ -1687,6 +1686,9 @@ function Auth({ externalError, clearExternalError }){
       h('button',{className:'btn btn-ghost',style:{width:'100%',justifyContent:'center',padding:'14px'},onClick:signInGoogle,disabled:busy},
         h('svg',{width:20,height:20,viewBox:'0 0 48 48'},h('path',{fill:'#EA4335',d:'M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'}),h('path',{fill:'#4285F4',d:'M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'}),h('path',{fill:'#FBBC05',d:'M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'}),h('path',{fill:'#34A853',d:'M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'})),
         t('sign_in_google')
+      ),
+      h('div',{style:{fontSize:12,color:'var(--muted)',textAlign:'center',padding:'0 8px'}},
+        'Если вход не работает в приложении — используйте Email/Пароль или войдите через браузер'
       ),
       isIOS && h('a',{
         href: busy ? '#' : window.location.origin + '/?open_external=true&from_app=true',
@@ -1933,38 +1935,61 @@ function SettingsPage({user, onClose, onSignOut}){
   const exportSession = async () => {
     try {
       const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
-      let val = localStorage.getItem(key);
-      if (!val) {
-        val = await new Promise((resolve, reject) => {
-          const req = indexedDB.open("firebaseLocalStorageDb");
-          req.onerror = () => reject(req.error);
-          req.onsuccess = () => {
-            const db = req.result;
-            if (!db.objectStoreNames.contains("firebaseLocalStorage")) {
-              resolve(null);
-              return;
-            }
-            try {
-              const tx = db.transaction("firebaseLocalStorage", "readonly");
-              const store = tx.objectStore("firebaseLocalStorage");
-              const getReq = store.get(key);
-              getReq.onsuccess = () => resolve(getReq.result ? JSON.stringify(getReq.result) : null);
-              getReq.onerror = () => reject(getReq.error);
-            } catch (e) {
-              reject(e);
-            }
-          };
-        });
-      }
-
-      if (!val) {
-        alert(t('err_session_not_found') || "Не удалось найти данные сессии. Попробуйте перезагрузить страницу.");
+      
+      // Сначала пробуем получить токен напрямую от Firebase
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        alert('Сначала войдите в аккаунт');
         return;
       }
-
-      const base64 = btoa(unescape(encodeURIComponent(val)));
-      await navigator.clipboard.writeText(base64);
-      alert(t('session_copied_alert') || "Код сессии успешно скопирован в буфер обмена! Перейдите в приложение на iPhone, нажмите 'Войти по коду' и вставьте скопированный код.");
+      
+      // Получаем свежий токен
+      const tokenResult = await currentUser.getIdTokenResult(true);
+      
+      // Собираем объект сессии вручную
+      const sessionObj = {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
+        photoURL: currentUser.photoURL,
+        emailVerified: currentUser.emailVerified,
+        isAnonymous: currentUser.isAnonymous,
+        providerData: currentUser.providerData,
+        stsTokenManager: {
+          refreshToken: currentUser.refreshToken,
+          accessToken: tokenResult.token,
+          expirationTime: new Date(tokenResult.expirationTime).getTime()
+        },
+        createdAt: currentUser.metadata.creationTime,
+        lastLoginAt: currentUser.metadata.lastSignInTime,
+        apiKey: FC.apiKey,
+        appName: '[DEFAULT]'
+      };
+      
+      const sessionStr = JSON.stringify(sessionObj);
+      const base64 = btoa(unescape(encodeURIComponent(sessionStr)));
+      
+      try {
+        await navigator.clipboard.writeText(base64);
+        alert(t('session_copied_alert'));
+      } catch(clipErr) {
+        // Если clipboard не работает — показываем код на экране
+        const textArea = document.createElement('textarea');
+        textArea.value = base64;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.width = '100%';
+        textArea.style.height = '200px';
+        textArea.style.zIndex = '99999';
+        textArea.style.fontSize = '12px';
+        textArea.style.padding = '16px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        alert('Выделите весь текст и скопируйте вручную');
+        setTimeout(() => document.body.removeChild(textArea), 10000);
+      }
     } catch (e) {
       alert(t('error_prefix') + e.message);
     }
