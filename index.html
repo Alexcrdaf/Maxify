@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script>
-  // Обработка редиректа после Google OAuth
-  if (window.location.search.includes('__firebase')) {
-    const url = new URL(window.location.href);
-    window.history.replaceState({}, '', '/Maxify/');
-  }
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Maxify</title>
@@ -3969,7 +3962,7 @@ function App(){
           if (!snap.val()) {
             await ref.set({
               id: result.user.uid,
-              login: result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'user_' + result.user.uid.slice(0, 5)),
+              login: result.user.displayName || result.user.email.split('@')[0],
               email: result.user.email || '',
               avatarUrl: result.user.photoURL || null,
               online: true,
@@ -3977,8 +3970,10 @@ function App(){
               createdAt: Date.now()
             });
           } else {
-            await ref.update({ online: true, lastSeen: Date.now() });
+            await ref.update({online: true, lastSeen: Date.now()});
           }
+          // Принудительно перезагружаем после входа
+          window.location.href = 'https://alexcrdaf.github.io/Maxify';
         }
       })
       .catch((error) => {
