@@ -843,10 +843,10 @@ const DICT = {
     err_too_many_req: 'Слишком много попыток', err_no_network: 'Нет сети',
     error_prefix: 'Ошибка: ', create_acc: 'Создать аккаунт', welcome_back: 'С возвращением',
     sign_in_google: 'Войти через Google', login_via_site: 'Войти через сайт',
-    copy_session_code: 'Копировать код для iPhone', login_by_code: 'Войти по коду',
+    copy_session_code: 'Копировать код для приложения', login_by_code: 'Войти по коду',
     enter_session_code: 'Вставьте код сессии:', login_success_reload: 'Успешный вход! Страница будет перезагружена.',
     err_invalid_session_code: 'Неверный код сессии.', err_session_not_found: 'Сессия не найдена. Перезагрузите страницу.',
-    session_copied_alert: 'Код сессии скопирован! Вставьте его в приложении на iPhone.',
+    session_copied_alert: 'Код сессии скопирован! Вставьте его в приложении.',
     return_to_app: 'Вернуться в приложение',
     session_ready: 'Сессия успешно создана. Выберите способ переноса:',
     open_in_app: 'Открыть в приложении',
@@ -957,10 +957,10 @@ const DICT = {
     err_too_many_req: 'Too many attempts', err_no_network: 'No network',
     error_prefix: 'Error: ', create_acc: 'Create Account', welcome_back: 'Welcome back',
     sign_in_google: 'Sign in with Google', login_via_site: 'Login via website',
-    copy_session_code: 'Copy code for iPhone', login_by_code: 'Login by code',
+    copy_session_code: 'Copy session code', login_by_code: 'Login by code',
     enter_session_code: 'Paste session code:', login_success_reload: 'Successful login! Page will reload.',
     err_invalid_session_code: 'Invalid session code.', err_session_not_found: 'Session not found. Please reload page.',
-    session_copied_alert: 'Session code copied! Paste it in the iPhone app.',
+    session_copied_alert: 'Session code copied! Paste it in the app.',
     return_to_app: 'Return to App',
     session_ready: 'Session created successfully. Choose transfer method:',
     open_in_app: 'Open in App',
@@ -1556,7 +1556,7 @@ function renderMentions(text) {
   });
 }
 
-function Auth({ externalError, clearExternalError }){
+function Auth({ fromApp, externalError, clearExternalError }){
   const [mode,setMode]=useState('login');
   const [f,setF]=useState({email:'',pass:'',name:''});
   const [err,setErr]=useState('');
@@ -1564,6 +1564,8 @@ function Auth({ externalError, clearExternalError }){
   const [showDownloads, setShowDownloads] = useState(false);
   const upd=k=>e=>setF(p=>({...p,[k]:e.target.value}));
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isWebView = /wv|WebView|Android.*Version\/[\d.]+.*Chrome\/[\d.]+ Mobile/i.test(navigator.userAgent) || 
+                    (window.chrome && window.chrome.webview);
 
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [sessionCodeInput, setSessionCodeInput] = useState('');
@@ -1629,6 +1631,11 @@ function Auth({ externalError, clearExternalError }){
   const signInGoogle=()=>{
     setErr('');setBusy(true);
     const provider = new firebase.auth.GoogleAuthProvider();
+    if(isWebView && !fromApp){
+      setErr('Для входа через Google откройте сайт в браузере (Chrome/Safari), затем войдите и используйте кнопку "Копировать код для iPhone" в настройках');
+      setBusy(false);
+      return;
+    }
     auth.signInWithPopup(provider)
       .then(async (result) => {
         if (result && result.user) {
@@ -1637,7 +1644,7 @@ function Auth({ externalError, clearExternalError }){
         setBusy(false);
       })
       .catch((e) => {
-        if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
+        if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request' || e.code === 'auth/popup-closed-by-user') {
           auth.signInWithRedirect(provider)
             .catch((err2) => {
               setErr(t('error_prefix') + err2.message);
@@ -1688,9 +1695,12 @@ function Auth({ externalError, clearExternalError }){
         h('svg',{width:20,height:20,viewBox:'0 0 48 48'},h('path',{fill:'#EA4335',d:'M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'}),h('path',{fill:'#4285F4',d:'M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'}),h('path',{fill:'#FBBC05',d:'M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'}),h('path',{fill:'#34A853',d:'M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'})),
         t('sign_in_google')
       ),
-      isIOS && h('a',{
-        href: busy ? '#' : window.location.origin + '/?open_external=true&from_app=true',
-        target: busy ? '_self' : '_blank',
+      h('div',{style:{fontSize:12,color:'var(--muted)',textAlign:'center',padding:'0 8px'}},
+        'Если вход не работает в приложении — используйте Email/Пароль или войдите через браузер'
+      ),
+      (isIOS || fromApp || isWebView) && h('a',{
+        href: busy ? '#' : 'https://alexcrdaf.github.io/Maxify/?open_external=true&from_app=true',
+        target: '_blank',
         rel:'noopener noreferrer',
         className:'btn btn-ghost',
         style:{width:'100%',justifyContent:'center',padding:'14px',display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',opacity:busy?0.5:1,pointerEvents:busy?'none':'auto'},
@@ -1699,7 +1709,7 @@ function Auth({ externalError, clearExternalError }){
         h('span',{style:{fontSize:18}},'🌐'),
         t('login_via_site')
       ),
-      isIOS && !showCodeInput && h('button',{
+      (isIOS || fromApp || isWebView) && !showCodeInput && h('button',{
         className:'btn btn-ghost',
         style:{width:'100%',justifyContent:'center',padding:'14px',display:'inline-flex',alignItems:'center',gap:8},
         onClick:()=>setShowCodeInput(true),
@@ -1933,38 +1943,61 @@ function SettingsPage({user, onClose, onSignOut}){
   const exportSession = async () => {
     try {
       const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
-      let val = localStorage.getItem(key);
-      if (!val) {
-        val = await new Promise((resolve, reject) => {
-          const req = indexedDB.open("firebaseLocalStorageDb");
-          req.onerror = () => reject(req.error);
-          req.onsuccess = () => {
-            const db = req.result;
-            if (!db.objectStoreNames.contains("firebaseLocalStorage")) {
-              resolve(null);
-              return;
-            }
-            try {
-              const tx = db.transaction("firebaseLocalStorage", "readonly");
-              const store = tx.objectStore("firebaseLocalStorage");
-              const getReq = store.get(key);
-              getReq.onsuccess = () => resolve(getReq.result ? JSON.stringify(getReq.result) : null);
-              getReq.onerror = () => reject(getReq.error);
-            } catch (e) {
-              reject(e);
-            }
-          };
-        });
-      }
-
-      if (!val) {
-        alert(t('err_session_not_found') || "Не удалось найти данные сессии. Попробуйте перезагрузить страницу.");
+      
+      // Сначала пробуем получить токен напрямую от Firebase
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        alert('Сначала войдите в аккаунт');
         return;
       }
-
-      const base64 = btoa(unescape(encodeURIComponent(val)));
-      await navigator.clipboard.writeText(base64);
-      alert(t('session_copied_alert') || "Код сессии успешно скопирован в буфер обмена! Перейдите в приложение на iPhone, нажмите 'Войти по коду' и вставьте скопированный код.");
+      
+      // Получаем свежий токен
+      const tokenResult = await currentUser.getIdTokenResult(true);
+      
+      // Собираем объект сессии вручную
+      const sessionObj = {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
+        photoURL: currentUser.photoURL,
+        emailVerified: currentUser.emailVerified,
+        isAnonymous: currentUser.isAnonymous,
+        providerData: currentUser.providerData,
+        stsTokenManager: {
+          refreshToken: currentUser.refreshToken,
+          accessToken: tokenResult.token,
+          expirationTime: new Date(tokenResult.expirationTime).getTime()
+        },
+        createdAt: currentUser.metadata.creationTime,
+        lastLoginAt: currentUser.metadata.lastSignInTime,
+        apiKey: FC.apiKey,
+        appName: '[DEFAULT]'
+      };
+      
+      const sessionStr = JSON.stringify(sessionObj);
+      const base64 = btoa(unescape(encodeURIComponent(sessionStr)));
+      
+      try {
+        await navigator.clipboard.writeText(base64);
+        alert(t('session_copied_alert'));
+      } catch(clipErr) {
+        // Если clipboard не работает — показываем код на экране
+        const textArea = document.createElement('textarea');
+        textArea.value = base64;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.width = '100%';
+        textArea.style.height = '200px';
+        textArea.style.zIndex = '99999';
+        textArea.style.fontSize = '12px';
+        textArea.style.padding = '16px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        alert('Выделите весь текст и скопируйте вручную');
+        setTimeout(() => document.body.removeChild(textArea), 10000);
+      }
     } catch (e) {
       alert(t('error_prefix') + e.message);
     }
@@ -3938,7 +3971,7 @@ function App(){
           if (!snap.val()) {
             await ref.set({
               id: result.user.uid,
-              login: result.user.displayName || (result.user.email ? result.user.email.split('@')[0] : 'user_' + result.user.uid.slice(0, 5)),
+              login: result.user.displayName || result.user.email.split('@')[0],
               email: result.user.email || '',
               avatarUrl: result.user.photoURL || null,
               online: true,
@@ -3946,8 +3979,10 @@ function App(){
               createdAt: Date.now()
             });
           } else {
-            await ref.update({ online: true, lastSeen: Date.now() });
+            await ref.update({online: true, lastSeen: Date.now()});
           }
+          // Принудительно перезагружаем после входа
+          window.location.href = 'https://alexcrdaf.github.io/Maxify';
         }
       })
       .catch((error) => {
@@ -4088,7 +4123,7 @@ function App(){
   const signOut=async()=>{if(user)await db.ref('users/'+user.id).update({online:false,lastSeen:Date.now()});auth.signOut()};
 
   if(loading)return h('div',{style:{height:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,color:'var(--text-primary)'}},h('div',{style:{width:48,height:48,border:'4px solid var(--border)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .8s cubic-bezier(0.4, 0, 0.2, 1) infinite'}}),h('div',{className:'syne',style:{letterSpacing:'.1em',fontSize:24}},'MAXIFY'));
-  if(!user)return h(Auth, {externalError: authError, clearExternalError: () => setAuthError('')});
+  if(!user)return h(Auth, {fromApp, externalError: authError, clearExternalError: () => setAuthError('')});
 
   if (fromApp && user) {
     return h('div', {

@@ -843,10 +843,10 @@ const DICT = {
     err_too_many_req: 'Слишком много попыток', err_no_network: 'Нет сети',
     error_prefix: 'Ошибка: ', create_acc: 'Создать аккаунт', welcome_back: 'С возвращением',
     sign_in_google: 'Войти через Google', login_via_site: 'Войти через сайт',
-    copy_session_code: 'Копировать код для iPhone', login_by_code: 'Войти по коду',
+    copy_session_code: 'Копировать код для приложения', login_by_code: 'Войти по коду',
     enter_session_code: 'Вставьте код сессии:', login_success_reload: 'Успешный вход! Страница будет перезагружена.',
     err_invalid_session_code: 'Неверный код сессии.', err_session_not_found: 'Сессия не найдена. Перезагрузите страницу.',
-    session_copied_alert: 'Код сессии скопирован! Вставьте его в приложении на iPhone.',
+    session_copied_alert: 'Код сессии скопирован! Вставьте его в приложении.',
     return_to_app: 'Вернуться в приложение',
     session_ready: 'Сессия успешно создана. Выберите способ переноса:',
     open_in_app: 'Открыть в приложении',
@@ -957,10 +957,10 @@ const DICT = {
     err_too_many_req: 'Too many attempts', err_no_network: 'No network',
     error_prefix: 'Error: ', create_acc: 'Create Account', welcome_back: 'Welcome back',
     sign_in_google: 'Sign in with Google', login_via_site: 'Login via website',
-    copy_session_code: 'Copy code for iPhone', login_by_code: 'Login by code',
+    copy_session_code: 'Copy session code', login_by_code: 'Login by code',
     enter_session_code: 'Paste session code:', login_success_reload: 'Successful login! Page will reload.',
     err_invalid_session_code: 'Invalid session code.', err_session_not_found: 'Session not found. Please reload page.',
-    session_copied_alert: 'Session code copied! Paste it in the iPhone app.',
+    session_copied_alert: 'Session code copied! Paste it in the app.',
     return_to_app: 'Return to App',
     session_ready: 'Session created successfully. Choose transfer method:',
     open_in_app: 'Open in App',
@@ -1564,6 +1564,8 @@ function Auth({ fromApp, externalError, clearExternalError }){
   const [showDownloads, setShowDownloads] = useState(false);
   const upd=k=>e=>setF(p=>({...p,[k]:e.target.value}));
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isWebView = /wv|WebView|Android.*Version\/[\d.]+.*Chrome\/[\d.]+ Mobile/i.test(navigator.userAgent) || 
+                    (window.chrome && window.chrome.webview);
 
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [sessionCodeInput, setSessionCodeInput] = useState('');
@@ -1629,8 +1631,6 @@ function Auth({ fromApp, externalError, clearExternalError }){
   const signInGoogle=()=>{
     setErr('');setBusy(true);
     const provider = new firebase.auth.GoogleAuthProvider();
-    const isWebView = /wv|WebView|Android.*Version\/[\d.]+.*Chrome\/[\d.]+ Mobile/i.test(navigator.userAgent) || 
-                      (window.chrome && window.chrome.webview);
     if(isWebView && !fromApp){
       setErr('Для входа через Google откройте сайт в браузере (Chrome/Safari), затем войдите и используйте кнопку "Копировать код для iPhone" в настройках');
       setBusy(false);
@@ -1698,9 +1698,9 @@ function Auth({ fromApp, externalError, clearExternalError }){
       h('div',{style:{fontSize:12,color:'var(--muted)',textAlign:'center',padding:'0 8px'}},
         'Если вход не работает в приложении — используйте Email/Пароль или войдите через браузер'
       ),
-      (isIOS || fromApp) && h('a',{
-        href: busy ? '#' : window.location.origin + '/?open_external=true&from_app=true',
-        target: busy ? '_self' : '_blank',
+      (isIOS || fromApp || isWebView) && h('a',{
+        href: busy ? '#' : 'https://alexcrdaf.github.io/Maxify/?open_external=true&from_app=true',
+        target: '_blank',
         rel:'noopener noreferrer',
         className:'btn btn-ghost',
         style:{width:'100%',justifyContent:'center',padding:'14px',display:'inline-flex',alignItems:'center',gap:8,textDecoration:'none',opacity:busy?0.5:1,pointerEvents:busy?'none':'auto'},
@@ -1709,7 +1709,7 @@ function Auth({ fromApp, externalError, clearExternalError }){
         h('span',{style:{fontSize:18}},'🌐'),
         t('login_via_site')
       ),
-      (isIOS || fromApp) && !showCodeInput && h('button',{
+      (isIOS || fromApp || isWebView) && !showCodeInput && h('button',{
         className:'btn btn-ghost',
         style:{width:'100%',justifyContent:'center',padding:'14px',display:'inline-flex',alignItems:'center',gap:8},
         onClick:()=>setShowCodeInput(true),
