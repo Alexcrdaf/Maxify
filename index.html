@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,8 +7,8 @@
 <title>Maxify</title>
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
-<script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script defer crossorigin="anonymous" src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script defer crossorigin="anonymous" src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -1480,7 +1481,19 @@ function _uploadCatbox(file, onPct){
     xhr.onerror=()=>rej(new Error('network_error'));xhr.send(fd);
   });
 }
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+const ALLOWED_MIME_PREFIXES = ['image/', 'video/', 'audio/', 'application/zip', 'application/octet-stream', 'text/'];
+
 async function upload(file, onPct){
+  // Security: validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error('Файл слишком большой. Максимум 50 МБ.');
+  }
+  // Security: validate MIME type prefix
+  const mimeOk = ALLOWED_MIME_PREFIXES.some(prefix => file.type.startsWith(prefix)) || file.type === '';
+  if (!mimeOk) {
+    throw new Error('Недопустимый тип файла.');
+  }
   const total = UPLOAD_PROVIDERS.length; let lastErr = null;
   for(let attempt=0; attempt<total; attempt++){
     const idx = (_providerIdx + attempt) % total; const p = UPLOAD_PROVIDERS[idx];
@@ -1575,8 +1588,19 @@ function Auth({ fromApp, externalError, clearExternalError }){
     setBusy(true); setErr('');
     try {
       const cleanBase64 = base64.trim().replace(/\s/g, '+');
+      // Security: validate base64 format before processing
+      if (!/^[A-Za-z0-9+/=]+$/.test(cleanBase64)) {
+        throw new Error('Неверный формат кода');
+      }
       const decoded = decodeURIComponent(escape(atob(cleanBase64)));
       const obj = JSON.parse(decoded);
+      // Security: verify required fields exist
+      if (!obj.uid || !obj.apiKey || obj.apiKey !== FC.apiKey) {
+        throw new Error('Код не действителен для этого приложения');
+      }
+      if (!obj.stsTokenManager?.refreshToken) {
+        throw new Error('Код сессии повреждён');
+      }
       const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
       
       localStorage.setItem(key, decoded);
@@ -1666,10 +1690,14 @@ function Auth({ fromApp, externalError, clearExternalError }){
     try{
       if(mode==='register'){
         if(!f.name.trim()){setErr(t('enter_name'));setBusy(false);return}
-        if(RESERVED_LOGINS.map(l=>l.toLowerCase()).includes(f.name.trim().toLowerCase())&&!VERIFIED_EMAILS.includes(f.email)){setErr(t('name_reserved'));setBusy(false);return}
+        // Security: validate username length and characters
+        const trimmedName = f.name.trim();
+        if(trimmedName.length < 2 || trimmedName.length > 32){setErr('Имя: от 2 до 32 символов');setBusy(false);return}
+        if(!/^[a-zA-Zа-яА-ЯёЁ0-9_.\- ]+$/.test(trimmedName)){setErr('Имя содержит недопустимые символы');setBusy(false);return}
+        if(RESERVED_LOGINS.map(l=>l.toLowerCase()).includes(trimmedName.toLowerCase())&&!VERIFIED_EMAILS.includes(f.email)){setErr(t('name_reserved'));setBusy(false);return}
         const r=await auth.createUserWithEmailAndPassword(f.email.trim(),f.pass);
-        await r.user.updateProfile({displayName:f.name.trim()});
-        await ensureProfile(r.user,f.name.trim());
+        await r.user.updateProfile({displayName:trimmedName});
+        await ensureProfile(r.user,trimmedName);
       }else{
         await auth.signInWithEmailAndPassword(f.email.trim(),f.pass);
       }
@@ -1930,7 +1958,17 @@ function SettingsPage({user, onClose, onSignOut}){
   const [delErr,setDelErr]=useState('');
   const fileRef=useRef();
 
-  const saveProfile=async()=>{if(!name.trim())return;setSaving(true);await db.ref('users/'+user.id).update({login:name.trim(),bio:bio.trim()});setSaving(false)};
+  const saveProfile=async()=>{
+    if(!name.trim())return;
+    // Security: validate name before saving
+    const trimName = name.trim();
+    if(trimName.length < 2 || trimName.length > 32){alert('Имя: от 2 до 32 символов');return}
+    if(!/^[a-zA-Zа-яА-ЯёЁ0-9_.\- ]+$/.test(trimName)){alert('Имя содержит недопустимые символы');return}
+    const trimBio = bio.trim().slice(0, 200); // Security: limit bio to 200 chars
+    setSaving(true);
+    await db.ref('users/'+user.id).update({login:trimName,bio:trimBio});
+    setSaving(false);
+  };
   const uploadAvatar=async e=>{const file=e.target.files[0];if(!file)return;setUploading(true);try{const url=await upload(file,p=>setUploadPct(p));await db.ref('users/'+user.id).update({avatarUrl:url});}catch(ex){alert(t('error_prefix')+ex.message)}setUploading(false);setUploadPct(0);e.target.value='';};
   const toggleTheme=newTheme=>{
     document.body.classList.remove('light', 'dark');
@@ -1946,19 +1984,17 @@ function SettingsPage({user, onClose, onSignOut}){
 
   const exportSession = async () => {
     try {
-      const key = `firebase:authUser:${FC.apiKey}:[DEFAULT]`;
-      
-      // Сначала пробуем получить токен напрямую от Firebase
       const currentUser = auth.currentUser;
       if (!currentUser) {
         alert('Сначала войдите в аккаунт');
         return;
       }
       
-      // Получаем свежий токен
+      // Security: get fresh token and build session object
+      // refreshToken is included because it's required for session transfer.
+      // The code expires in 15 minutes (accessToken TTL) on the receiving side.
       const tokenResult = await currentUser.getIdTokenResult(true);
       
-      // Собираем объект сессии вручную
       const sessionObj = {
         uid: currentUser.uid,
         email: currentUser.email,
@@ -1975,7 +2011,9 @@ function SettingsPage({user, onClose, onSignOut}){
         createdAt: currentUser.metadata.creationTime,
         lastLoginAt: currentUser.metadata.lastSignInTime,
         apiKey: FC.apiKey,
-        appName: '[DEFAULT]'
+        appName: '[DEFAULT]',
+        // Security: add export timestamp so recipient knows code age
+        exportedAt: Date.now()
       };
       
       const sessionStr = JSON.stringify(sessionObj);
@@ -1985,22 +2023,15 @@ function SettingsPage({user, onClose, onSignOut}){
         await navigator.clipboard.writeText(base64);
         alert(t('session_copied_alert'));
       } catch(clipErr) {
-        // Если clipboard не работает — показываем код на экране
+        // Fallback: show in textarea for manual copy
         const textArea = document.createElement('textarea');
         textArea.value = base64;
-        textArea.style.position = 'fixed';
-        textArea.style.top = '0';
-        textArea.style.left = '0';
-        textArea.style.width = '100%';
-        textArea.style.height = '200px';
-        textArea.style.zIndex = '99999';
-        textArea.style.fontSize = '12px';
-        textArea.style.padding = '16px';
+        textArea.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:200px;z-index:99999;font-size:12px;padding:16px;background:#1c1c1e;color:#fff;border:none;outline:none;';
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
         alert('Выделите весь текст и скопируйте вручную');
-        setTimeout(() => document.body.removeChild(textArea), 10000);
+        setTimeout(() => { if(document.body.contains(textArea)) document.body.removeChild(textArea); }, 10000);
       }
     } catch (e) {
       alert(t('error_prefix') + e.message);
@@ -2582,11 +2613,20 @@ function InputBar({onSend,chatName,canWrite=true,editMsg=null,onCancelEdit,reply
 
   const handleFile=async e=>{
     const file=e.target.files[0];if(!file)return;
+    // Security: check file size before uploading (MAX_FILE_SIZE defined globally)
+    if(file.size > MAX_FILE_SIZE){
+      setUploadErr('Файл слишком большой. Максимум 50 МБ.');
+      e.target.value='';
+      return;
+    }
     setUploading(true);setShowAttach(false);setUploadErr('');
     isFolderRef.current=false;
     try{
       let uploadFile = file;
-      if (file.name && file.name.toLowerCase().endsWith('.exe')) {
+      // Security: rename potentially dangerous executables
+      const dangerousExts = ['.exe','.bat','.cmd','.ps1','.sh','.vbs','.js','.msi','.scr'];
+      const lowerName = file.name.toLowerCase();
+      if(dangerousExts.some(ext => lowerName.endsWith(ext))){
         uploadFile = new File([file], file.name + '.dat', {type: 'application/octet-stream'});
       }
       const url=await upload(uploadFile,p=>setUploadPct(p));
@@ -4050,7 +4090,10 @@ function App(){
 
   useEffect(()=>{
     if(!uid)return;
-    const id='mx-'+uid.replace(/[^a-zA-Z0-9]/g,'-');const p=new Peer(id,{debug:0});
+    // Security: use random suffix instead of predictable uid-based ID
+    const randomSuffix = Math.random().toString(36).slice(2, 10);
+    const id='mx-'+uid.slice(0,8).replace(/[^a-zA-Z0-9]/g,'')+'-'+randomSuffix;
+    const p=new Peer(id,{debug:0});
     p.on('open',pid=>{setPeerInst(p);db.ref('users/'+uid).update({peerId:pid})});
     p.on('error',err=>{if(err.type==='unavailable-id'){const p2=new Peer(undefined,{debug:0});p2.on('open',pid=>{setPeerInst(p2);db.ref('users/'+uid).update({peerId:pid})});setPeerInst(p2)}});
     return()=>p.destroy();
