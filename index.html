@@ -4120,6 +4120,8 @@ h('div', { onClick: (e) => { e.preventDefault(); toggleGlass(!glassEnabled); }, 
                         db.ref(`dm/${chatCid}/msgs`).push(msgData);
                         db.ref(`dm/${chatCid}/last`).set({ uid: me, ts: Date.now(), preview: previewText(payload) });
                         db.ref(`dm/${chatCid}/unread/${peer}`).transaction(v => (v || 0) + 1);
+                        db.ref(`user_chats/${me}/${peer}`).set(true);
+                        db.ref(`user_chats/${peer}/${me}`).set(true);
                         setReplyMsg(null);
                     }
                     db.ref(`dm/${chatCid}/typing/${me}`).set(false);
@@ -5204,15 +5206,36 @@ h('div', { onClick: (e) => { e.preventDefault(); toggleGlass(!glassEnabled); }, 
 
                 useEffect(() => {
                     if (!uid) return;
-                    const ref = db.ref('dm');
-                    ref.on('value', s => { const all = s.val() || {}; const mine = Object.entries(all).filter(([k]) => k.includes(uid)).map(([k, v]) => { const other = k.split('__').find(p => p !== uid); return { uid: other, last: v.last || null, unread: v.unread?.[uid] || 0 } }).filter(c => c.uid).sort((a, b) => (b.last?.ts || 0) - (a.last?.ts || 0)); setDmConvs(mine); mine.forEach(c => loadUser(c.uid)) });
-                    return () => ref.off();
+                    const userChatsRef = db.ref(`user_chats/${uid}`);
+                    userChatsRef.on('value', async s => {
+                        const peers = Object.keys(s.val() || {});
+                        if (peers.length === 0) { setDmConvs([]); return; }
+                        const convs = await Promise.all(peers.map(async peerId => {
+                            const chatId = [uid, peerId].sort().join('__');
+                            const [lastSnap, unreadSnap] = await Promise.all([
+                                db.ref(`dm/${chatId}/last`).once('value'),
+                                db.ref(`dm/${chatId}/unread/${uid}`).once('value')
+                            ]);
+                            return {
+                                uid: peerId,
+                                last: lastSnap.val(),
+                                unread: unreadSnap.val() || 0
+                            };
+                        }));
+                        const sortedConvs = convs.sort((a, b) => (b.last?.ts || 0) - (a.last?.ts || 0));
+                        setDmConvs(sortedConvs);
+                        sortedConvs.forEach(c => loadUser(c.uid));
+                    });
+                    return () => userChatsRef.off();
                 }, [uid, loadUser]);
 
                 useEffect(() => {
                     if (!uid) return;
-                    const ref = db.ref('rooms');
-                    ref.on('value', s => { const all = s.val() || {}; setRooms(Object.values(all).filter(r => r && r.members && r.members[uid])) });
+                    const ref = db.ref('rooms').orderByChild(`members/${uid}`).equalTo(true);
+                    ref.on('value', s => {
+                        const all = s.val() || {};
+                        setRooms(Object.values(all).filter(r => r));
+                    });
                     return () => ref.off();
                 }, [uid]);
 
