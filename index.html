@@ -640,6 +640,16 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        html,
+        body,
+        #root {
+            height: 100%;
+            height: -webkit-fill-available;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             background-color: var(--bg-base);
             background-image:
@@ -647,8 +657,6 @@
                 url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             color: var(--text-primary);
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            height: 100dvh;
-            overflow: hidden;
             transition: background-color 0.4s ease, color 0.4s ease;
             position: relative;
         }
@@ -884,6 +892,8 @@
             border-radius: 20px 20px 4px 20px;
             box-shadow: var(--bubble-mine-shadow);
             animation: fadeInUpBubble 0.4s cubic-bezier(0.25, 1, 0.5, 1) both;
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0);
         }
 
         .bubble-their {
@@ -894,10 +904,16 @@
             border-radius: 20px 20px 20px 4px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             animation: fadeInUpBubble 0.4s cubic-bezier(0.25, 1, 0.5, 1) both;
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0);
         }
 
         .msg-in {
             animation: msgPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0);
+            content-visibility: auto;
+            contain-intrinsic-size: 80px;
         }
 
         @keyframes msgPop {
@@ -1405,6 +1421,12 @@
                 --bg-base: #141622;
             }
 
+            body::before,
+            body::after {
+                animation: none !important;
+                filter: blur(40px) !important;
+            }
+
             body.light {
                 --bg-base: #f2f2f7;
             }
@@ -1416,6 +1438,8 @@
             .app-layout {
                 padding: 0 !important;
                 gap: 0 !important;
+                height: 100%;
+                height: -webkit-fill-available;
             }
 
             .main-area {
@@ -1633,10 +1657,14 @@
 
         .fade-in {
             animation: fadeIn 0.25s cubic-bezier(0.25, 1, 0.5, 1) both;
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0);
         }
 
         .slide-up {
             animation: fadeIn 0.3s cubic-bezier(0.25, 1, 0.5, 1) both;
+            will-change: transform, opacity;
+            transform: translate3d(0, 0, 0);
         }
 
         .rt-card {
@@ -3007,7 +3035,11 @@
                                 ),
                                 h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, h('label', { style: { fontSize: 13, color: 'var(--muted)', fontWeight: 600 } }, t('username')), h('input', { value: name, onChange: e => setName(e.target.value), placeholder: t('username') })),
                                 h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, h('label', { style: { fontSize: 13, color: 'var(--muted)', fontWeight: 600 } }, t('about')), h('textarea', { value: bio, onChange: e => setBio(e.target.value), rows: 4, placeholder: '...', style: { resize: 'none' } })),
-                                h('button', { className: 'btn btn-primary', style: { justifyContent: 'center' }, onClick: saveProfile, disabled: saving }, saving ? t('saving') : t('save_changes'))
+                                h('button', { className: 'btn btn-primary', style: { justifyContent: 'center' }, onClick: saveProfile, disabled: saving }, saving ? t('saving') : t('save_changes')),
+                                h('button', { className: 'btn btn-ghost', style: { justifyContent: 'center', marginTop: 8 }, onClick: async () => {
+                                    const ok = await requestNotifPermission();
+                                    alert(ok ? 'Уведомления успешно включены!' : 'Не удалось включить уведомления. Убедитесь, что приложение добавлено на экран "Домой", и попробуйте снова.');
+                                } }, '🔔 Включить уведомления')
                             ),
                             tab === 'theme' && h('div', { style: { display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 500, paddingBottom: '60px' } },
                                 h('div', { style: { fontSize: 18, fontWeight: 700 } }, t('theme')),
@@ -3830,6 +3862,7 @@
                 const msgsAreaRef = useRef();
                 const prevScrollHeightRef = useRef(0);
                 const shouldRestoreScrollRef = useRef(false);
+                const lastMsgKeyRef = useRef('');
 
                 const handleScroll = e => {
                     const container = e.currentTarget;
@@ -3886,7 +3919,12 @@
                         shouldRestoreScrollRef.current = false;
                         container.scrollTop = container.scrollHeight - prevScrollHeightRef.current;
                     } else {
-                        bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+                        const lastMsg = msgs[msgs.length - 1];
+                        const lastKey = lastMsg ? lastMsg.k : '';
+                        if (lastKey !== lastMsgKeyRef.current) {
+                            lastMsgKeyRef.current = lastKey;
+                            bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+                        }
                     }
                 }, [msgs]);
                 useEffect(() => { db.ref(`dm/${chatCid}/unread/${me}`).set(0) }, [chatCid, me]);
@@ -4151,6 +4189,7 @@
                 const msgsAreaRef = useRef();
                 const prevScrollHeightRef = useRef(0);
                 const shouldRestoreScrollRef = useRef(false);
+                const lastMsgKeyRef = useRef('');
 
                 const handleScroll = e => {
                     const container = e.currentTarget;
@@ -4196,7 +4235,12 @@
                         shouldRestoreScrollRef.current = false;
                         container.scrollTop = container.scrollHeight - prevScrollHeightRef.current;
                     } else {
-                        bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+                        const lastMsg = msgs[msgs.length - 1];
+                        const lastKey = lastMsg ? lastMsg.k : '';
+                        if (lastKey !== lastMsgKeyRef.current) {
+                            lastMsgKeyRef.current = lastKey;
+                            bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+                        }
                     }
                 }, [msgs]);
 
@@ -5366,7 +5410,7 @@
                         t('return_to_app')
                     ),
                     h('div', { className: 'app-layout', style: { height: '100dvh', display: 'flex', padding: 16, gap: 16 } },
-                        h('div', { className: 'glass sidebar', style: { width: 280, padding: '16px', display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 } },
+                        h('aside', { className: 'glass sidebar', style: { width: 280, padding: '16px', display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 } },
                             h('div', { style: { display: 'flex', alignItems: 'center', gap: 12, padding: '12px', borderRadius: '20px', cursor: 'pointer', background: 'var(--input-bg)', border: '1px solid var(--border)', transition: 'all 0.2s' }, onMouseEnter: e => e.currentTarget.style.transform = 'translateY(-2px)', onMouseLeave: e => e.currentTarget.style.transform = '', onClick: () => setShowSettings(true) },
                                 h(Avatar, { user, size: 46, ring: true }),
                                 h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'syne', style: { fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, user.login), h('div', { style: { fontSize: 12, color: peerInst ? 'var(--ok)' : 'var(--muted)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 } }, h('span', { className: 'status-dot ' + (peerInst ? 'online' : 'offline') }), peerInst ? t('online') : t('connecting_dots')))
@@ -5393,7 +5437,7 @@
                             h('button', { style: { background: 'none', border: 'none', color: 'var(--muted)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '10px', textAlign: 'center', borderRadius: '16px', transition: 'all 0.2s' }, onMouseEnter: e => { e.target.style.color = '#fff'; e.target.style.background = 'var(--danger-grad)' }, onMouseLeave: e => { e.target.style.color = 'var(--muted)'; e.target.style.background = 'none' }, onClick: signOut }, t('logout'))
                         ),
 
-                        showMobileList && !activeChat && !showSettings && !viewProfile && !showRT && !showFeed && h('div', { className: 'mobile-list-overlay' },
+                        showMobileList && !activeChat && !showSettings && !viewProfile && !showRT && !showFeed && h('section', { className: 'mobile-list-overlay' },
                             h('div', { className: 'mobile-list-header' },
                                 h('div', { className: 'syne', style: { fontSize: 28 } }, tab === 'dms' ? t('chats') : tab === 'groups' ? t('groups') : t('channels')),
                                 h('div', { style: { cursor: 'pointer' }, onClick: () => setShowSettings(true) }, h(Avatar, { user, size: 36, ring: true }))
@@ -5401,7 +5445,7 @@
                             h('div', { style: { padding: '12px', display: 'flex', flexDirection: 'column', gap: 4 } }, listContent())
                         ),
 
-                        h('div', { className: 'main-area' + ((activeChat || viewProfile || rtPlaying || showSettings) ? ' no-nav' : ''), style: { flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 } },
+                        h('main', { className: 'main-area' + ((activeChat || viewProfile || rtPlaying || showSettings) ? ' no-nav' : ''), style: { flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 } },
                             showSettings
                                 ? h(SettingsPage, { user, onClose: () => { setShowSettings(false); setTab('dms'); }, onSignOut: signOut })
                                 : viewProfile
@@ -5448,7 +5492,7 @@
                                                     )
                         ),
 
-                        !(activeChat || viewProfile || rtPlaying) && h('div', { className: 'mobile-nav' },
+                        !(activeChat || viewProfile || rtPlaying) && h('nav', { className: 'mobile-nav' },
                             navTabs.map(t => {
                                 const isActive = t.id === 'profile' ? showSettings : t.id === 'rt' ? showRT && !showSettings && !showFeed : t.id === 'feed' ? showFeed && !showSettings : !activeChat && !showRT && !showFeed && showMobileList && tab === t.id;
                                 return h('div', { key: t.id, className: 'mobile-nav-item' + (isActive ? ' active' : ''), onClick: () => { if (t.id === 'profile') { setShowSettings(true); setShowMobileList(false); setShowRT(false); setShowFeed(false); return } if (t.id === 'rt') { setShowRT(true); setShowFeed(false); setShowSettings(false); setActiveChat(null); setShowMobileList(false); return } if (t.id === 'feed') { setShowFeed(true); setShowRT(false); setShowSettings(false); setActiveChat(null); setShowMobileList(false); return } setShowSettings(false); setShowRT(false); setShowFeed(false); setTab(t.id); setActiveChat(null); setShowMobileList(true) } },
