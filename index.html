@@ -8,6 +8,10 @@
     <title>Maxify</title>
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Maxify">
+    <link rel="manifest" href="manifest.json">
     <script defer crossorigin="anonymous" src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script defer crossorigin="anonymous" src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -2311,11 +2315,23 @@
                 if (!('Notification' in window)) return;
                 if (Notification.permission !== 'granted') return;
                 if (document.visibilityState === 'visible') return;
-                try {
-                    const n = new Notification(title, { body: body, icon: NOTIF_ICON, tag: tag || 'maxify-msg', renotify: true, silent: false });
-                    if (onClick) n.onclick = () => { window.focus(); onClick(); n.close(); };
-                    setTimeout(() => n.close(), 6000);
-                } catch (e) { }
+                
+                const options = { body: body, icon: NOTIF_ICON, tag: tag || 'maxify-msg', renotify: true, silent: false };
+                if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification(title, options);
+                    });
+                } else {
+                    try {
+                        const n = new Notification(title, options);
+                        if (onClick) n.onclick = () => { window.focus(); onClick(); n.close(); };
+                        setTimeout(() => n.close(), 6000);
+                    } catch (e) {
+                        if (navigator.serviceWorker?.ready) {
+                            navigator.serviceWorker.ready.then(reg => reg.showNotification(title, options));
+                        }
+                    }
+                }
             }
 
             function sendCallNotif(callerName, isVideo, onClick) {
@@ -2329,10 +2345,22 @@
                 }
                 if (!('Notification' in window)) return;
                 if (Notification.permission !== 'granted') return;
-                try {
-                    const n = new Notification(title, { body: body, icon: NOTIF_ICON, tag: 'maxify-call', requireInteraction: true, renotify: true, silent: false });
-                    if (onClick) n.onclick = () => { window.focus(); onClick(); n.close(); };
-                } catch (e) { }
+                
+                const options = { body: body, icon: NOTIF_ICON, tag: 'maxify-call', requireInteraction: true, renotify: true, silent: false };
+                if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification(title, options);
+                    });
+                } else {
+                    try {
+                        const n = new Notification(title, options);
+                        if (onClick) n.onclick = () => { window.focus(); onClick(); n.close(); };
+                    } catch (e) {
+                        if (navigator.serviceWorker?.ready) {
+                            navigator.serviceWorker.ready.then(reg => reg.showNotification(title, options));
+                        }
+                    }
+                }
             }
 
             function getBestMimeType(kind) {
