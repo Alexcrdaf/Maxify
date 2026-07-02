@@ -600,6 +600,24 @@
             display: none !important;
         }
 
+        /* Performance Mode Overrides */
+        body.perf-mode::before,
+        body.perf-mode::after {
+            display: none !important;
+            animation: none !important;
+        }
+        body.perf-mode,
+        body.perf-mode * {
+            animation: none !important;
+            animation-duration: 0s !important;
+            transition: none !important;
+            transition-duration: 0s !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            --glass-blur: none !important;
+            --glass-shine: none !important;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -1736,6 +1754,7 @@
                     theme_green: 'Зеленая', theme_blue: 'Голубая', theme_liquid_glass_green: 'Жидкое стекло (Зеленое)', theme_red: 'Красная',
                     theme_purple: 'Фиолетовая', theme_orange: 'Оранжевая', theme_yellow: 'Жёлтая', theme_pink: 'Розовая', theme_teal: 'Бирюзовая', theme_sakura: 'Сакура', theme_forest: 'Лесная', theme_midnight: 'Полуночная', theme_sunset: 'Закат', theme_platinum: 'Платиновая',
                     liquid_glass_toggle: 'Эффект жидкого стекла',
+                    perf_mode_toggle: 'Режим производительности (экономия батареи)',
                     reset_password: 'Сбросить пароль', pwd_reset_sent: 'Ссылка для сброса пароля отправлена',
                     interface_lang: 'Язык интерфейса', manage_account: 'Управление аккаунтом', logout_acc: '🚪 Выйти из аккаунта',
                     delete_acc_forever: 'Удалить аккаунт навсегда', cancel: 'Отмена', delete: 'Удалить',
@@ -1853,6 +1872,7 @@
                      theme_green: 'Green', theme_blue: 'Blue', theme_liquid_glass_green: 'Liquid Glass (Green)', theme_red: 'Red',
                      theme_purple: 'Purple', theme_orange: 'Orange', theme_yellow: 'Yellow', theme_pink: 'Pink', theme_teal: 'Teal', theme_sakura: 'Sakura', theme_forest: 'Forest', theme_midnight: 'Midnight Blue', theme_sunset: 'Sunset', theme_platinum: 'Platinum',
                      liquid_glass_toggle: 'Liquid Glass effect',
+                      perf_mode_toggle: 'Performance Mode (battery saver)',
                      reset_password: 'Reset password', pwd_reset_sent: 'Password reset link sent',
                      interface_lang: 'Interface language', manage_account: 'Manage account', logout_acc: '🚪 Logout',
                      delete_acc_forever: 'Delete account forever', cancel: 'Cancel', delete: 'Delete',
@@ -1970,6 +1990,7 @@
                      theme_green: 'Verde', theme_blue: 'Azul', theme_liquid_glass_green: 'Cristal Líquido (Verde)', theme_red: 'Rojo',
                      theme_purple: 'Púrpura', theme_orange: 'Naranja', theme_yellow: 'Amarillo', theme_pink: 'Rosa', theme_teal: 'Turquesa', theme_sakura: 'Sakura', theme_forest: 'Bosque', theme_midnight: 'Noche', theme_sunset: 'Atardecer', theme_platinum: 'Platino',
                      liquid_glass_toggle: 'Efecto cristal líquido',
+                      perf_mode_toggle: 'Modo de rendimiento (ahorro de batería)',
                      reset_password: 'Restablecer contraseña', pwd_reset_sent: 'Enlace para restablecer contraseña enviado',
                      interface_lang: 'Idioma de la interfaz', manage_account: 'Gestionar cuenta', logout_acc: '🚪 Cerrar sesión',
                      delete_acc_forever: 'Eliminar cuenta para siempre', cancel: 'Cancelar', delete: 'Eliminar',
@@ -2908,6 +2929,7 @@
                 const [saving, setSaving] = useState(false);
                 const [uploading, setUploading] = useState(false);
                 const [uploadPct, setUploadPct] = useState(0);
+                const [perfMode, setPerfModeState] = useState(() => localStorage.getItem('perf_mode') === '1');
                 const [theme, setThemeState] = useState(() => {
                     let saved = localStorage.getItem('theme') || 'dark';
                     if (saved === 'glass') saved = 'blue';
@@ -2939,6 +2961,15 @@
                     localStorage.setItem('theme', newTheme);
                     setThemeState(newTheme);
                     if (window.chrome && window.chrome.webview) { try { window.chrome.webview.postMessage(JSON.stringify({ type: 'theme', value: newTheme })) } catch (e) { } }
+                };
+                const togglePerfMode = enabled => {
+                    setPerfModeState(enabled);
+                    localStorage.setItem('perf_mode', enabled ? '1' : '0');
+                    if (enabled) {
+                        document.body.classList.add('perf-mode');
+                    } else {
+                        document.body.classList.remove('perf-mode');
+                    }
                 };
                 const toggleGlass = enabled => {
                     setGlassEnabled(enabled);
@@ -3068,8 +3099,17 @@
                                     h('div', { style: { flex: 1 } },
                                         h('div', { style: { fontWeight: 600, fontSize: 15 } }, t('liquid_glass_toggle'))
                                     ),
-                                    h('div', { onClick: (e) => { e.preventDefault(); toggleGlass(!glassEnabled); }, style: { width: 52, height: 32, borderRadius: 999, background: glassEnabled ? 'var(--ok)' : 'var(--border)', position: 'relative', transition: 'background .2s', cursor: 'pointer', flexShrink: 0 } },
+h('div', { onClick: (e) => { e.preventDefault(); toggleGlass(!glassEnabled); }, style: { width: 52, height: 32, borderRadius: 999, background: glassEnabled ? 'var(--ok)' : 'var(--border)', position: 'relative', transition: 'background .2s', cursor: 'pointer', flexShrink: 0 } },
                                         h('div', { style: { width: 28, height: 28, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: glassEnabled ? '22px' : '2px', transition: 'left .2s', boxShadow: '0 2px 8px rgba(0,0,0,.2)' } })
+                                    )
+                                ),
+                                h('label', { style: { display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', padding: '16px 20px', borderRadius: 20, background: 'var(--input-bg)', border: '1px solid var(--border)', userSelect: 'none', marginTop: 12 } },
+                                    h('div', { style: { fontSize: 28, flexShrink: 0 } }, '⚡'),
+                                    h('div', { style: { flex: 1 } },
+                                        h('div', { style: { fontWeight: 600, fontSize: 15 } }, t('perf_mode_toggle') || 'Режим производительности')
+                                    ),
+                                    h('div', { onClick: (e) => { e.preventDefault(); togglePerfMode(!perfMode); }, style: { width: 52, height: 32, borderRadius: 999, background: perfMode ? 'var(--ok)' : 'var(--border)', position: 'relative', transition: 'background .2s', cursor: 'pointer', flexShrink: 0 } },
+                                        h('div', { style: { width: 28, height: 28, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: perfMode ? '22px' : '2px', transition: 'left .2s', boxShadow: '0 2px 8px rgba(0,0,0,.2)' } })
                                     )
                                 )
                             ),
@@ -5073,6 +5113,14 @@
                     document.body.classList.remove('light', 'dark', 'green', 'blue', 'red', 'purple', 'orange', 'yellow', 'pink', 'teal', 'sakura', 'forest', 'midnight', 'sunset', 'platinum');
                     document.body.classList.add(saved);
                     
+                    // Apply performance mode class
+                    const perfActive = localStorage.getItem('perf_mode') === '1';
+                    if (perfActive) {
+                        document.body.classList.add('perf-mode');
+                    } else {
+                        document.body.classList.remove('perf-mode');
+                    }
+
                     // Apply glass class
                     const glassActive = localStorage.getItem('glass_enabled') === '1';
                     if (glassActive) {
