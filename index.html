@@ -3868,8 +3868,8 @@ h('div', { onClick: (e) => { e.preventDefault(); toggleGlass(!glassEnabled); }, 
                     const diffX = touchMove.current.x - touchStart.current.x;
                     const diffY = Math.abs(touchMove.current.y - touchStart.current.y);
 
-                    // Swipe right (horizontal swipe)
-                    if (diffX > 80 && diffY < 50) {
+                    // Swipe right (horizontal swipe) starting from the left edge (x < 50)
+                    if (touchStart.current.x < 50 && diffX > 80 && diffY < 50) {
                         if (onBack) onBack();
                     }
                 }, [onBack]);
@@ -5202,42 +5202,115 @@ h('div', { onClick: (e) => { e.preventDefault(); toggleGlass(!glassEnabled); }, 
                     return () => p.destroy();
                 }, [uid]);
 
+                const peerUsersRef = useRef(peerUsers);
+                useEffect(() => { peerUsersRef.current = peerUsers; }, [peerUsers]);
+                const activeChatRef = useRef(activeChat);
+                useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
+
                 const loadUser = useCallback(u => { if (!u) return; db.ref('users/' + u).on('value', s => { const v = s.val(); if (v) setPeerUsers(p => ({ ...p, [u]: v })) }) }, []);
 
                 useEffect(() => {
                     if (!uid) return;
                     const userChatsRef = db.ref(`user_chats/${uid}`);
-                    userChatsRef.on('value', async s => {
+                    let activeListeners = [];
+
+                    userChatsRef.on('value', s => {
+                        activeListeners.forEach(l => {
+                            l.refLast.off('value', l.cbLast);
+                            l.refUnread.off('value', l.cbUnread);
+                        });
+                        activeListeners = [];
+
                         const peers = Object.keys(s.val() || {});
-                        if (peers.length === 0) { setDmConvs([]); return; }
-                        const convs = await Promise.all(peers.map(async peerId => {
+                        if (peers.length === 0) {
+                            setDmConvs([]);
+                            return;
+                        }
+
+                        const convsMap = {};
+                        peers.forEach(peerId => {
                             const chatId = [uid, peerId].sort().join('__');
-                            const [lastSnap, unreadSnap] = await Promise.all([
-                                db.ref(`dm/${chatId}/last`).once('value'),
-                                db.ref(`dm/${chatId}/unread/${uid}`).once('value')
-                            ]);
-                            return {
-                                uid: peerId,
-                                last: lastSnap.val(),
-                                unread: unreadSnap.val() || 0
-                            };
-                        }));
-                        const sortedConvs = convs.sort((a, b) => (b.last?.ts || 0) - (a.last?.ts || 0));
-                        setDmConvs(sortedConvs);
-                        sortedConvs.forEach(c => loadUser(c.uid));
+                            loadUser(peerId);
+
+                            convsMap[peerId] = { uid: peerId, last: null, unread: 0 };
+
+                            const refLast = db.ref(`dm/${chatId}/last`);
+                            const cbLast = refLast.on('value', lastSnap => {
+                                const lastVal = lastSnap.val();
+                                const prevLast = convsMap[peerId].last;
+                                convsMap[peerId].last = lastVal;
+
+                                if (lastVal && lastVal.uid !== uid) {
+                                    if (!prevLast || lastVal.ts > prevLast.ts) {
+                                        playRecv();
+                                        const curChat = activeChatRef.current;
+                                        const isCurrentChat = curChat && curChat.type === 'dm' && curChat.id === peerId;
+                                        if (!isCurrentChat) {
+                                            const senderName = peerUsersRef.current[peerId]?.login || t('msg_placeholder').replace('...', '');
+                                            sendNotif(senderName, lastVal.preview, 'dm-' + chatId);
+                                        }
+                                    }
+                                }
+                                updateConvsState();
+                            });
+
+                            const refUnread = db.ref(`dm/${chatId}/unread/${uid}`);
+                            const cbUnread = refUnread.on('value', unreadSnap => {
+                                convsMap[peerId].unread = unreadSnap.val() || 0;
+                                updateConvsState();
+                            });
+
+                            activeListeners.push({ refLast, cbLast, refUnread, cbUnread });
+                        });
+
+                        function updateConvsState() {
+                            const list = Object.values(convsMap).sort((a, b) => (b.last?.ts || 0) - (a.last?.ts || 0));
+                            setDmConvs(list);
+                        }
                     });
-                    return () => userChatsRef.off();
-                }, [uid, loadUser]);
+
+                    return () => {
+                        userChatsRef.off();
+                        activeListeners.forEach(l => {
+                            l.refLast.off('value', l.cbLast);
+                            l.refUnread.off('value', l.cbUnread);
+                        });
+                    };
+                }, [uid, loadUser, t]);
 
                 useEffect(() => {
                     if (!uid) return;
                     const ref = db.ref('rooms').orderByChild(`members/${uid}`).equalTo(true);
+                    const prevRoomsLast = {};
+
                     ref.on('value', s => {
                         const all = s.val() || {};
-                        setRooms(Object.values(all).filter(r => r));
+                        const roomsList = Object.values(all).filter(r => r);
+
+                        roomsList.forEach(room => {
+                            if (room && room.last) {
+                                const roomId = room.id;
+                                const prevLast = prevRoomsLast[roomId];
+                                prevRoomsLast[roomId] = room.last;
+
+                                if (room.last.uid !== uid) {
+                                    if (!prevLast || room.last.ts > prevLast.ts) {
+                                        playRecv();
+                                        const curChat = activeChatRef.current;
+                                        const isCurrentChat = curChat && curChat.type === 'room' && curChat.id === roomId;
+                                        if (!isCurrentChat) {
+                                            const senderName = room.last.senderName || t('user');
+                                            sendNotif(room.name, senderName + ': ' + room.last.preview, 'room-' + roomId);
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        setRooms(roomsList);
                     });
                     return () => ref.off();
-                }, [uid]);
+                }, [uid, t]);
 
                 const hiddenRooms = useMemo(() => user?.hiddenRooms || {}, [user]);
                 const visibleRooms = useMemo(() => rooms.filter(r => !hiddenRooms[r.id]), [rooms, hiddenRooms]);
