@@ -5206,6 +5206,7 @@ h('div', { onClick: (e) => { e.preventDefault(); toggleGlass(!glassEnabled); }, 
                 useEffect(() => { peerUsersRef.current = peerUsers; }, [peerUsers]);
                 const activeChatRef = useRef(activeChat);
                 useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
+                const initTimeRef = useRef(Date.now());
 
                 const loadUser = useCallback(u => { if (!u) return; db.ref('users/' + u).on('value', s => { const v = s.val(); if (v) setPeerUsers(p => ({ ...p, [u]: v })) }) }, []);
 
@@ -5240,7 +5241,7 @@ h('div', { onClick: (e) => { e.preventDefault(); toggleGlass(!glassEnabled); }, 
                                 const prevLast = convsMap[peerId].last;
                                 convsMap[peerId].last = lastVal;
 
-                                if (lastVal && lastVal.uid !== uid) {
+                                if (lastVal && lastVal.uid !== uid && lastVal.ts > initTimeRef.current) {
                                     if (!prevLast || lastVal.ts > prevLast.ts) {
                                         playRecv();
                                         const curChat = activeChatRef.current;
@@ -5293,7 +5294,7 @@ h('div', { onClick: (e) => { e.preventDefault(); toggleGlass(!glassEnabled); }, 
                                 const prevLast = prevRoomsLast[roomId];
                                 prevRoomsLast[roomId] = room.last;
 
-                                if (room.last.uid !== uid) {
+                                if (room.last.uid !== uid && room.last.ts > initTimeRef.current) {
                                     if (!prevLast || room.last.ts > prevLast.ts) {
                                         playRecv();
                                         const curChat = activeChatRef.current;
