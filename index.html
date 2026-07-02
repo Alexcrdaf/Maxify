@@ -632,6 +632,10 @@
             -ms-user-select: none;
         }
 
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
             background-color: var(--bg-base);
             background-image:
@@ -1658,6 +1662,33 @@
     <div id="root" style="height:100dvh; position: relative; z-index: 1;"></div>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
+            // Блокировка DevTools, просмотра кода и контекстного меню
+            document.addEventListener('contextmenu', e => {
+                try {
+                    if (typeof auth !== 'undefined' && auth.currentUser?.email === 'dima.julbarisov01@gmail.com') return;
+                } catch (_) {}
+                e.preventDefault();
+            });
+            document.addEventListener('keydown', e => {
+                try {
+                    if (typeof auth !== 'undefined' && auth.currentUser?.email === 'dima.julbarisov01@gmail.com') return;
+                } catch (_) {}
+                // Блокировка F12
+                if (e.key === 'F12') {
+                    e.preventDefault();
+                    return false;
+                }
+                // Блокировка Ctrl+U / Cmd+U (просмотр кода) и Ctrl+Shift+I/J/C
+                if (e.ctrlKey && (e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase()) || e.key.toUpperCase() === 'U')) {
+                    e.preventDefault();
+                    return false;
+                }
+                // Блокировка Cmd+Opt+I/J/C для macOS
+                if (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
 
             const DICT = {
                 ru: {
