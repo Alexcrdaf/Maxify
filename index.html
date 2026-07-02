@@ -5271,7 +5271,7 @@
                     const userChatsRef = db.ref(`user_chats/${uid}`);
                     let activeListeners = [];
 
-                    userChatsRef.on('value', s => {
+                    userChatsRef.on('value', async s => {
                         activeListeners.forEach(l => {
                             l.refLast.off('value', l.cbLast);
                             l.refUnread.off('value', l.cbUnread);
@@ -5284,37 +5284,63 @@
                             return;
                         }
 
-                        const convsMap = {};
-                        peers.forEach(peerId => {
+                        // 1. Fetch initial values in one batch to prevent UI list jumping
+                        const convs = await Promise.all(peers.map(async peerId => {
                             const chatId = [uid, peerId].sort().join('__');
                             loadUser(peerId);
+                            const [lastSnap, unreadSnap] = await Promise.all([
+                                db.ref(`dm/${chatId}/last`).once('value'),
+                                db.ref(`dm/${chatId}/unread/${uid}`).once('value')
+                            ]);
+                            return {
+                                uid: peerId,
+                                last: lastSnap.val(),
+                                unread: unreadSnap.val() || 0
+                            };
+                        }));
 
-                            convsMap[peerId] = { uid: peerId, last: null, unread: 0 };
+                        const convsMap = {};
+                        convs.forEach(c => {
+                            convsMap[c.uid] = c;
+                        });
+
+                        const initialList = Object.values(convsMap).sort((a, b) => (b.last?.ts || 0) - (a.last?.ts || 0));
+                        setDmConvs(initialList);
+
+                        // 2. Attach real-time listeners for updates
+                        peers.forEach(peerId => {
+                            const chatId = [uid, peerId].sort().join('__');
 
                             const refLast = db.ref(`dm/${chatId}/last`);
                             const cbLast = refLast.on('value', lastSnap => {
                                 const lastVal = lastSnap.val();
                                 const prevLast = convsMap[peerId].last;
-                                convsMap[peerId].last = lastVal;
+                                
+                                if (JSON.stringify(prevLast) !== JSON.stringify(lastVal)) {
+                                    convsMap[peerId].last = lastVal;
 
-                                if (lastVal && lastVal.uid !== uid && lastVal.ts > initTimeRef.current) {
-                                    if (!prevLast || lastVal.ts > prevLast.ts) {
-                                        playRecv();
-                                        const curChat = activeChatRef.current;
-                                        const isCurrentChat = curChat && curChat.type === 'dm' && curChat.id === peerId;
-                                        if (!isCurrentChat) {
-                                            const senderName = peerUsersRef.current[peerId]?.login || t('msg_placeholder').replace('...', '');
-                                            sendNotif(senderName, lastVal.preview, 'dm-' + chatId);
+                                    if (lastVal && lastVal.uid !== uid && lastVal.ts > initTimeRef.current) {
+                                        if (!prevLast || lastVal.ts > prevLast.ts) {
+                                            playRecv();
+                                            const curChat = activeChatRef.current;
+                                            const isCurrentChat = curChat && curChat.type === 'dm' && curChat.id === peerId;
+                                            if (!isCurrentChat) {
+                                                const senderName = peerUsersRef.current[peerId]?.login || t('msg_placeholder').replace('...', '');
+                                                sendNotif(senderName, lastVal.preview, 'dm-' + chatId);
+                                            }
                                         }
                                     }
+                                    updateConvsState();
                                 }
-                                updateConvsState();
                             });
 
                             const refUnread = db.ref(`dm/${chatId}/unread/${uid}`);
                             const cbUnread = refUnread.on('value', unreadSnap => {
-                                convsMap[peerId].unread = unreadSnap.val() || 0;
-                                updateConvsState();
+                                const unreadVal = unreadSnap.val() || 0;
+                                if (convsMap[peerId].unread !== unreadVal) {
+                                    convsMap[peerId].unread = unreadVal;
+                                    updateConvsState();
+                                }
                             });
 
                             activeListeners.push({ refLast, cbLast, refUnread, cbUnread });
